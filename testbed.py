@@ -304,15 +304,29 @@ def sr_test_fft(cf=2.437e9, refLevel=-60, recordLength=1024):
     sr_test_plot(freqArr, meanFFTArr)
     
 # Master function for gain characterization
-def gain_char(minRL, maxRL, numRLs, cf=3.6e9, numFFTs=1000, iqBw=40e6,
-    recordLength=1024, gVRL=False, hist=False):
+def gain_char(minRL, maxRL, numRLs, which="figure", hist=False):
+    # "which" parameter chooses either "figure" or "power" for what is plotted
+    # "figure" = noise figure, "power" = mean noise power
+    # Or pass "none" to not create the plot (useful for making histograms only)
+
+    if which is not "figure" and not "power" and not "none":
+        print("Choose either figure, power, or none for the which parameter")
+        return None
+
+    # Data collection settings
+    numFFTs = 1000
+    cf = 3.6e9
+    iqBw = 40e6
+    recordLength = 1024
 
     # Create necessary variables
     compRecLen = numFFTs*recordLength
-    refLevArr = np.linspace(minRL, maxRL, numRLs)
-    meanFFTArr = np.zeros((len(refLevArr), recordLength))
-    iqArr = np.zeros((len(refLevArr), compRecLen), dtype=complex)
+    refLev = np.linspace(minRL, maxRL, numRLs)
+    avgNoisePwr = np.zeros_like(refLev)
+    meanFFTArr = np.zeros((len(refLev), recordLength))
+    iqArr = np.zeros((len(refLev), compRecLen), dtype=complex)
     freqArr = np.zeros_like(meanFFTArr)
+    thermalNoise = theoryNoise(iqBw)
 
     connect()
 
@@ -322,11 +336,9 @@ def gain_char(minRL, maxRL, numRLs, cf=3.6e9, numFFTs=1000, iqBw=40e6,
     set_iqRecordLength(compRecLen)
     sampRate = get_iqSampleRate()
 
-    # Calculate thermal noise for the set BW
-    thermalNoise = theoryNoise(iqBw)
-
-    for (i, refLev) in enumerate(refLevArr):
-        set_refLevel(refLev)
+    # Collect data
+    for (i, RL) in enumerate(refLev):
+        set_refLevel(RL)
         iqArray = np.zeros(compRecLen, dtype=complex)
         iqArray = iqblk_collect(compRecLen)
         iqSlice = np.zeros((numFFTs, recordLength), dtype=complex)
@@ -339,80 +351,89 @@ def gain_char(minRL, maxRL, numRLs, cf=3.6e9, numFFTs=1000, iqBw=40e6,
 
     disconnect()
 
-    # Truncate all freq domain data to the set bandwidth (remove tails)
-    lowBound = findNearest(freqArr, cf - iqBw/2)
-    highBound = findNearest(freqArr, cf + iqBw/2)
-    newMeanFFTArr = np.zeros((len(refLevArr), highBound + 1 - lowBound))
-    newFreqArr = np.zeros_like(newMeanFFTArr)
-    for (i, arr) in enumerate(freqArr):
-        newFreqArr[i] = arr[lowBound:highBound + 1]
-    for (i, arr) in enumerate(meanFFTArr):
-        newMeanFFTArr[i] = arr[lowBound:highBound + 1]
+    if which is not "none":
+        # Truncate freq domain data to the set bandwidth (remove tails)
+        lowBound = findNearest(freqArr, cf - iqBw/2)
+        highBound = findNearest(freqArr, cf + iqBw/2)
+        newMeanFFTArr = np.zeros((len(refLev), highBound + 1 - lowBound))
+        newFreqArr = np.zeros_like(newMeanFFTArr)
+        for (i, arr) in enumerate(freqArr):
+            newFreqArr[i] = arr[lowBound:highBound + 1]
+        for (i, arr) in enumerate(meanFFTArr):
+            newMeanFFTArr[i] = arr[lowBound:highBound + 1]
 
-    # Calculate average noise powers for each ref level
-    avgNoisePower = np.zeros_like(refLevArr)
+        # Calculate mean noise powers
+        for (i, FFT) in enumerate(newMeanFFTArr):
+            avgNoisePwr[i] = np.mean(FFT)
 
-    for (i, FFT) in enumerate(newMeanFFTArr):
-        avgNoisePower[i] = np.mean(FFT)
+        # Plot desired noise quantity vs ref level
+        noise_plot(refLev, avgNoisePwr, thermalNoise, which=which)
 
-    # Plot average noise power vs reference level
-    if gVRL:
-        plot_noiseVsRL(refLevArr, avgNoisePower, thermalNoise)
-
+    # Plot IQ histograms
     if hist:
-        # Does not use truncated data in any way
-        gainChar_hist(iqArr, refLevArr)
+        gainChar_hist(iqArr, refLev)
 
-def plot_noiseVsRL(refLevels, avgNoisePower, thermalNoise, fit=True, norm=False):
+def noise_plot(refLev, avgNoisePwr, thermalNoise, which="figure"):
+    # Plots and fits noise vs. ref level data. Use for either noise figure or 
+    # mean noise power vs. ref level, specified by "which" parameter
+
+    # Handle cases
+    if which == "figure":
+        ydata = avgNoisePwr/thermalNoise
+        quantity = "Noise Figure" # used for title and labels
+        unit = "" # dimensionless
+        p0 = np.array([-30, -110/thermalNoise, 0, 1]) # param guess for fit
+        sigma_y = np.ones_like(ydata)/100 # 1/100 fractional error
+        absErr = False
+    elif which == "power":
+        ydata = avgNoisePwr
+        quantity = "Mean Noise Power"
+        unit = " [dBm]" # appended to quantity for axis label
+        p0 = np.array([-30, -110, 0, 1])
+        sigma_y = np.ones_like(ydata)*1.5 # 1.5 dBm absolute error
+        absErr = True
+    else:
+        print("Please enter either figure or power for the which parameter")
+        return None
+
+    # Model function for fitter
+    def noise_model(x, x0, y0, k1, k2):
+        return np.piecewise(x, [x < x0, x >= x0], [lambda x:k1*x + y0-k1*x0,
+            lambda x:k2*x + y0-k2*x0])
+
+    # Curve fitting + fit statistics
+    (p, C) = opt.curve_fit(noise_model, refLev, ydata, sigma=sigma_y, absolute_sigma=absErr)
+    sigp = np.sqrt(np.diag(C))
+    chisq = np.sum(((ydata - noise_model(refLev, *p)) ** 2)/(sigma_y ** 2))
+    dof = len(ydata) - len(p) # deg of freedom
+    rChiSq = chisq/dof # Reduced Chisq
+    Q = sf.gammaincc(0.5*dof, 0.5*chisq) # Goodness of fit
+
+    # Print fit statistics
+    print("Fit Statistics:\n"
+        + "x0 = {:.3f} +/- {:.3f} dBm\n".format(p[0], sigp[0])
+        + "y0 = {:.3f} +/- {:.3f}{}\n".format(p[1], sigp[1], unit)
+        + "m1 = {:.3f} +/- {:.3f} \n".format(p[2], sigp[2])
+        + "m2 = {:.3f} +/- {:.3f} \n".format(p[3], sigp[3])
+        + "Chi Squared = {:.3f}\n".format(chisq)
+        + "Reduced ChiSq = {:.3f}\n".format(rChiSq)
+        + "Degress of Freedom = {}\n".format(dof)
+        + "Goodness of Fit = {:.3f}\n".format(Q)
+    )
+
+    # Plotting
+    refLevFine = np.linspace(refLev[0], refLev[-1], 1000) # For fit plot
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ax.set_xlabel("Reference Level [dBm]")
+    ax.set_ylabel(quantity + unit)
+    ax.set_title("Tek RSA306b " + quantity + " vs. Reference Level")
     ax.grid(which="major", axis="both", alpha=0.75)
     ax.grid(which="minor", axis="both", alpha=0.4)
-
-    # Handle normalization if desired
-    if norm:
-        ydata = avgNoisePower - thermalNoise
-        y_label = "Normalized Mean Noise Power [dBm]"
-        title = "Normalized Mean Noise Power vs. Reference Level"
-        thermalNoise = 0
-    else:
-        ydata = avgNoisePower
-        y_label = "Mean Noise Power [dBm]"
-        title = "Mean Noise Power vs. Reference Level"
-
-    ax.axhline(thermalNoise, label="Thermal Noise = {:.2f} dBm".format(thermalNoise))
-    ax.plot(refLevels, ydata, 'k.', label="Data")
-
-    # Curve Fitting
-    if fit:
-        def piecewise_model(x, x0, y0, k1, k2):
-            return np.piecewise(x, [x < x0, x >= x0], [lambda x:k1*x + y0-k1*x0, lambda x:k2*x + y0-k2*x0])
-        p0 = np.array([-30, -110, 0, 1]) # Initial parameter guess
-        sigma_y = np.ones_like(ydata)*1.5# Using 1.5 dBm sigma
-        (p, C) = opt.curve_fit(piecewise_model, refLevels, ydata, sigma=sigma_y, absolute_sigma=True)
-        # Fit Statistics
-        sigp = np.sqrt(np.diag(C))
-        chisq = np.sum(((ydata-piecewise_model(refLevels, *p))**2)/(sigma_y**2))
-        dof = len(ydata) - len(p)
-        rChiSq = chisq/dof
-        Q = sf.gammaincc(0.5*dof, 0.5*chisq)
-        print(f"""Best fit:
-            x0 = {p[0]} +/- {sigp[0]}
-            y0 = {p[1]} +/- {sigp[1]}
-            k1 = {p[2]} +/- {sigp[2]}
-            k2 = {p[3]} +/- {sigp[3]}
-            chisq = {chisq}
-            rChiSq = {rChiSq}
-            dof = {dof}
-            goodness of fit = {Q}""")
-        # Plotting
-        fineRL = np.linspace(refLevels[0], refLevels[-1], 1000)
-        ax.plot(fineRL, piecewise_model(fineRL, *p), 'r--', label="Curve Fit, Red. ChiSq = {:.3f}".format(rChiSq))
-    
-    ax.set_ylabel(y_label)
-    ax.set_title(title)
+    ax.plot(refLev, ydata, 'k.', label=(quantity + " Data"))
+    ax.plot(refLevFine, noise_model(refLevFine, *p), 'r--', label=
+        "Curve Fit, ChiSq = {:.3f}".format(chisq))
     ax.legend()
     plt.show()
 
@@ -482,13 +503,4 @@ def theoryNoise(bw, T=294.261):
 #char_sampleRate()
 #wifi_fft(iqBw=2.25e7)
 #sr_test_fft(cf=4000e6)
-
-
-#gain_char(-130, 30, 17, fftPlot=False, hist=False)
-#gain_char(-40, -20, 20, fftPlot=False, hist=False)
-
-# Get some histograms
-gain_char(-30, -10, 3, hist=True)
-
-# Full range avg. noise power vs ref level plot w/ fit:
-#gain_char(-130, 30, 50, gVRL=True)
+gain_char(-130, 30, 50, which="figure", hist=False)
