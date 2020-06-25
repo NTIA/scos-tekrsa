@@ -1,17 +1,19 @@
 import numpy as np
+import scipy.optimize as opt
+import scipy.special as sf
 import matplotlib.pyplot as plt
 from matplotlib import rc as mpl_rc
+from matplotlib.ticker import StrMethodFormatter
 from time import sleep, strftime
 # The next import also loads the RSA driver and device
 # It may be better to load the driver/device in this file instead
 from RSA_API import *
 
 """ PLOT FORMATTING STUFF """
-mpl_rc('xtick', direction='in', labelsize='small')
-mpl_rc('ytick', direction='in', labelsize='small')
+mpl_rc('xtick', direction='in', top=True)
+mpl_rc('ytick', direction='in', right=True)
 mpl_rc('xtick.minor', visible=True)
 mpl_rc('ytick.minor', visible=True)
-mpl_rc('axes', grid=False)
 
 """ DATA COLLECTION METHODS """
 
@@ -300,43 +302,28 @@ def sr_test_fft(cf=2.437e9, refLevel=-60, recordLength=1024):
     disconnect()
 
     sr_test_plot(freqArr, meanFFTArr)
-
-# FFT plotting for gain characterization
-def gainChar_test_plot(freqArr, meanFFTArr, refLevArr, iqBw, cf):
-
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    ax.set_title("Mean FFTs for Various Reference Levels")
-    ax.set_xlabel("Frequency [Hz]")
-    ax.set_ylabel("Power [dBm]")
-    ax.set_xlim(cf - iqBw/2, cf + iqBw/2)
-    ax.set_ylim(-120, -110)
-    ax.grid(which="major", axis="both", alpha=0.75)
-    ax.grid(which="minor", axis="both", alpha=0.25)
-
-    for (i, FFT) in enumerate(meanFFTArr):
-        avgPwr = np.mean(FFT)
-        ax.plot(freqArr[i, :], FFT, label="Ref. Level: {} dBm, Mean Power: {:.3f} dBm".format(refLevArr[i], avgPwr))
-    ax.legend(loc='lower center')
-    plt.show()
     
 # Master function for gain characterization
-def gain_char(minRL, maxRL, numRLs, cf=3e9, numFFTs=5000, recordLength=1024):
+def gain_char(minRL, maxRL, numRLs, cf=3.6e9, numFFTs=1000, iqBw=40e6,
+    recordLength=1024, gVRL=False, hist=False):
 
+    # Create necessary variables
     compRecLen = numFFTs*recordLength
-    iqBw = 40e6
-    #refLevArr = np.array([-130, 30])
-    refLevArr = np.linspace(minRL, maxRL,numRLs)
-
+    refLevArr = np.linspace(minRL, maxRL, numRLs)
     meanFFTArr = np.zeros((len(refLevArr), recordLength))
+    iqArr = np.zeros((len(refLevArr), compRecLen), dtype=complex)
     freqArr = np.zeros_like(meanFFTArr)
 
     connect()
 
+    # Configure device
     set_centerFreq(cf)
     set_iqBandwidth(iqBw)
     set_iqRecordLength(compRecLen)
     sampRate = get_iqSampleRate()
+
+    # Calculate thermal noise for the set BW
+    thermalNoise = theoryNoise(iqBw)
 
     for (i, refLev) in enumerate(refLevArr):
         set_refLevel(refLev)
@@ -348,14 +335,138 @@ def gain_char(minRL, maxRL, numRLs, cf=3e9, numFFTs=5000, recordLength=1024):
         m4s_temp = iq_fft(iqSlice)
         meanFFTArr[i] = m4s_temp[2]
         freqArr[i] = generate_spectrum(cf, sampRate, recordLength)
+        iqArr[i] = iqArray
 
     disconnect()
 
-    gainChar_test_plot(freqArr, meanFFTArr, refLevArr, iqBw, cf)
-    # set various ref levels (start with just max and min)
-    # for each, record 50 IQ blocks
-    # get average FFT for each ref level
-    # make I data histogram for each ref level
+    # Truncate all freq domain data to the set bandwidth (remove tails)
+    lowBound = findNearest(freqArr, cf - iqBw/2)
+    highBound = findNearest(freqArr, cf + iqBw/2)
+    newMeanFFTArr = np.zeros((len(refLevArr), highBound + 1 - lowBound))
+    newFreqArr = np.zeros_like(newMeanFFTArr)
+    for (i, arr) in enumerate(freqArr):
+        newFreqArr[i] = arr[lowBound:highBound + 1]
+    for (i, arr) in enumerate(meanFFTArr):
+        newMeanFFTArr[i] = arr[lowBound:highBound + 1]
+
+    # Calculate average noise powers for each ref level
+    avgNoisePower = np.zeros_like(refLevArr)
+
+    for (i, FFT) in enumerate(newMeanFFTArr):
+        avgNoisePower[i] = np.mean(FFT)
+
+    # Plot average noise power vs reference level
+    if gVRL:
+        plot_noiseVsRL(refLevArr, avgNoisePower, thermalNoise)
+
+    if hist:
+        # Does not use truncated data in any way
+        gainChar_hist(iqArr, refLevArr)
+
+def plot_noiseVsRL(refLevels, avgNoisePower, thermalNoise, fit=True, norm=False):
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.set_xlabel("Reference Level [dBm]")
+    ax.grid(which="major", axis="both", alpha=0.75)
+    ax.grid(which="minor", axis="both", alpha=0.4)
+
+    # Handle normalization if desired
+    if norm:
+        ydata = avgNoisePower - thermalNoise
+        y_label = "Normalized Mean Noise Power [dBm]"
+        title = "Normalized Mean Noise Power vs. Reference Level"
+        thermalNoise = 0
+    else:
+        ydata = avgNoisePower
+        y_label = "Mean Noise Power [dBm]"
+        title = "Mean Noise Power vs. Reference Level"
+
+    ax.axhline(thermalNoise, label="Thermal Noise = {:.2f} dBm".format(thermalNoise))
+    ax.plot(refLevels, ydata, 'k.', label="Data")
+
+    # Curve Fitting
+    if fit:
+        def piecewise_model(x, x0, y0, k1, k2):
+            return np.piecewise(x, [x < x0, x >= x0], [lambda x:k1*x + y0-k1*x0, lambda x:k2*x + y0-k2*x0])
+        p0 = np.array([-30, -110, 0, 1]) # Initial parameter guess
+        sigma_y = np.ones_like(ydata)*1.5# Using 1.5 dBm sigma
+        (p, C) = opt.curve_fit(piecewise_model, refLevels, ydata, sigma=sigma_y, absolute_sigma=True)
+        # Fit Statistics
+        sigp = np.sqrt(np.diag(C))
+        chisq = np.sum(((ydata-piecewise_model(refLevels, *p))**2)/(sigma_y**2))
+        dof = len(ydata) - len(p)
+        rChiSq = chisq/dof
+        Q = sf.gammaincc(0.5*dof, 0.5*chisq)
+        print(f"""Best fit:
+            x0 = {p[0]} +/- {sigp[0]}
+            y0 = {p[1]} +/- {sigp[1]}
+            k1 = {p[2]} +/- {sigp[2]}
+            k2 = {p[3]} +/- {sigp[3]}
+            chisq = {chisq}
+            rChiSq = {rChiSq}
+            dof = {dof}
+            goodness of fit = {Q}""")
+        # Plotting
+        fineRL = np.linspace(refLevels[0], refLevels[-1], 1000)
+        ax.plot(fineRL, piecewise_model(fineRL, *p), 'r--', label="Curve Fit, Red. ChiSq = {:.3f}".format(rChiSq))
+    
+    ax.set_ylabel(y_label)
+    ax.set_title(title)
+    ax.legend()
+    plt.show()
+
+def gainChar_hist(iqData, refLevels, numBins=30):
+    # Make histograms for sets of IQ samples
+    # taken with various reference levels
+
+    fig, ax = plt.subplots(len(refLevels), 3)
+    ytick_fmt = StrMethodFormatter(('{x:,g}'))
+    xtick_fmt = StrMethodFormatter(('{x:.3f}'))
+
+    for (i, RL) in enumerate(refLevels):
+        iData = np.real(iqData[i]) # V
+        qData = np.imag(iqData[i]) # V
+        pwrData = (np.abs(iqData[i])**2)/50 # W
+
+        # I histogram
+        ax[i][0].grid(which="major", axis="y", alpha=0.75)
+        ax[i][0].grid(which="minor", axis="y", alpha=0.25)
+        ax[i][0].hist(iData*1e3, numBins, label="Ref. Level = {} dBm".format(RL))
+        ax[i][0].set_ylabel("Number")
+        ax[i][0].yaxis.set_major_formatter(ytick_fmt)
+        ax[i][0].xaxis.set_major_formatter(xtick_fmt)
+        ax[i][0].legend()
+        # Q histogram
+        ax[i][1].grid(which="major", axis="y", alpha=0.75)
+        ax[i][1].grid(which="minor", axis="y", alpha=0.25)
+        ax[i][1].hist(qData*1e3, numBins, label="Ref. Level = {} dBm".format(RL))
+        ax[i][1].yaxis.set_major_formatter(ytick_fmt)
+        ax[i][1].xaxis.set_major_formatter(xtick_fmt)
+        ax[i][1].legend()
+        # Power histogram
+        ax[i][2].grid(which="major", axis="y", alpha=0.75)
+        ax[i][2].grid(which="minor", axis="y", alpha=0.25)
+        ax[i][2].hist(pwrData*1e3, numBins, label="Ref. Level = {} dBm".format(RL))
+        ax[i][2].yaxis.set_major_formatter(ytick_fmt)
+        ax[i][2].xaxis.set_major_formatter(xtick_fmt)
+        ax[i][2].legend()
+
+    # Axis Labels
+    ax[0][0].set_title("Histogram of I Data")
+    ax[0][1].set_title("Histogram of Q Data")
+    ax[0][2].set_title("Histogram of Power Data")
+    ax[-1][0].set_xlabel("I (mV)")
+    ax[-1][1].set_xlabel("Q (mV)")
+    ax[-1][2].set_xlabel("Power (mW)")
+
+    plt.gcf().subplots_adjust(bottom=0.15)
+    plt.show()
+
+def findNearest(arr, val):
+    # Return index of array element nearest to value
+    idx = np.abs(arr - val).argmin()
+    return idx
 
 def theoryNoise(bw, T=294.261):
     # Calculates thermal noise power
@@ -367,14 +478,17 @@ def theoryNoise(bw, T=294.261):
     return P_dBm
 
 """ RUN STUFF """
-iqblk_master(1e9, 0, 40e6, 1024, plot=True, savefig=False)
+#iqblk_master(1e9, 0, 40e6, 1024, plot=True, savefig=False)
 #char_sampleRate()
 #wifi_fft(iqBw=2.25e7)
 #sr_test_fft(cf=4000e6)
 
 
-#gain_char(-130, -100, 4)
-#gain_char(-100, -70, 4)
-#gain_char(-70, -40, 4)
-#gain_char(-40, -10, 4)
-#gain_char(-10, 30, 5)
+#gain_char(-130, 30, 17, fftPlot=False, hist=False)
+#gain_char(-40, -20, 20, fftPlot=False, hist=False)
+
+# Get some histograms
+gain_char(-30, -10, 3, hist=True)
+
+# Full range avg. noise power vs ref level plot w/ fit:
+#gain_char(-130, 30, 50, gVRL=True)
