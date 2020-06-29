@@ -3,6 +3,7 @@ import statsmodels.api as sm
 import scipy.optimize as opt
 import scipy.special as sf
 import scipy.stats as stats
+import scipy.integrate as integ
 import matplotlib.pyplot as plt
 from matplotlib import rc as mpl_rc
 from matplotlib.ticker import StrMethodFormatter
@@ -306,7 +307,7 @@ def sr_test_fft(cf=2.437e9, refLevel=-60, recordLength=1024):
     sr_test_plot(freqArr, meanFFTArr)
     
 # Master function for gain characterization
-def gain_char(minRL, maxRL, numRLs, which="none", hist=False, normTest=False):
+def gain_char(minRL, maxRL, numRLs, which="none", hist=False, normTest=False, enbw=False):
     # "which" parameter chooses either "figure" or "power" for what is plotted
     # "figure" = noise figure, "power" = mean noise power
     # Or pass "none" to not create the plot (useful for making histograms only)
@@ -381,6 +382,10 @@ def gain_char(minRL, maxRL, numRLs, which="none", hist=False, normTest=False):
     # Normality tests for IQ data
     if normTest:
         gainChar_normTests(iqArr, refLev)
+
+    # Calculate equivalent noise bandwidth
+    if enbw:
+        gainChar_enbw(meanFFTArr, refLev)
 
 def noise_plot(refLev, avgNoisePwr, thermalNoise, which="figure"):
     # Plots and fits noise vs. ref level data. Use for either noise figure or 
@@ -574,6 +579,23 @@ def gainChar_normTests(iqData, refLevels):
     # It still works, but temporarily disabled for this reason
     #plt.show()
 
+def gainChar_enbw(FFTs, refLevels):
+    # Currently not working
+    maxI = np.zeros_like(refLevels)
+    maxQ = np.zeros_like(refLevels)
+    integI = np.zeros_like(FFTs)
+    integQ = np.zeros_like(FFTs)
+
+    for (i, iq) in enumerate(FFTs):
+        maxI[i] = np.max(np.real(FFTs[i]))
+        maxQ[i] = np.max(np.imag(FFTs[i]))
+        integI[i] = np.abs(np.real(FFTs[i])/maxI[i])**2
+        integQ[i] = np.abs(np.imag(FFTs[i])/maxQ[i])**2
+
+    print(integ.romb(integI[0]))
+
+
+
 def findNearest(arr, val):
     # Return index of array element nearest to value
     idx = np.abs(arr - val).argmin()
@@ -594,4 +616,4 @@ def theoryNoise(df, T=294.261):
 #wifi_fft(iqBw=2.25e7)
 #sr_test_fft(cf=4000e6)
 #gain_char(-130, 30, 50, which="figure", hist=False)
-gain_char(-130, 30, 2, normTest=True)
+gain_char(-130, 30, 2, enbw=True)
