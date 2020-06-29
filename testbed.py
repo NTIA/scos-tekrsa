@@ -1,6 +1,8 @@
 import numpy as np
+import statsmodels.api as sm
 import scipy.optimize as opt
 import scipy.special as sf
+import scipy.stats as stats
 import matplotlib.pyplot as plt
 from matplotlib import rc as mpl_rc
 from matplotlib.ticker import StrMethodFormatter
@@ -304,7 +306,7 @@ def sr_test_fft(cf=2.437e9, refLevel=-60, recordLength=1024):
     sr_test_plot(freqArr, meanFFTArr)
     
 # Master function for gain characterization
-def gain_char(minRL, maxRL, numRLs, which="figure", hist=False):
+def gain_char(minRL, maxRL, numRLs, which="none", hist=False, normTest=False):
     # "which" parameter chooses either "figure" or "power" for what is plotted
     # "figure" = noise figure, "power" = mean noise power
     # Or pass "none" to not create the plot (useful for making histograms only)
@@ -326,7 +328,6 @@ def gain_char(minRL, maxRL, numRLs, which="figure", hist=False):
     meanFFTArr = np.zeros((len(refLev), recordLength))
     iqArr = np.zeros((len(refLev), compRecLen), dtype=complex)
     freqArr = np.zeros_like(meanFFTArr)
-    thermalNoise = theoryNoise(iqBw)
 
     connect()
 
@@ -351,6 +352,10 @@ def gain_char(minRL, maxRL, numRLs, which="figure", hist=False):
 
     disconnect()
 
+    # Calculate theoretical thermal noise
+    df = freqArr[0,1] - freqArr[0,0]
+    thermalNoise = theoryNoise(df)
+
     if which is not "none":
         # Truncate freq domain data to the set bandwidth (remove tails)
         lowBound = findNearest(freqArr, cf - iqBw/2)
@@ -373,24 +378,28 @@ def gain_char(minRL, maxRL, numRLs, which="figure", hist=False):
     if hist:
         gainChar_hist(iqArr, refLev)
 
+    # Normality tests for IQ data
+    if normTest:
+        gainChar_normTests(iqArr, refLev)
+
 def noise_plot(refLev, avgNoisePwr, thermalNoise, which="figure"):
     # Plots and fits noise vs. ref level data. Use for either noise figure or 
     # mean noise power vs. ref level, specified by "which" parameter
 
     # Handle cases
     if which == "figure":
-        ydata = avgNoisePwr/thermalNoise
+        ydata = avgNoisePwr - thermalNoise
         quantity = "Noise Figure" # used for title and labels
         unit = "" # dimensionless
         p0 = np.array([-30, -110/thermalNoise, 0, 1]) # param guess for fit
-        sigma_y = np.ones_like(ydata)/100 # 1/100 fractional error
+        sigma_y = np.ones_like(ydata)/10 # 1/100 fractional error
         absErr = False
     elif which == "power":
         ydata = avgNoisePwr
         quantity = "Mean Noise Power"
         unit = " [dBm]" # appended to quantity for axis label
         p0 = np.array([-30, -110, 0, 1])
-        sigma_y = np.ones_like(ydata)*1.5 # 1.5 dBm absolute error
+        sigma_y = np.ones_like(ydata)*4.2 # 4.2 dBm absolute error
         absErr = True
     else:
         print("Please enter either figure or power for the which parameter")
@@ -431,6 +440,8 @@ def noise_plot(refLev, avgNoisePwr, thermalNoise, which="figure"):
     ax.set_title("Tek RSA306b " + quantity + " vs. Reference Level")
     ax.grid(which="major", axis="both", alpha=0.75)
     ax.grid(which="minor", axis="both", alpha=0.4)
+    if which is "power":
+        ax.axhline(thermalNoise, color='c', label="Thermal Noise = {:.3f} dBm".format(thermalNoise))
     ax.plot(refLev, ydata, 'k.', label=(quantity + " Data"))
     ax.plot(refLevFine, noise_model(refLevFine, *p), 'r--', label=
         "Curve Fit, ChiSq = {:.3f}".format(chisq))
@@ -453,7 +464,7 @@ def gainChar_hist(iqData, refLevels, numBins=30):
         # I histogram
         ax[i][0].grid(which="major", axis="y", alpha=0.75)
         ax[i][0].grid(which="minor", axis="y", alpha=0.25)
-        ax[i][0].hist(iData*1e3, numBins, label="Ref. Level = {} dBm".format(RL))
+        ax[i][0].hist(iData*1e3, numBins, label="Ref. Level = {:.2f} dBm".format(RL))
         ax[i][0].set_ylabel("Number")
         ax[i][0].yaxis.set_major_formatter(ytick_fmt)
         ax[i][0].xaxis.set_major_formatter(xtick_fmt)
@@ -461,14 +472,14 @@ def gainChar_hist(iqData, refLevels, numBins=30):
         # Q histogram
         ax[i][1].grid(which="major", axis="y", alpha=0.75)
         ax[i][1].grid(which="minor", axis="y", alpha=0.25)
-        ax[i][1].hist(qData*1e3, numBins, label="Ref. Level = {} dBm".format(RL))
+        ax[i][1].hist(qData*1e3, numBins, label="Ref. Level = {:.2f} dBm".format(RL))
         ax[i][1].yaxis.set_major_formatter(ytick_fmt)
         ax[i][1].xaxis.set_major_formatter(xtick_fmt)
         ax[i][1].legend()
         # Power histogram
         ax[i][2].grid(which="major", axis="y", alpha=0.75)
         ax[i][2].grid(which="minor", axis="y", alpha=0.25)
-        ax[i][2].hist(pwrData*1e3, numBins, label="Ref. Level = {} dBm".format(RL))
+        ax[i][2].hist(pwrData*1e3, numBins, label="Ref. Level = {:.2f} dBm".format(RL))
         ax[i][2].yaxis.set_major_formatter(ytick_fmt)
         ax[i][2].xaxis.set_major_formatter(xtick_fmt)
         ax[i][2].legend()
@@ -484,18 +495,97 @@ def gainChar_hist(iqData, refLevels, numBins=30):
     plt.gcf().subplots_adjust(bottom=0.15)
     plt.show()
 
+def gainChar_normTests(iqData, refLevels):
+
+    shapAlph = 0.05
+    agosAlph = 0.05
+    iShap, qShap = False, False
+    iAgos, qAgos = False, False
+
+    fig, ax = plt.subplots(len(refLevels), 2, figsize=(10,6))
+    fig.suptitle("IQ Data QQ Plots")
+    
+    for (i, refLev) in enumerate(refLevels):
+        iData = np.real(iqData[i])
+        qData = np.imag(iqData[i])
+
+        # Make QQ Plots
+        sm.qqplot(iData, line='s', ax=ax[i][0], color='k', label="I Data")
+        sm.qqplot(qData, line='s', ax=ax[i][1], color='k', label="Q Data")
+        ax[i][0].set_title("I Data, RL = {} dBm".format(refLev))
+        ax[i][1].set_title("Q Data, RL = {} dBm".format(refLev))
+
+        # Shapiro-Wilk Test
+        iShapStat, iShapP = stats.shapiro(iData)
+        qShapStat, qShapP = stats.shapiro(qData)
+        if iShapP > shapAlph:
+            iShap = True
+        if qShapP > shapAlph:
+            qShap = True
+        print("\nBeginning Normality Tests for Reference Level = {} dBm:\n".format(refLev))
+        print("Shapiro-Wilk Test:\n")
+        print("  I Statistic = {:.3f}\n".format(iShapStat)
+            + "  I P-Value = {:.3f}\n".format(iShapP)
+            + "  I Data is Gaussian: {}\n".format(str(iShap))
+            + "  Q Statistic = {:.3f}\n".format(qShapStat)
+            + "  Q P-Value = {:.3f}\n".format(qShapP)
+            + "  Q Data is Gaussian: {}\n".format(str(qShap)))
+
+        # D'Agostino K^2 Test
+        iAgosStat, iAgosP = stats.normaltest(iData)
+        qAgosStat, qAgosP = stats.normaltest(qData)
+        if iAgosP > agosAlph:
+            iAgos = True
+        if qAgosP > agosAlph:
+            qAgos = True
+        print("D'Agostino K^2 Test:\n")
+        print("  I Statistic = {:.3f}\n".format(iAgosStat)
+            + "  I P-Value = {:.3f}\n".format(iAgosP)
+            + "  I Data is Gaussian: {}\n".format(str(iAgos))
+            + "  Q Statistic = {:.3f}\n".format(qAgosStat)
+            + "  Q P-Value = {:.3f}\n".format(qAgosP)
+            + "  Q Data is Gaussian: {}\n".format(str(qAgos)))
+
+        # Anderson-Darling Test
+        iAndersRes = stats.anderson(iData)
+        qAndersRes = stats.anderson(qData)
+        print("Anderson-Darling Test:\n")
+        print("  I Statistic = {:.3f}".format(iAndersRes.statistic))
+        for i in range(len(iAndersRes.critical_values)):
+            res = iAndersRes
+            sl, cv = res.significance_level[i], res.critical_values[i]
+            print("    For Significance Level = {:.3f} and Critical Value = {:.3f}: ".format(sl, cv))
+            if res.statistic < cv:
+                print("      I Data is Gaussian")
+            else:
+                print("      I Data is not Gaussian")
+        print("\n  Q Statistic = {:.3f}".format(qAndersRes.statistic))
+        for i in range(len(qAndersRes.critical_values)):
+            res = qAndersRes
+            sl, cv = res.significance_level[i], res.critical_values[i]
+            print("    For Significance Level = {:.3f} and Critical Value = {:.3f}: ".format(sl, cv))
+            if res.statistic < cv:
+                print("      Q Data is Gaussian")
+            else:
+                print("      Q Data is not Gaussian")
+
+    plt.tight_layout(1.5, h_pad=1, w_pad=1)
+    # For some reason, showing the QQ plots causes matplotlib to freeze
+    # It still works, but temporarily disabled for this reason
+    #plt.show()
+
 def findNearest(arr, val):
     # Return index of array element nearest to value
     idx = np.abs(arr - val).argmin()
     return idx
 
-def theoryNoise(bw, T=294.261):
+def theoryNoise(df, T=294.261):
     # Calculates thermal noise power
     # T: temp, kelvin
-    # bw: bandwidth, Hz
+    # df: fft bin size, Hz
     # Returns noise power in dBm
     k = 1.380649e-23 # J/K
-    P_dBm = 10*np.log10(k*T*bw)
+    P_dBm = 10*np.log10(k*T*df) + 30
     return P_dBm
 
 """ RUN STUFF """
@@ -503,4 +593,5 @@ def theoryNoise(bw, T=294.261):
 #char_sampleRate()
 #wifi_fft(iqBw=2.25e7)
 #sr_test_fft(cf=4000e6)
-gain_char(-130, 30, 50, which="figure", hist=False)
+#gain_char(-130, 30, 50, which="figure", hist=False)
+gain_char(-130, 30, 2, normTest=True)
