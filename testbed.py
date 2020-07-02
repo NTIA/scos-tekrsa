@@ -336,31 +336,21 @@ def sr_test_fft(cf=2.437e9, refLevel=-60, recordLength=1024):
     sr_test_plot(freqArr, meanFFTArr)
     
 # Master function for gain characterization
-def gain_char(minRL, maxRL, numRLs, which="none", hist=False,
+def gain_char(minRL, maxRL, numRLs, noiseFig=False, trunc=False, fftPlot=False, hist=False,
     normTest=False, enbw=False):
-
-    if which is not "figure" and not "power" and not "none":
-        print("Choose either figure, power, or none for the which parameter")
-        return None
 
     # Data collection settings
     recordLength = 1024 # IQ samples per block
     numSets = 1024 # Number of IQ blocks
     cf = 3.6e9 # Center frequency
     iqBw = 40e6 # IQ Bandwidth
-
-    # Variables for calculations
-    k = 1.380649e-23 # J/K, Boltzmann constant
-    T = 294.261 # K, ambient temperature
     
     # Create necessary variables
     compRecLen = numSets*recordLength
     refLev = np.linspace(minRL, maxRL, numRLs)
-    avgNoisePwr = np.zeros_like(refLev)
     iqArr = np.zeros((len(refLev), compRecLen), dtype=complex)
     FFTs = np.zeros((len(refLev), recordLength))
     freqArr = np.zeros((len(refLev), recordLength))
-    ENBW = np.zeros(len(refLev))
 
     connect()
 
@@ -386,48 +376,28 @@ def gain_char(minRL, maxRL, numRLs, which="none", hist=False,
         
     disconnect()
 
-    #if which is not "none":
-    #    # Truncate freq domain data to the set bandwidth (remove tails)
-    #    lowBound = findNearest(freqArr, cf - iqBw/2)
-    #    highBound = findNearest(freqArr, cf + iqBw/2)
-    #    newMeanFFTArr = np.zeros((len(refLev), highBound + 1 - lowBound))
-    #    newFreqArr = np.zeros_like(newMeanFFTArr)
-    #    for (i, arr) in enumerate(freqArr):
-    #        newFreqArr[i] = arr[lowBound:highBound + 1]
-    #    for (i, arr) in enumerate(meanFFTArr):
-    #        newMeanFFTArr[i] = arr[lowBound:highBound + 1]##
-
-    #    # Calculate mean noise powers
-    #    for (i, FFT) in enumerate(newMeanFFTArr):
-    #        avgNoisePwr[i] = np.mean(FFT)#
-
-        # Plot desired noise quantity vs ref level
-       #  noise_plot(refLev, avgNoisePwr, thermalNoise, which=which)
+    if trunc:
+        # Truncate freq domain data to the set bandwidth (remove tails)
+        lowBound = findNearest(freqArr, cf - iqBw/2)
+        highBound = findNearest(freqArr, cf + iqBw/2)
+        newFFTs = np.zeros((len(refLev), highBound + 1 - lowBound))
+        newFreqArr = np.zeros_like(newFFTs)
+        for (i, arr) in enumerate(freqArr):
+            newFreqArr[i] = arr[lowBound:highBound + 1]
+        for (i, FFT) in enumerate(FFTs):
+            newFFTs[i] = FFT[lowBound:highBound + 1]
+        # Replace existing arrays
+        FFTs = newFFTs
+        freqArr = newFreqArr
 
     # Calculate noise figures
-    for (i, RL) in enumerate(refLev):
-        linFFT = 10**(FFTs[i]/10) # translate back to linear domain
-        integral = integ.cumtrapz(np.abs(linFFT/np.max(linFFT))**2, freqArr[i])
-        ENBW[i] = integral[-1]
-        avgNoisePwr[i] = np.mean((np.real(iqArr[i])**2 + np.imag(iqArr[i])**2)/100) # avg power, watts
-    print(ENBW)
-    nf = avgNoisePwr/(k*T*ENBW) # dimensionless, from non-dB
-    nf_dBm = 10*np.log10(nf) # convert to dBm
-    
-    # Plot noise figure vs. ref level
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    ax.plot(refLev, nf_dBm, 'k.', label="Noise Figure")
-    ax.set_xlabel("Reference Level [dBm]")
-    ax.set_ylabel("Noise Figure")
-    ax.set_title("Noise Figure vs. Reference Level Setting")
-    ax.grid(which="major", axis="both", alpha=0.75)
-    ax.grid(which="minor", axis="both", alpha=0.4)
-    plt.show()
+    if noiseFig:
+        nf = gainChar_noiseFig(freqArr, FFTs, iqArr, refLev)
+        noiseFig_compPlot(nf, refLev)
 
     # Plot FFT:
-    fft_plot(freqArr[0], FFTs[0], "Avg. Noise Power, RL = -130dBm")
-    fft_plot(freqArr[-1], FFTs[-1], "Avg. Noise Power, RL = +30dBm")
+    if fftPlot:
+        gainChar_fftPlot(freqArr, FFTs, refLev)
 
     # Plot IQ histograms
     if hist:
@@ -437,73 +407,86 @@ def gain_char(minRL, maxRL, numRLs, which="none", hist=False,
     if normTest:
         gainChar_normTests(iqArr, refLev)
 
-    # Calculate equivalent noise bandwidth
-    if enbw:
-        gainChar_enbw(meanFFTArr, refLev)
+def gainChar_noiseFig(freqs, FFTs, IQ, refLevels):
+    # Variables for calculations
+    k = 1.380649e-23 # J/K, Boltzmann constant
+    T = 294.261 # K, ambient temperature
+    avgPwr = np.zeros_like(refLevels)
+    ENBW = gainChar_ENBW(freqs, FFTs, refLevels)
+    for (i, RL) in enumerate(refLevels):
+        avgPwr[i] = np.mean((np.abs(IQ[i])**2)/50) # avg power, watts
 
-def noise_plot(refLev, avgNoisePwr, thermalNoise, which="figure"):
-    # Plots and fits noise vs. ref level data. Use for either noise figure or 
-    # mean noise power vs. ref level, specified by "which" parameter
+    print(ENBW)
 
-    # Handle cases
-    if which == "figure":
-        ydata = avgNoisePwr - thermalNoise
-        quantity = "Noise Figure" # used for title and labels
-        unit = "" # dimensionless
-        p0 = np.array([-30, -110/thermalNoise, 0, 1]) # param guess for fit
-        sigma_y = np.ones_like(ydata)/10 # 1/100 fractional error
-        absErr = False
-    elif which == "power":
-        ydata = avgNoisePwr
-        quantity = "Mean Noise Power"
-        unit = " [dBm]" # appended to quantity for axis label
-        p0 = np.array([-30, -110, 0, 1])
-        sigma_y = np.ones_like(ydata)*4.2 # 4.2 dBm absolute error
-        absErr = True
-    else:
-        print("Please enter either figure or power for the which parameter")
-        return None
+    # Calculate noise figure
+    nf = avgPwr/(k*T*ENBW) # dimensionless, Watts/Watts
+    nf_dBm = 10*np.log10(nf) # convert to dBm
 
-    # Model function for fitter
-    def noise_model(x, x0, y0, k1, k2):
+    return nf_dBm
+
+def noiseFig_compPlot(nf_dBm, refLevels):
+    # Curve fitting
+    # Model function
+    def pw_model(x, x0, y0, k1, k2):
         return np.piecewise(x, [x < x0, x >= x0], [lambda x:k1*x + y0-k1*x0,
             lambda x:k2*x + y0-k2*x0])
+    p0 = np.array([-30, 22, 0, 1])
+    sigma_y = np.ones_like(nf_dBm) # arbitrary error...
+    absErr = True
+    refLevFine = np.linspace(refLevels[0], refLevels[-1], 1000) # For fit plot
 
-    # Curve fitting + fit statistics
-    (p, C) = opt.curve_fit(noise_model, refLev, ydata, sigma=sigma_y, absolute_sigma=absErr)
+    (p, C) = opt.curve_fit(pw_model, refLevels, nf_dBm, sigma=sigma_y, absolute_sigma=absErr)
     sigp = np.sqrt(np.diag(C))
-    chisq = np.sum(((ydata - noise_model(refLev, *p)) ** 2)/(sigma_y ** 2))
-    dof = len(ydata) - len(p) # deg of freedom
+    chisq = np.sum(((nf_dBm - pw_model(refLevels, *p)) ** 2)/(sigma_y ** 2))
+    dof = len(nf_dBm) - len(p) # deg of freedom
     rChiSq = chisq/dof # Reduced Chisq
     Q = sf.gammaincc(0.5*dof, 0.5*chisq) # Goodness of fit
 
     # Print fit statistics
     print("Fit Statistics:\n"
         + "x0 = {:.3f} +/- {:.3f} dBm\n".format(p[0], sigp[0])
-        + "y0 = {:.3f} +/- {:.3f}{}\n".format(p[1], sigp[1], unit)
-        + "m1 = {:.3f} +/- {:.3f} \n".format(p[2], sigp[2])
-        + "m2 = {:.3f} +/- {:.3f} \n".format(p[3], sigp[3])
+        + "y0 = {:.3f} +/- {:.3f}\n".format(p[1], sigp[1])
+        + "m1 = {:.3f} +/- {:.3f}\n".format(p[2], sigp[2])
+        + "m2 = {:.3f} +/- {:.3f}\n".format(p[3], sigp[3])
         + "Chi Squared = {:.3f}\n".format(chisq)
         + "Reduced ChiSq = {:.3f}\n".format(rChiSq)
         + "Degress of Freedom = {}\n".format(dof)
-        + "Goodness of Fit = {:.3f}\n".format(Q)
-    )
-
-    # Plotting
-    refLevFine = np.linspace(refLev[0], refLev[-1], 1000) # For fit plot
-
+        + "Goodness of Fit = {:.3f}\n".format(Q))
+        
+    # Plot noise figure vs. ref level with fit
     fig = plt.figure()
     ax = fig.add_subplot(111)
+    ax.plot(refLevels, nf_dBm, 'k.', label="Data")
+    ax.plot(refLevFine, pw_model(refLevFine, *p), 'r--',
+        label="Curve Fit, Goodness of Fit = {:.3f}".format(Q))
     ax.set_xlabel("Reference Level [dBm]")
-    ax.set_ylabel(quantity + unit)
-    ax.set_title("Tek RSA306b " + quantity + " vs. Reference Level")
+    ax.set_ylabel("Noise Figure")
+    ax.set_title("Noise Figure vs. Reference Level Setting")
     ax.grid(which="major", axis="both", alpha=0.75)
     ax.grid(which="minor", axis="both", alpha=0.4)
-    if which is "power":
-        ax.axhline(thermalNoise, color='c', label="Thermal Noise = {:.3f} dBm".format(thermalNoise))
-    ax.plot(refLev, ydata, 'k.', label=(quantity + " Data"))
-    ax.plot(refLevFine, noise_model(refLevFine, *p), 'r--', label=
-        "Curve Fit, ChiSq = {:.3f}".format(chisq))
+    ax.legend()
+    plt.show()
+
+def gainChar_ENBW(freqs, FFTs, refLevels):
+    # Calculates ENBWs from FFTs for various refLevels
+    # Expects FFTs in power units (dBm)
+    ENBW = np.zeros(len(refLevels))
+    for (i, RL) in enumerate(refLevels):
+        linFFT = 10**((FFTs[i]-30)/10) # Convert dBm to Watts
+        integral = integ.cumtrapz(np.abs(linFFT/np.max(linFFT))**2, freqs[i])
+        ENBW[i] = integral[-1]
+    return ENBW
+
+def gainChar_fftPlot(freqs, FFTs, refLevels):
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.set_xlabel("Frequency [Hz]")
+    ax.set_ylabel("Power [dBm]")
+    ax.set_title("Mean Noise FFTs for Various Reference Levels")
+    ax.grid(which="major", axis="both", alpha=0.75)
+    ax.grid(which="minor", axis="both", alpha=0.4)
+    for (i, RL) in enumerate(refLevels):
+        ax.plot(freqs[i], FFTs[i], label="Ref. Level: {:.2f} dBm".format(RL))
     ax.legend()
     plt.show()
 
@@ -633,29 +616,10 @@ def gainChar_normTests(iqData, refLevels):
     # It still works, but temporarily disabled for this reason
     #plt.show()
 
-def gainChar_enbw(FFTs, refLevels):
-    # Currently not working
-    maxI = np.zeros_like(refLevels)
-    maxQ = np.zeros_like(refLevels)
-    integI = np.zeros_like(FFTs)
-    integQ = np.zeros_like(FFTs)
-
-    for (i, iq) in enumerate(FFTs):
-        maxI[i] = np.max(np.real(FFTs[i]))
-        maxQ[i] = np.max(np.imag(FFTs[i]))
-        integI[i] = np.abs(np.real(FFTs[i])/maxI[i])**2
-        integQ[i] = np.abs(np.imag(FFTs[i])/maxQ[i])**2
-
-    print(integ.romb(integI[0]))
-
 def findNearest(arr, val):
     # Return index of array element nearest to value
     idx = np.abs(arr - val).argmin()
     return idx
-
-# IQ Streaming test function
-def iqStreamTest():
-    return None
 
 """ RUN STUFF """
 #iqblk_master(1e9, 0, 40e6, 1024, plot=True, savefig=False)
@@ -663,6 +627,5 @@ def iqStreamTest():
 #wifi_fft(iqBw=2.25e7)
 #sr_test_fft(cf=4000e6)
 #gain_char(-130, 30, 50, which="figure", hist=False)
-gain_char(-130, 30, 50, which="power")
-#gain_char(-130, 30, 2, enbw=True)
-#iqStreamTest()
+#gain_char(-130, 30, 50)
+gain_char(-130, 30, 50, noiseFig=True)
