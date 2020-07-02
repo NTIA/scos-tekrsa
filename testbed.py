@@ -188,6 +188,35 @@ def iq_fft(iqData):
 
     return m4s_detected
 
+# Take IQ Data FFT + Calculate M4S
+def gainChar_meanFFT(iqData, power=True):
+    # iqData: IQ data array
+
+    (numFFTs, recLength) = np.shape(iqData)
+
+    # Take FFT and normalize
+    complex_fft = np.fft.fftshift(np.fft.fft(iqData))
+
+    # Convert to psuedo-power
+    complex_fft = np.square(np.abs(complex_fft))
+    
+    # Create the detector result
+    result = np.zeros(recLength, dtype=np.float32)
+
+    # Get mean FFT
+    result = np.mean(complex_fft, axis=0)
+
+    # Convert to power
+    if power:
+        impedance_factor = -10*np.log10(50)
+        result = 10*np.log10(result) + impedance_factor + 30
+        result -= 3 # Account for double sided FFT
+        # Normalize FFT
+        fft_normalization_factor = -20*np.log10(len(np.min(complex_fft, axis=0)))
+        result += fft_normalization_factor
+
+    return result
+
 # Generate frequency axis points for an FFT
 def generate_spectrum(f0, sr, n):
     # Taken from scos_algorithm_test.lib.utils
@@ -307,28 +336,31 @@ def sr_test_fft(cf=2.437e9, refLevel=-60, recordLength=1024):
     sr_test_plot(freqArr, meanFFTArr)
     
 # Master function for gain characterization
-def gain_char(minRL, maxRL, numRLs, which="none", hist=False, normTest=False, enbw=False):
-    # "which" parameter chooses either "figure" or "power" for what is plotted
-    # "figure" = noise figure, "power" = mean noise power
-    # Or pass "none" to not create the plot (useful for making histograms only)
+def gain_char(minRL, maxRL, numRLs, which="none", hist=False,
+    normTest=False, enbw=False):
 
     if which is not "figure" and not "power" and not "none":
         print("Choose either figure, power, or none for the which parameter")
         return None
 
     # Data collection settings
-    numFFTs = 1000
-    cf = 3.6e9
-    iqBw = 40e6
-    recordLength = 1024
+    recordLength = 1024 # IQ samples per block
+    numSets = 1024 # Number of IQ blocks
+    cf = 3.6e9 # Center frequency
+    iqBw = 40e6 # IQ Bandwidth
 
+    # Variables for calculations
+    k = 1.380649e-23 # J/K, Boltzmann constant
+    T = 294.261 # K, ambient temperature
+    
     # Create necessary variables
-    compRecLen = numFFTs*recordLength
+    compRecLen = numSets*recordLength
     refLev = np.linspace(minRL, maxRL, numRLs)
     avgNoisePwr = np.zeros_like(refLev)
-    meanFFTArr = np.zeros((len(refLev), recordLength))
     iqArr = np.zeros((len(refLev), compRecLen), dtype=complex)
-    freqArr = np.zeros_like(meanFFTArr)
+    FFTs = np.zeros((len(refLev), recordLength))
+    freqArr = np.zeros((len(refLev), recordLength))
+    ENBW = np.zeros(len(refLev))
 
     connect()
 
@@ -336,44 +368,60 @@ def gain_char(minRL, maxRL, numRLs, which="none", hist=False, normTest=False, en
     set_centerFreq(cf)
     set_iqBandwidth(iqBw)
     set_iqRecordLength(compRecLen)
-    sampRate = get_iqSampleRate()
 
-    # Collect data
+    # Generate FFT frequencies
+    sampRate = get_iqSampleRate()
+    freqs = generate_spectrum(cf, sampRate, recordLength)
+    for i in range(len(refLev)):
+        freqArr[i] = freqs
+
+    # Collect and structure IQ data
     for (i, RL) in enumerate(refLev):
         set_refLevel(RL)
-        iqArray = np.zeros(compRecLen, dtype=complex)
-        iqArray = iqblk_collect(compRecLen)
-        iqSlice = np.zeros((numFFTs, recordLength), dtype=complex)
-        for j in range(numFFTs):
-            iqSlice[j] = iqArray[j*recordLength:(j+1)*recordLength]
-        m4s_temp = iq_fft(iqSlice)
-        meanFFTArr[i] = m4s_temp[2]
-        freqArr[i] = generate_spectrum(cf, sampRate, recordLength)
-        iqArr[i] = iqArray
-
+        iqArr[i] = iqblk_collect(compRecLen)
+        iqSlice = np.zeros((numSets, recordLength), dtype=complex)
+        for j in range(numSets):
+            iqSlice[j] = iqArr[i,j*recordLength:(j+1)*recordLength]
+        FFTs[i] = gainChar_meanFFT(iqSlice, power=True) # Store mean FFT
+        
     disconnect()
 
-    # Calculate theoretical thermal noise
-    df = freqArr[0,1] - freqArr[0,0]
-    thermalNoise = theoryNoise(df)
+    #if which is not "none":
+    #    # Truncate freq domain data to the set bandwidth (remove tails)
+    #    lowBound = findNearest(freqArr, cf - iqBw/2)
+    #    highBound = findNearest(freqArr, cf + iqBw/2)
+    #    newMeanFFTArr = np.zeros((len(refLev), highBound + 1 - lowBound))
+    #    newFreqArr = np.zeros_like(newMeanFFTArr)
+    #    for (i, arr) in enumerate(freqArr):
+    #        newFreqArr[i] = arr[lowBound:highBound + 1]
+    #    for (i, arr) in enumerate(meanFFTArr):
+    #        newMeanFFTArr[i] = arr[lowBound:highBound + 1]##
 
-    if which is not "none":
-        # Truncate freq domain data to the set bandwidth (remove tails)
-        lowBound = findNearest(freqArr, cf - iqBw/2)
-        highBound = findNearest(freqArr, cf + iqBw/2)
-        newMeanFFTArr = np.zeros((len(refLev), highBound + 1 - lowBound))
-        newFreqArr = np.zeros_like(newMeanFFTArr)
-        for (i, arr) in enumerate(freqArr):
-            newFreqArr[i] = arr[lowBound:highBound + 1]
-        for (i, arr) in enumerate(meanFFTArr):
-            newMeanFFTArr[i] = arr[lowBound:highBound + 1]
-
-        # Calculate mean noise powers
-        for (i, FFT) in enumerate(newMeanFFTArr):
-            avgNoisePwr[i] = np.mean(FFT)
+    #    # Calculate mean noise powers
+    #    for (i, FFT) in enumerate(newMeanFFTArr):
+    #        avgNoisePwr[i] = np.mean(FFT)#
 
         # Plot desired noise quantity vs ref level
-        noise_plot(refLev, avgNoisePwr, thermalNoise, which=which)
+       #  noise_plot(refLev, avgNoisePwr, thermalNoise, which=which)
+
+    # Calculate noise figures
+    for (i, RL) in enumerate(refLev):
+        integral = integ.cumtrapz(np.abs(FFTs[i]/np.max(FFTs[i]))**2, freqArr[i])
+        ENBW[i] = integral[-1]
+        avgNoisePwr[i] = np.mean((np.real(iqArr[i])**2 + np.imag(iqArr[i])**2)/100) # avg power, watts
+    nf = avgNoisePwr/(k*T*ENBW) # dimensionless, from non-dB
+    nf_dBm = 10*np.log10(nf) + 30 # convert to dBm
+    
+    # Plot noise figure vs. ref level
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.plot(refLev, nf_dBm, 'k.', label="Noise Figure")
+    ax.set_xlabel("Reference Level [dBm]")
+    ax.set_ylabel("Noise Figure")
+    ax.set_title("Noise Figure vs. Reference Level Setting")
+    ax.grid(which="major", axis="both", alpha=0.75)
+    ax.grid(which="minor", axis="both", alpha=0.4)
+    plt.show()
 
     # Plot IQ histograms
     if hist:
@@ -594,21 +642,14 @@ def gainChar_enbw(FFTs, refLevels):
 
     print(integ.romb(integI[0]))
 
-
-
 def findNearest(arr, val):
     # Return index of array element nearest to value
     idx = np.abs(arr - val).argmin()
     return idx
 
-def theoryNoise(df, T=294.261):
-    # Calculates thermal noise power
-    # T: temp, kelvin
-    # df: fft bin size, Hz
-    # Returns noise power in dBm
-    k = 1.380649e-23 # J/K
-    P_dBm = 10*np.log10(k*T*df) + 30
-    return P_dBm
+# IQ Streaming test function
+def iqStreamTest():
+    return None
 
 """ RUN STUFF """
 #iqblk_master(1e9, 0, 40e6, 1024, plot=True, savefig=False)
@@ -616,4 +657,6 @@ def theoryNoise(df, T=294.261):
 #wifi_fft(iqBw=2.25e7)
 #sr_test_fft(cf=4000e6)
 #gain_char(-130, 30, 50, which="figure", hist=False)
-gain_char(-130, 30, 2, enbw=True)
+gain_char(-130, 30, 50, which="power")
+#gain_char(-130, 30, 2, enbw=True)
+#iqStreamTest()
