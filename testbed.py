@@ -212,7 +212,7 @@ def gainChar_meanFFT(iqData, power=True):
         result = 10*np.log10(result) + impedance_factor + 30
         result -= 3 # Account for double sided FFT
         # Normalize FFT
-        fft_normalization_factor = -20*np.log10(len(np.min(complex_fft, axis=0)))
+        fft_normalization_factor = -20*np.log10(recLength)
         result += fft_normalization_factor
 
     return result
@@ -406,11 +406,13 @@ def gain_char(minRL, maxRL, numRLs, which="none", hist=False,
 
     # Calculate noise figures
     for (i, RL) in enumerate(refLev):
-        integral = integ.cumtrapz(np.abs(FFTs[i]/np.max(FFTs[i]))**2, freqArr[i])
+        linFFT = 10**(FFTs[i]/10) # translate back to linear domain
+        integral = integ.cumtrapz(np.abs(linFFT/np.max(linFFT))**2, freqArr[i])
         ENBW[i] = integral[-1]
         avgNoisePwr[i] = np.mean((np.real(iqArr[i])**2 + np.imag(iqArr[i])**2)/100) # avg power, watts
+    print(ENBW)
     nf = avgNoisePwr/(k*T*ENBW) # dimensionless, from non-dB
-    nf_dBm = 10*np.log10(nf) + 30 # convert to dBm
+    nf_dBm = 10*np.log10(nf) # convert to dBm
     
     # Plot noise figure vs. ref level
     fig = plt.figure()
@@ -422,6 +424,10 @@ def gain_char(minRL, maxRL, numRLs, which="none", hist=False,
     ax.grid(which="major", axis="both", alpha=0.75)
     ax.grid(which="minor", axis="both", alpha=0.4)
     plt.show()
+
+    # Plot FFT:
+    fft_plot(freqArr[0], FFTs[0], "Avg. Noise Power, RL = -130dBm")
+    fft_plot(freqArr[-1], FFTs[-1], "Avg. Noise Power, RL = +30dBm")
 
     # Plot IQ histograms
     if hist:
