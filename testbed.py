@@ -336,7 +336,7 @@ def sr_test_fft(cf=2.437e9, refLevel=-60, recordLength=1024):
     sr_test_plot(freqArr, meanFFTArr)
     
 # Master function for gain characterization
-def gain_char(minRL, maxRL, numRLs, noiseFig=False, trunc=False, fftPlot=False, hist=False,
+def gain_char(minRL, maxRL, numRLs, noiseFig=False, trunc=False, trunc1=False, fftPlot=False, hist=False,
     normTest=False, enbw=False):
 
     # Data collection settings
@@ -390,6 +390,15 @@ def gain_char(minRL, maxRL, numRLs, noiseFig=False, trunc=False, fftPlot=False, 
         FFTs = newFFTs
         freqArr = newFreqArr
 
+    if trunc1:
+        # Remove first value only
+        newFFTs = np.zeros((len(refLev), recordLength-1))
+        newFreqArr = np.zeros((len(refLev), recordLength-1))
+        newFFTs = FFTs[:,1:]
+        newFreqArr = freqArr[:,1:]
+        FFTs = newFFTs
+        freqArr = newFreqArr
+
     # Calculate noise figures
     if noiseFig:
         nf = gainChar_noiseFig(freqArr, FFTs, iqArr, refLev)
@@ -397,7 +406,7 @@ def gain_char(minRL, maxRL, numRLs, noiseFig=False, trunc=False, fftPlot=False, 
 
     # Plot FFT:
     if fftPlot:
-        gainChar_fftPlot(freqArr, FFTs, refLev)
+        gainChar_fftPlot(freqArr, FFTs, refLev, power=False)
 
     # Plot IQ histograms
     if hist:
@@ -477,11 +486,17 @@ def gainChar_ENBW(freqs, FFTs, refLevels):
         ENBW[i] = integral[-1]
     return ENBW
 
-def gainChar_fftPlot(freqs, FFTs, refLevels):
+def gainChar_fftPlot(freqs, FFTs, refLevels, power=True):
+    if power is False:
+        for i in range(len(FFTs)):
+            FFTs[i] = 10**((FFTs[i]-30)/10) # dBm to W
+        y_unit = " [Watts]"
+    else:
+        y_unit = " [dBm]"
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ax.set_xlabel("Frequency [Hz]")
-    ax.set_ylabel("Power [dBm]")
+    ax.set_ylabel("Power" + y_unit)
     ax.set_title("Mean Noise FFTs for Various Reference Levels")
     ax.grid(which="major", axis="both", alpha=0.75)
     ax.grid(which="minor", axis="both", alpha=0.4)
@@ -519,7 +534,7 @@ def gainChar_hist(iqData, refLevels, numBins=30):
         ax[i][1].yaxis.set_major_formatter(ytick_fmt)
         ax[i][1].xaxis.set_major_formatter(xtick_fmt)
         ax[i][1].legend()
-        
+
         # Power histogram
         ax[i][2].grid(which="major", axis="y", alpha=0.75)
         ax[i][2].grid(which="minor", axis="y", alpha=0.25)
@@ -628,6 +643,5 @@ def findNearest(arr, val):
 #char_sampleRate()
 #wifi_fft(iqBw=2.25e7)
 #sr_test_fft(cf=4000e6)
-#gain_char(-130, 30, 50, which="figure", hist=False)
 #gain_char(-130, 30, 50)
-gain_char(-130, 30, 50, noiseFig=True)
+gain_char(-70, -50, 3, fftPlot=True, noiseFig=False, trunc1=True)
