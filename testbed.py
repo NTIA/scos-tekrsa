@@ -465,7 +465,7 @@ def noiseFig_compPlot(nf_dBm, refLevels):
     # Plot noise figure vs. ref level with fit
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.plot(refLevels, nf_dBm, 'k.', label="Data")
+    ax.plot(refLevels, nf_dBm, 'C0.', label="Data")
     ax.plot(refLevFine, pw_model(refLevFine, *p), 'r--',
         label="Curve Fit, Goodness of Fit = {:.3f}".format(Q))
     ax.set_xlabel("Reference Level [dBm]")
@@ -645,4 +645,4 @@ def findNearest(arr, val):
 #sr_test_fft(cf=4000e6)
 #gain_char(-130, 30, 50)
 #gain_char(-70, -50, 3, fftPlot=True, noiseFig=False, trunc1=True)
-gain_char(-130, 30, 2, trunc=True, normTest=True)
+gain_char(-130, 30, 50, noiseFig=True)
