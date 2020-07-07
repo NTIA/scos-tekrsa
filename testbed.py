@@ -569,8 +569,8 @@ def gainChar_normTests(iqData, refLevels):
         qData = np.imag(iqData[i])
 
         # Make QQ Plots
-        sm.qqplot(iData, line='s', ax=ax[i][0], color='k', label="I Data")
-        sm.qqplot(qData, line='s', ax=ax[i][1], color='k', label="Q Data")
+        sm.qqplot(iData, line='s', ax=ax[i][0], color='b', label="I Data")
+        sm.qqplot(qData, line='s', ax=ax[i][1], color='b', label="Q Data")
         ax[i][0].set_title("I Data, RL = {} dBm".format(refLev))
         ax[i][1].set_title("Q Data, RL = {} dBm".format(refLev))
 
@@ -631,7 +631,7 @@ def gainChar_normTests(iqData, refLevels):
     plt.tight_layout(1.5, h_pad=1, w_pad=1)
     # For some reason, showing the QQ plots causes matplotlib to freeze
     # It still works, but temporarily disabled for this reason
-    #plt.show()
+    plt.show()
 
 def findNearest(arr, val):
     # Return index of array element nearest to value
@@ -644,4 +644,5 @@ def findNearest(arr, val):
 #wifi_fft(iqBw=2.25e7)
 #sr_test_fft(cf=4000e6)
 #gain_char(-130, 30, 50)
-gain_char(-70, -50, 3, fftPlot=True, noiseFig=False, trunc1=True)
+#gain_char(-70, -50, 3, fftPlot=True, noiseFig=False, trunc1=True)
+gain_char(-130, 30, 2, trunc=True, normTest=True)
