@@ -569,8 +569,8 @@ def gainChar_normTests(iqData, refLevels):
         qData = np.imag(iqData[i])
 
         # Make QQ Plots
-        sm.qqplot(iData, line='s', ax=ax[i][0], color='b', label="I Data")
-        sm.qqplot(qData, line='s', ax=ax[i][1], color='b', label="Q Data")
+        sm.qqplot(iData, line='s', ax=ax[i][0], color='c', label="I Data")
+        sm.qqplot(qData, line='s', ax=ax[i][1], color='c', label="Q Data")
         ax[i][0].set_title("I Data, RL = {} dBm".format(refLev))
         ax[i][1].set_title("Q Data, RL = {} dBm".format(refLev))
 
