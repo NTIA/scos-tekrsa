@@ -465,9 +465,9 @@ def noiseFig_compPlot(nf_dBm, refLevels):
     # Plot noise figure vs. ref level with fit
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.plot(refLevels, nf_dBm, 'c.', label="Data")
     ax.plot(refLevFine, pw_model(refLevFine, *p), 'r--',
         label="Piecewise Fit")
+    ax.plot(refLevels, nf_dBm, 'c.', label="Data")
     ax.set_xlabel("Reference Level [dBm]")
     ax.set_ylabel("Noise Figure")
     ax.set_title("Noise Figure vs. Reference Level Setting")
