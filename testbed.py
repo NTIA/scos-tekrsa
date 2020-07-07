@@ -511,6 +511,7 @@ def gainChar_hist(iqData, refLevels, numBins=30):
         ax[i][0].yaxis.set_major_formatter(ytick_fmt)
         ax[i][0].xaxis.set_major_formatter(xtick_fmt)
         ax[i][0].legend()
+
         # Q histogram
         ax[i][1].grid(which="major", axis="y", alpha=0.75)
         ax[i][1].grid(which="minor", axis="y", alpha=0.25)
@@ -518,6 +519,7 @@ def gainChar_hist(iqData, refLevels, numBins=30):
         ax[i][1].yaxis.set_major_formatter(ytick_fmt)
         ax[i][1].xaxis.set_major_formatter(xtick_fmt)
         ax[i][1].legend()
+        
         # Power histogram
         ax[i][2].grid(which="major", axis="y", alpha=0.75)
         ax[i][2].grid(which="minor", axis="y", alpha=0.25)
