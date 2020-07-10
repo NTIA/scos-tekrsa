@@ -10,7 +10,8 @@ from matplotlib.ticker import StrMethodFormatter
 from time import sleep, strftime
 # The next import also loads the RSA driver and device
 # It may be better to load the driver/device in this file instead
-from RSA_API import *
+#from RSA_API import *
+from RSA_API_redux import *
 
 """ PLOT FORMATTING STUFF """
 mpl_rc('xtick', direction='in', top=True)
@@ -239,14 +240,16 @@ def fft_plot(freqData, fftData, title):
     plt.show()
 
 # Master function for Wifi spectrum testing
+# Later edited for other usage
 def wifi_fft(cf=2.437e9, refLevel=-40, iqBw=40e6, recordLength=1024):
     # WIFI CHANNELS
     # 1: 2412 MHz
     # 6: 2437 MHz
     # 11: 2462 MHz
 
-    numFFTs = 100
-    iqArray = np.zeros((numFFTs, recordLength), dtype=complex)
+    numFFTs = 1024
+    compRecLen = numFFTs*recordLength
+    iqArr = np.zeros((compRecLen), dtype=complex)
 
     connect()
 
@@ -255,13 +258,19 @@ def wifi_fft(cf=2.437e9, refLevel=-40, iqBw=40e6, recordLength=1024):
     set_centerFreq(cf)
     set_refLevel(refLevel)
     set_iqBandwidth(iqBw)
-    set_iqRecordLength(recordLength)
+    set_iqRecordLength(compRecLen)
     iqSampleRate = get_iqSampleRate()
 
     # Acquire Data:
     # Each row will be its own IQ data, each column its own data point
-    for (num, vals) in enumerate(iqArray):
-        iqArray[num] = iqblk_collect(recordLength)
+    #for (num, vals) in enumerate(iqArray):
+    #    iqArray[num] = iqblk_collect(recordLength)
+
+    # Collect and structure IQ data
+    iqArr = iqblk_collect(compRecLen)
+    iqSlice = np.zeros((numFFTs, recordLength), dtype=complex)
+    for j in range(numFFTs):
+        iqSlice[j] = iqArr[j*recordLength:(j+1)*recordLength]
 
     disconnect()
 
@@ -273,7 +282,7 @@ def wifi_fft(cf=2.437e9, refLevel=-40, iqBw=40e6, recordLength=1024):
 
     print("Constructing Mean FFT...")
 
-    m4s_wifi = iq_fft(iqArray)
+    m4s_wifi = iq_fft(iqSlice)
     freqPlotData = generate_spectrum(cf, iqSampleRate, recordLength)
     calcBw = freqPlotData[-1] - freqPlotData[0]
     print("Minimum Frequency: {}\n".format(freqPlotData[0]),
@@ -638,6 +647,36 @@ def findNearest(arr, val):
     idx = np.abs(arr - val).argmin()
     return idx
 
+def transferFunc(cf=1e9, refLev=-40, bw=40e6):
+    recordLength = 1024
+    numFFTs = 1024
+    compRecLen = numFFTs*recordLength
+    iqArr = np.zeros((compRecLen), dtype=complex)
+
+    connect()
+
+    set_centerFreq(cf)
+    set_refLevel(refLev)
+    set_iqBandwidth(bw)
+    set_iqRecordLength(compRecLen)
+    iqSampleRate = get_iqSampleRate()
+
+    # Collect and structure IQ data
+    iqArr = iqblk_collect(compRecLen)
+    iqSlice = np.zeros((numFFTs, recordLength), dtype=complex)
+    for j in range(numFFTs):
+        iqSlice[j] = iqArr[j*recordLength:(j+1)*recordLength]
+
+    disconnect()
+
+    m4s_wifi = iq_fft(iqSlice)
+    freqPlotData = generate_spectrum(cf, iqSampleRate, recordLength)
+    print(freqPlotData)
+    binsize = (freqPlotData[1]-freqPlotData[0])/2
+    print(freqPlotData+binsize)
+    fft_plot(freqPlotData, m4s_wifi[2], title="Mean FFT")
+
+
 """ RUN STUFF """
 #iqblk_master(1e9, 0, 40e6, 1024, plot=True, savefig=False)
 #char_sampleRate()
@@ -645,4 +684,6 @@ def findNearest(arr, val):
 #sr_test_fft(cf=4000e6)
 #gain_char(-130, 30, 50)
 #gain_char(-70, -50, 3, fftPlot=True, noiseFig=False, trunc1=True)
-gain_char(-130, 30, 50, noiseFig=True)
+#gain_char(-130, 30, 50, noiseFig=True)
+#transferFunc(refLev=-30)
+#iqstream_test()
