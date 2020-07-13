@@ -22,10 +22,11 @@ API_VERSION_STRLEN = 8 # Bytes allocated for API version number string
 """ CUSTOM ENUMERATION TYPES """
 # These are defined as tuples, in which the index of each item corresponds
 # to the integer value for the item as defined in the API manual
-FREQREF_SOURCE = ("FRS_INTERNAL", "FRS_EXTREF", "FRS_GNSS", "FRS_USER")
+FREQREF_SOURCE = ("INTERNAL", "EXTREF", "GNSS", "USER")
 
-IQSOUTDEST = ("IQSOD_CLIENT", "IQSOD_FILE_TIQ", "IQSOD_FILE_SIQ",
-    "IQSOD_FILE_SIQ_SPLIT", "IQSOD_FILE_MIDAS", "IQSOD_FILE_MIDAS_DET")
+IQSOUTDEST = ("CLIENT", "FILE_TIQ", "FILE_SIQ", "FILE_SIQ_SPLIT")
+
+IQSOUTDTYPE = ("SINGLE", "INT32", "INT16", "SINGLE_SCALE_INT32")
 
 """ CUSTOM DATA STRUCTURES """
 class IQSTREAM_File_Info(Structure):
@@ -36,23 +37,6 @@ class IQSTREAM_File_Info(Structure):
                 ('acqStatus', c_uint32),
                 ('filenames', c_wchar_p)]
 
-class IQSOUTDEST:
-    def __init__(self):
-        self.IQSOD_CLIENT = c_int(0)
-        self.IQSOD_FILE_TIQ = c_int(1)
-        self.IQSOD_FILE_SIQ = c_int(2)
-        self.IQSOD_FILE_SIQ_SPLIT = c_int(3)
-        self.IQSOD_FILE_MIDAS = c_int(11)
-        self.IQSOD_FILE_MIDAS_DET = c_int(12)
-IQSOUTDEST = IQSOUTDEST()
-
-class IQSOUTDTYPE:
-    def __init__(self):
-        self.IQSODT_SINGLE = c_int(0)
-        self.IQSODT_INT32 = c_int(1)
-        self.IQSODT_INT16 = c_int(2)
-        self.IQSODT_SINGLE_SCALE_INT32 = c_int(3)
-IQSOUTDTYPE = IQSOUTDTYPE()
 
 """ CONNECTION METHODS """
 def connect():
@@ -308,34 +292,33 @@ def set_externalRefEnable(exRefEn):
     """
     rsa.CONFIG_SetExternalRefEnable(c_bool(exRefEn))
 
-def set_freqReferenceSource(src):
+def set_freqReferenceSource(src="INTERNAL"):
     """
-    Select the device frequency reference source.
+    Select the device frequency reference source; defaults to INTERNAL.
 
-    Valid setting are FRS_INTERNAL, FRS_EXTREF, FRS_GNSS, or FRS_USER.
-    Note that the RSA306 and RSA306b support only INTERNAL and EXTREF
-    sources. The INTERNAL source is always a valid selection, and is
-    never switched out of automatically. The EXTREF source uses the
-    signal input to the Ref In connector as frequency reference for
-    the internal oscillators. If EXTREF is selected without a valid
-    signal connected to Ref In, the source automatically switches to
-    USER if available, or to INTERNAL otherwise. The GNSS source uses
-    the internal GNSS receiver to adjust the internal reference oscill-
-    ator. If GNSS source is selected, the GNSS receiver must be enabled.
-    If the GNSS receiver is not enabled, the source selection remains
-    GNSS, but no frequency correction is done. GNSS adjusting only 
-    occurs when the GNSS receiver has navigation lock. When the receiver
-    is unlocked, the adjustment setting is retained unchanged until
-    receiver lock is achieved or the source is switched to another
-    selection. If USER source is selected, the previously set USER
-    setting is used. if the USER setting has not been set, the source
-    switches automatically to INTERNAL.
+    Note: RSA306B and RSA306 support only INTERNAL and EXTREF sources.
 
     Parameters
     ----------
     src : string
-        Frequency reference source selection. Must be FRS_INTERNAL,
-        FRS_EXTREF, FRS_GNSS, or FRS_USER.
+        Frequency reference source selection. Valid settings:
+            INTERNAL : Always a valid selection
+            EXTREF : Uses signal input to Ref In connector as frequency
+                reference for internal oscillators. If selected without
+                a valid signal connected to Ref In, source is switched
+                automatically to USER if available, or otherwise to
+                INTERNAL.
+            GNSS : Uses the internal GNSS receiver to adjust the
+                internal reference oscillator. If selected, the GNSS
+                receiver must be enabled. If it is not enabled, the 
+                source selection remains GNSS, but no frequency
+                correction is done. GNSS disciplining only occurs when
+                the GNSS receiver has navigation lock. When unlocked,
+                the adjustment setting is retained unchanged until the
+                receiver achieves lock or the source is switched.
+            USER : If selected, the previously set USER setting is
+                used. If the USER setting has not been set, the source
+                switches automatically to INTERNAL.
 
     Returns
     -------
@@ -353,8 +336,8 @@ def set_freqReferenceSource(src):
         raise SDR_Error(
             0,
             "Input string does not match one of the valid settings.",
-            ("Please input one of: FRS_INTERNAL, FRS_EXTREF, FRS_GNSS, "
-            + "or FRS_USER."))
+            "Please input one of: INTERNAL, EXTREF, GNSS, or USER."
+        )
 
 def set_refLevel(refLevel):
     """
@@ -770,7 +753,7 @@ def IQSTREAM_GetMinAcqBandwidth():
     float
         The minimum IQ bandwidth supported by IQ streaming, in Hz.
     """
-    minBandwidth = c_double()
+    minBandwidthHz = c_double()
     rsa.IQSTREAM_GetMinAcqBandwidth(byref(minBandwidthHz))
     return minBandwidthHz.value
 
@@ -813,13 +796,25 @@ def IQSTREAM_GetAcqParameters():
 
 # def IQSTREAM_GetDiskFileInfo():
     
-# def IQSTREAM_GetDiskFileWriteStatus():
+def IQSTREAM_GetDiskFileWriteStatus():
     """
     Allow monitoring the progress of file output.
 
     The returned values indicate when the file output has started and
-    completed. These become valid after IQSTREAM_Start() is called, with
-    any file output destination selected.
+    completed. These become valid after IQSTREAM_Start() is called,
+    with any file output destination selected.
+
+    For untriggered configuration, isComplete is all that needs to be
+    monitored. When it switches from false -> true, file output has
+    completed. Note that if "infinite" file length is selected, then
+    isComplete only changes to true when the run is stopped by running
+    IQSTREAM_Stop().
+
+    If triggering is used, isWriting can be used to determine when a
+    trigger has been received. The client application can monitor this
+    value, and if a maximum wait period has elapsed while it is still
+    false, the output operation can be aborted. isWriting behaves the
+    same for both finite and infinite file length settings.
 
     Returns
     -------
@@ -828,6 +823,10 @@ def IQSTREAM_GetAcqParameters():
     bool: isWriting
         Whether the IQ stream processing has started writing to file.
     """
+    isComplete = c_bool()
+    isWriting = c_bool()
+    rsa.IQSTREAM_GetDiskFileWriteStatus(byref(isComplete), byref(isWriting))
+    return isComplete.value, isWriting.value
 
 def IQSTREAM_GetEnable():
     """
@@ -869,13 +868,20 @@ def IQSTREAM_GetIQDataBufferSize():
 
 def IQSTREAM_SetAcqBandwidth(bwHz_req):
     """
-    Set the acquisition bandwidth of the output IQ data stream samples.
+    Request the acquisition bandwidth of the output IQ stream samples.
 
     The requested bandwidth should only be changed when the instrument
     is in the global stopped state. The new BW setting does not take
     effect until the global system state is cycled from stopped to
     running. A check is performed to ensure the requested bandwidth is
     within the valid range.
+
+    Note: The requested bandwidth directly determines the sample rate.
+    The actual bandwidth and sample rate values can be queried after
+    setting by using IQSTREAM_GetAcqParameters().
+
+    Note: The requested bandwidth will be rounded up to the nearest
+    value among: 5 MHz, 10 MHz, 20 MHz, and 40 MHz.
 
     Parameters
     ----------
@@ -966,21 +972,21 @@ def IQSTREAM_SetDiskFilenameBase(filenameBase):
     -------
     None
     """
-    rsa.IQSTREAM_SetDiskFilenameBase(byref(c_char(filenameBase)))
+    rsa.IQSTREAM_SetDiskFilenameBaseW(c_wchar_p(filenameBase))
 
-def IQSTREAM_SetDiskFilenameSuffix(suffixCtl):
+def IQSTREAM_SetDiskFilenameSuffix(suffixCtl=-1):
     """
     Set the control that determines the appended filename suffix.
+
+    Default behavior: A value of -1 generates a string from the file
+    creation time in the format: "-YYYY.MM.DD.hh.mm.ss.msec". Note that
+    this time is not directly linked to the data timestamps, and should
+    not be used as a high-accuracy timestamp of the file data.
 
     Passing a value of -2 causes the base filename to be used withouta
     suffix. In this case, the output filename will not change from one
     run to the next, so each output file will overwrite the previous
     one unless the filename is explicitly changed.
-
-    A value of -1 generates a string from the file creation time in the
-    format: "-YYYY.MM.DD.hh.mm.ss.msec". Note that this time is not
-    directly linked to the data timestamps, and should not be used as a
-    high-accuracy timestamp of the file data.
 
     Values >= 0 generate a 5 digit, autoincrementing index, with an initial
     value equal to the input suffixCtl value. Format: "-nnnnn". The index
@@ -1015,19 +1021,109 @@ def IQSTREAM_SetDiskFilenameSuffix(suffixCtl):
 
 # def IQSTREAM_SetIQDataBufferSize(reqSize):
 
-def IQSTREAM_SetOutputConfiguration(dest, dtype):
+def IQSTREAM_SetOutputConfiguration(dest="FILE_SIQ", dtype="INT32"):
     """
     Set the output data destination and IQ data type.
 
+    The destination can be the client application, or files of different
+    formats. The IQ data type can be chosen independently of the file
+    format. IQ data values are stored in interleaved I/Q/I/Q order
+    regardless of the destination or data type. Defaults to combined
+    SIQ file with INT32 data.
+
+    Note: TIQ format files only allow INT32 or INT16 data types.
+
     Parameters
     ----------
-    dest : IQSOUTDEST
+    dest : string
+        Destination (sink) for IQ sample output. Valid settings:
+            CLIENT : Client application
+            FILE_TIQ : TIQ format file (.tiq extension)
+            FILE_SIQ : SIQ format file with header and data combined in
+                one file (.siq extension)
+            FILE_SIQ_SPLIT : SIQ format with header and data in separate
+                files (.siqh and .siqd extensions)
+    dtype : string
+        Output IQ data type. Valid settings:
+            SINGLE : 32-bit single precision floating point (not valid
+                with TIQ file destination)
+            INT32 : 32-bit integer
+            INT16 : 16-bit integer
+            SINGLE_SCALE_INT32 : 32-bit single precision float, with
+                data scaled the same as INT32 data type (not valid with
+                TIQ file destination)
 
-    dtype : IQSOUTDTYPE
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    SDR_Error
+        If inputs are not valid settings, or if single data type is 
+        selected along with TIQ file format.
     """
-    return None
-#def IQSTREAM_Start():
+    if dest in IQSOUTDEST:
+        if dtype in IQSOUTDTYPE:
+            if dest == "FILE_TIQ" and "SINGLE" in dtype:
+                raise SDR_Error(
+                    0,
+                    "Invalid selection of TIQ file and Single data type together",
+                    "TIQ format files allow only INT32 or INT16 data types."
+                )
+            else:
+                val1 = c_int(IQSOUTDEST.index(dest))
+                val2 = c_int(IQSOUTDTYPE.index(dtype))
+                rsa.IQSTREAM_SetOutputConfiguration(val1, val2)
+        else:
+            raise SDR_Error(
+                0,
+                "Input data type string does not match a valid setting.",
+                "Please input one of: SINGLE, INT32, INT16, or " 
+                + "SINGLE_SCALE_INT32."
+            )
+    else:
+        raise SDR_Error(
+            0,
+            "Input destination string does not match a valid setting.",
+            "Please input one of: CLIENT, FILE_TIQ, FILE_SIQ, or "
+            + "FILE_SIQ_SPLIT."
+        )
 
-#def IQSTREAM_Stop():
+def IQSTREAM_Start():
+    """
+    Initialize IQ stream processing and initiate data output.
 
-#def IQSTREAM_GetDiskFileWriteStatus():
+    If the data destination is file, the output file is created, and if
+    triggering is not enabled, data starts to be written to the file
+    immediately. If triggering is enabled, data will not start to be
+    written to the file until a trigger event is detected.
+    TRIG_ForceTrigger() can be used to generate a trigger even if the 
+    specified one does not occur.
+
+    If the data destination is the client application, data will become
+    available soon after this function is invoked. Even if triggering
+    is enabled, the data will begin flowing to the client without need
+    for a trigger event. The client must begin retrieving data as soon
+    after IQSTREAM_Start() as possible.
+
+    Returns
+    -------
+    None
+    """
+    rsa.IQSTREAM_Start()
+
+def IQSTREAM_Stop():
+    """
+    Terminate IQ stream processing and disable data output.
+
+    If the data destination is file, file writing is stopped and the
+    output file is closed.
+
+    Returns
+    -------
+    None
+    """
+    rsa.IQSTREAM_Stop()
+
+# def IQSTREAM_WaitForIQDataReady():
