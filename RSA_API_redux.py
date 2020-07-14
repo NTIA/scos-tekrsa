@@ -1,7 +1,24 @@
+"""
+
+Notes/To Do's
+
+Currently, ALL SDR_Error codes thrown are arbitrary placeholders
+If no returns are specified in a method's docstring, it returns None
+
+error handling:
+possibly should add general catch-all's for all commands which could
+return an error from the API. For example, look at reset() command
+if doing this^, include it in "Raises" part of docstring? Don't think
+this is necessary.
+alternatively, implement "RSA_Error" for these types and use internal
+API error codes
+
+Support multiple devices? search/connect could allow for selection 
+among multiple
+
+"""
 from ctypes import *
 from SDR_Error import SDR_Error
-
-# Currently, ALL SDR_Error codes thrown are arbitrary placeholders
 
 """ LOAD RSA DRIVER """
 RTLD_LAZY = 0x0001
@@ -9,7 +26,7 @@ LAZYLOAD = RTLD_LAZY | RTLD_GLOBAL
 rsa = CDLL('./drivers/libRSA_API.so', LAZYLOAD)
 usbapi = CDLL('./drivers/libcyusb_shared.so', LAZYLOAD)
 
-""" CONSTANTS """
+""" GLOBAL CONSTANTS """
 MAX_NUM_DEVICES = 10 # Max num. of devices that could be found
 MAX_SERIAL_STRLEN = 8 # Bytes allocated for serial number string
 MAX_DEVTYPE_STRLEN = 8 # Bytes allocated for device type string
@@ -23,13 +40,15 @@ API_VERSION_STRLEN = 8 # Bytes allocated for API version number string
 # These are defined as tuples, in which the index of each item corresponds
 # to the integer value for the item as defined in the API manual
 FREQREF_SOURCE = ("INTERNAL", "EXTREF", "GNSS", "USER")
-
+DEVEVENT = ("OVERRANGE", "TRIGGER", "1PPS")
 IQSOUTDEST = ("CLIENT", "FILE_TIQ", "FILE_SIQ", "FILE_SIQ_SPLIT")
-
 IQSOUTDTYPE = ("SINGLE", "INT32", "INT16", "SINGLE_SCALE_INT32")
+TRIGGER_MODE = ("freeRun", "Triggered")
+TRIGGER_SOURCE = ("External", "IFPowerLevel")
+TRIGGER_TRANSITION = ("LH", "HL", "Either")
 
 """ CUSTOM DATA STRUCTURES """
-class IQSTREAM_File_Info(Structure):
+class IQSTRMFILEINFO(Structure):
     _fields_ = [('numberSamples', c_uint64),
                 ('sample0Timestamp', c_uint64),
                 ('triggerSampleIndex', c_uint64),
@@ -37,105 +56,67 @@ class IQSTREAM_File_Info(Structure):
                 ('acqStatus', c_uint32),
                 ('filenames', c_wchar_p)]
 
-
-""" CONNECTION METHODS """
-def connect():
+""" AGGREGATE/HIGH-LEVEL METHODS """
+def search_connect(loadPreset=True):
     """
     Search for and connect to a Tektronix RSA device. 
     
     More than 10 devices cannot be found at once. Search criteria are
     not implemented, and connection only occurs if exactly one device is
-    found. Preset configuration is loaded upon connection. This results
-    in: trigger mode set to Free Run, center frequency to 1.5 GHz, span
-    to 40 MHz, IQ record length to 1024 samples, and reference level to
-    0 dBm.
+    found.
 
-    Returns
-    -------
-    None
+    Preset configuration is optionally loaded upon connection. This
+    results in: trigger mode set to Free Run, center frequency to 1.5
+    GHz, span to 40 MHz, IQ record length to 1024 samples, and
+    reference level to 0 dBm. Preset functionality is enabled by
+    default.
+
+    Parameters
+    ----------
+    loadPreset : bool
+        Whether to load the preset configuration upon connection.
 
     Raises
     ------
     SDR_Error
         If no matching device is found, if more than one matching
-        devices are found, or if a single device is found but connection
+        device are found, or if a single device is found but connection
         fails.
     """
-    numFound = c_int(0)
-    devIDs = (c_int * MAX_NUM_DEVICES)()
-    devSerial = ((c_char * MAX_NUM_DEVICES) * MAX_SERIAL_STRLEN)()
-    devType = ((c_char * MAX_NUM_DEVICES) * MAX_DEVTYPE_STRLEN)()
+    foundDevices = search()
+    numFound = len(foundDevices)
 
-    # Search for device
-    rsa.DEVICE_Search(byref(numFound), devIDs, devSerial, devType)
-    foundDevices = {ID: (devSerial[ID].value, devType[ID].value) for ID in \
-        devIDs}
-
-    # Ensure only a single device was found
-    if numFound.value < 1:
-        # Search criteria not yet implemented!!!
-        raise SDR_Error(
-            0,
-            "Could not find a matching RSA306b",
-            "Try being less restrictive in the search criteria"
-        )
-
-    if numFound.value > 1:
-        err_body = "Please add/correct identifying information.\r\n"
+    # Zero devices found case handled within search()
+    # Multiple devices found case:
+    if numFound > 1:
+        err_body = "The following devices were found:"
         # Add list of found devices to error body text
         for (ID, key) in foundDevices.items():
-            err_body += "\r\n{}\r\n".format(str(ID) + ": " + str(key))
+            err_body += "\r\n{}".format(str(ID) + ": " + str(key))
         raise SDR_Error(
-            1,
-            "Found {} devices matching search criteria, " +
-            "need exactly 1".format(numFound.value),
+            0,
+            "Found {} devices, need exactly 1.".format(numFound),
             err_body
         )
 
-    # Connect to RSA306b
-    try:
-        rsa.DEVICE_Connect(devIDs[0])
-        set_preset() # Remove later?
-    except Exception as e:
-        # segment is borrowed from b210 file
-        # but there are better/more specific ways to catch errors
-        # UNTESTED: inclusion of "e" error message in SDR_Error
-        raise SDR_Error(
-            2,
-            "Failed to connect to RSA306b",
-            "Failed to finish the initialization routine during " +
-            "connection to RSA306b... {}".format(e)
-        )
+    connect()
 
-def disconnect():
-    """
-    Disconnect from a Tektronix RSA device.
-
-    Stops data acquisition and disconnects from the connected device.
-
-    Returns
-    -------
-    None
-    """
-    rsa.DEVICE_Disconnect()
+    if loadPreset:
+        preset()
 
 """ CONFIG METHODS """
-def get_centerFreq():
-    """
-    Query the center frequency.
 
-    Returns
-    -------
-    float
-        The center frequency, measured in Hz.
-    """
+# Naming: CONFIG_SomeCommand() --> someCommand()
+
+def getCenterFreq():
+    """Return the current center frequency in Hz."""
     cf = c_double()
     rsa.CONFIG_GetCenterFreq(byref(cf))
     return cf.value
 
-def get_externalRefFreq():
+def getExternalRefFrequency():
     """
-    Query the frequency of the external reference.
+    Return the frequency, in Hz, of the external reference"
 
     The external reference input must be enabled for this method to
     return useful results.
@@ -150,7 +131,7 @@ def get_externalRefFreq():
     SDR_Error
         If there is no external reference input in use.
     """
-    src = get_freqReferenceSource()
+    src = getFrequencyReferenceSource()
     if src == FREQREF_SOURCE[0]:
         raise SDR_Error(
             0,
@@ -162,9 +143,9 @@ def get_externalRefFreq():
         rsa.CONFIG_GetExternalRefFrequency(byref(extFreq))
         return extFreq.value
 
-def get_freqReferenceSource():
+def getFrequencyReferenceSource():
     """
-    Query the frequency reference source.
+    Return a string representing the frequency reference source.
 
     Valid results are FRS_INTERNAL, FRS_EXTREF, FRS_GNSS, and FRS_USER.
     Note that the RSA306 and RSA306b support only the FRS_INTERNAL and
@@ -179,38 +160,23 @@ def get_freqReferenceSource():
     rsa.CONFIG_GetFrequencyReferenceSource(byref(src))
     return FREQREF_SOURCE[src.value]
 
-def get_maxCenterFreq():
-    """
-    Query the maximum center frequency.
-
-    Returns
-    -------
-    float
-        The maximum center frequency, measured in Hz.
-    """
+def getMaxCenterFreq():
+    """Return the maximum center frequency in Hz."""
     maxCF = c_double()
     rsa.CONFIG_GetMaxCenterFreq(byref(maxCF))
     return maxCF.value
 
-def get_minCenterFreq():
-    """
-    Query the minimum center frequency of the connected device.
-
-    Returns
-    -------
-    float
-        The minimum center frequency, measured in Hz.
-    """
+def getMinCenterFreq():
+    """Return the minimum center frequency in Hz."""
     minCF = c_double()
     rsa.CONFIG_GetMinCenterFreq(byref(minCF))
     return minCF.value
 
-def get_referenceLevel():
+def getReferenceLevel():
     """
-    Query the reference level.
+    Return the current reference level in dBm.
 
-    The reference level is measured in dBm, and must fall within the
-    range of -130 dBm to 30 dBm.
+    The reference level must fall between -130 dBm and +30 dBm.
 
     Returns
     -------
@@ -221,21 +187,17 @@ def get_referenceLevel():
     rsa.CONFIG_GetReferenceLevel(byref(refLevel))
     return refLevel.value
 
-def set_preset():
+def preset():
     """
     Set the connected device to preset values.
 
     This method sets the trigger mode to Free Run, the center frequency
     to 1.5 GHz, the span to 40 MHz, the IQ record length to 1024 
     samples, and the reference level to 0 dBm.
-
-    Returns
-    -------
-    None
     """
     rsa.CONFIG_Preset()
 
-def set_centerFreq(cf):
+def setCenterFreq(cf):
     """
     Set the center frequency value.
 
@@ -257,8 +219,8 @@ def set_centerFreq(cf):
     SDR_Error
         If desired center frequency is not in the allowed range.
     """
-    minCF = get_minCenterFreq()
-    maxCF = get_maxCenterFreq()
+    minCF = getMinCenterFreq()
+    maxCF = getMaxCenterFreq()
 
     if minCF <= cf <= maxCF:
         rsa.CONFIG_SetCenterFreq(c_double(cf))
@@ -271,7 +233,7 @@ def set_centerFreq(cf):
                 maxCF)
         )
 
-def set_externalRefEnable(exRefEn):
+def setExternalRefEnable(exRefEn):
     """
     Enable or disable the external reference.
 
@@ -292,37 +254,43 @@ def set_externalRefEnable(exRefEn):
     """
     rsa.CONFIG_SetExternalRefEnable(c_bool(exRefEn))
 
-def set_freqReferenceSource(src="INTERNAL"):
+def setFrequencyReferenceSource(src="INTERNAL"):
     """
-    Select the device frequency reference source; defaults to INTERNAL.
+    Select the device frequency reference source.
 
     Note: RSA306B and RSA306 support only INTERNAL and EXTREF sources.
+
+    The INTERNAL source is always a valid selection, and is never
+    switched out of automatically.
+
+    The EXTREF source uses the signal input to the Ref In connector as
+    frequency reference for the internal oscillators. If EXTREF is
+    selected without a valid signal connected to Ref In, the source
+    automatically switches to USER if available, or to INTERNAL
+    otherwise. If lock fails, an error status indicating the failure is
+    returned.
+
+    The GNSS source uses the internal GNSS receiver to adjust the
+    internal reference oscillator. If GNSS source is selected, the GNSS
+    receiver must be enabled. If the GNSS receiver is not enabled, the
+    source selection remains GNSS, but no frequency correction is done.
+    GNSS disciplining only occurs when the GNSS receiver has navigation
+    lock. When the receiver is unlocked, the adjustment setting is
+    retained unchanged until receiver lock is achieved or the source is
+    switched to another selection
+
+    If USER source is selected, the previously set USER setting is
+    used. If the USER setting has not been set, the source switches
+    automatically to INTERNAL.
 
     Parameters
     ----------
     src : string
         Frequency reference source selection. Valid settings:
-            INTERNAL : Always a valid selection
-            EXTREF : Uses signal input to Ref In connector as frequency
-                reference for internal oscillators. If selected without
-                a valid signal connected to Ref In, source is switched
-                automatically to USER if available, or otherwise to
-                INTERNAL.
-            GNSS : Uses the internal GNSS receiver to adjust the
-                internal reference oscillator. If selected, the GNSS
-                receiver must be enabled. If it is not enabled, the 
-                source selection remains GNSS, but no frequency
-                correction is done. GNSS disciplining only occurs when
-                the GNSS receiver has navigation lock. When unlocked,
-                the adjustment setting is retained unchanged until the
-                receiver achieves lock or the source is switched.
-            USER : If selected, the previously set USER setting is
-                used. If the USER setting has not been set, the source
-                switches automatically to INTERNAL.
-
-    Returns
-    -------
-    None
+            INTERNAL : Internal frequency reference.
+            EXTREF : External (Ref In) frequency reference.
+            GNSS : Internal GNSS receiver reference
+            USER : Previously set USER setting, or, if none, INTERNAL.
 
     Raises
     ------
@@ -339,7 +307,7 @@ def set_freqReferenceSource(src="INTERNAL"):
             "Please input one of: INTERNAL, EXTREF, GNSS, or USER."
         )
 
-def set_refLevel(refLevel):
+def setReferenceLevel(refLevel):
     """
     Set the reference level
 
@@ -379,17 +347,44 @@ def set_refLevel(refLevel):
 
 """ DEVICE METHODS """
 
-def DEVICE_Run():
-    """
-    Start data acquisition.
+# Tested ? F
 
-    Returns
-    -------
-    None
-    """
-    rsa.DEVICE_Run()
+# Naming: DEVICE_SomeCommand --> someCommand()
 
-def get_enable():
+#      Omitted method     |    Reason for omission
+#  ---------------------  | -------------------------
+#  DEVICE_GetErrorString  | Not currently using Tek's error codes
+# DEVICE_GetNomenclatureW | Implemented getNomenclature() instead
+
+def connect(deviceID=0):
+    """
+    Connect to a device specified by the deviceID parameter.
+
+    If a single device is attached, no parameter needs to be given. If
+    multiple devices are attached, a deviceID value must be given to
+    identify which device is the target for connection.
+
+    The deviceID value can be found using the search() method.
+
+    Parameters
+    ----------
+    deviceID : int
+        The deviceID of the target device.
+    """
+    try:
+        rsa.DEVICE_Connect(c_int(deviceID))
+    except Exception as e:
+        raise SDR_Error(
+            0,
+            "Failed to connect to device.",
+            e
+        )
+
+def disconnect():
+    """Stop data acquisition and disconnect from connected device."""
+    rsa.DEVICE_Disconnect()
+
+def getEnable():
     """
     Query the run state.
 
@@ -406,7 +401,7 @@ def get_enable():
     rsa.DEVICE_GetEnable(byref(enable))
     return enable.value
 
-def get_fpgaVersion():
+def getFPGAVersion():
     """
     Retrieve the FPGA version number.
 
@@ -423,7 +418,7 @@ def get_fpgaVersion():
     rsa.DEVICE_GetFPGAVersion(byref(fpgaVersion))
     return fpgaVersion.value.decode('utf-8')
 
-def get_fwVersion():
+def getFWVersion():
     """
     Retrieve the firmware version number.
 
@@ -440,7 +435,7 @@ def get_fwVersion():
     rsa.DEVICE_GetFWVersion(byref(fwVersion))
     return fwVersion.value.decode('utf-8')
 
-def get_hwVersion():
+def getHWVersion():
     """
     Retrieve the hardware version number.
 
@@ -456,7 +451,7 @@ def get_hwVersion():
     rsa.DEVICE_GetHWVersion(byref(hwVersion))
     return hwVersion.value.decode('utf-8')
 
-def get_nomenclature():
+def getNomenclature():
     """
     Retrieve the name of the device.
 
@@ -472,7 +467,7 @@ def get_nomenclature():
     rsa.DEVICE_GetNomenclature(byref(nomenclature))
     return nomenclature.value.decode('utf-8')
 
-def get_serialNumber():
+def getSerialNumber():
     """
     Retrieve the serial number of the device.
 
@@ -488,7 +483,7 @@ def get_serialNumber():
     rsa.DEVICE_GetSerialNumber(byref(serialNum))
     return serialNum.value.decode('utf-8')
 
-def get_apiVersion():
+def getAPIVersion():
     """
     Retrieve the API version number.
 
@@ -505,7 +500,24 @@ def get_apiVersion():
     rsa.DEVICE_GetAPIVersion(byref(apiVersion))
     return apiVersion.value.decode('utf-8')
 
-def get_info():
+def prepareForRun():
+    """
+    Put the system in a known state, ready to stream data.
+
+    This method does not actually initiate data transfer. During file
+    playback mode, this is useful to allow other parts of your
+    application to prepare to receive data before starting the
+    transfer. See startFrameTransfer(). This is in comparison to the
+    run() function, which immediately starts data streaming without
+    waiting for a "go" signal.
+
+    Returns
+    -------
+    None
+    """
+    rsa.DEVICE_PrepareForRun()
+
+def getInfo():
     """
     Retrieve multiple device and information strings.
 
@@ -517,12 +529,12 @@ def get_info():
     dict
         All of the above listed information, labeled.
     """
-    nomenclature = get_nomenclature()
-    serialNum = get_serialNumber()
-    fwVersion = get_fwVersion()
-    fpgaVersion = get_fpgaVersion()
-    hwVersion = get_hwVersion()
-    apiVersion = get_apiVersion()
+    nomenclature = getNomenclature()
+    serialNum = getSerialNumber()
+    fwVersion = getFWVersion()
+    fpgaVersion = getFPGAVersion()
+    hwVersion = getHWVersion()
+    apiVersion = getAPIVersion()
 
     info = {
         "Nomenclature" : nomenclature,
@@ -535,7 +547,7 @@ def get_info():
 
     return info
 
-def get_overTempStatus():
+def getOverTemperatureStatus():
     """
     Query device for over-temperature status.
 
@@ -556,8 +568,195 @@ def get_overTempStatus():
     rsa.DEVICE_GetOverTemperatureStatus(byref(overTemperature))
     return overTemperature.value
 
+def reset(deviceID=-1):
+    """
+    Reboot the specified device.
+
+    If a single device is attached, no parameter needs to be given. If
+    multiple devices are attached, a deviceID value must be given to
+    identify which device to reboot.
+
+    Parameters
+    ----------
+    deviceID : int
+        The deviceID of the target device.
+
+    Raises
+    ------
+    SDR_Error
+        If multiple devices are attached and a deviceID is not given.
+    """
+    foundDevices = search()
+    numFound = len(foundDevices)
+
+    if numFound == 1:
+        deviceID = 0
+    elif numFound > 1 and deviceID == -1:
+        raise SDR_Error(
+            0,
+            "Multiple devices found, but no ID specified.",
+            "Please give a deviceID to specify which device to reboot."
+        )
+
+    try:
+        rsa.DEVICE_Reset(c_int(deviceID))
+    except Exception as e:
+        raise SDR_Error(
+            0,
+            "Failed to reboot device.",
+            e
+        )      
+
+def run():
+    """Start data acquisition."""
+    rsa.DEVICE_Run() 
+
+def search():
+    """
+    Search for connectable devices.
+
+    Returns a dict with an entry containing the device ID number,
+    serial number, and device type information for each device found.
+    An example of this would be: {0 : ('B012345', 'RSA306B')}, when a 
+    single RSA306B is found, with serial number 'B012345'.
+
+    Valid deviceType strings are "RSA306", "RSA306B", "RSA503A",
+    "RSA507A", "RSA603A", and "RSA607A".
+
+    Returns
+    -------
+    dict
+        Found devices: {deviceID : (deviceSerial, deviceType)}.
+            deviceID : int
+            deviceSerial : string
+            deviceType : string
+
+    Raises
+    ------
+    SDR_Error
+        If no devices are found.
+    """
+    numFound = c_int()
+    devIDs = (c_int * MAX_NUM_DEVICES)()
+    devSerial = ((c_char * MAX_NUM_DEVICES) * MAX_SERIAL_STRLEN)()
+    devType = ((c_char * MAX_NUM_DEVICES) * MAX_DEVTYPE_STRLEN)()
+
+    rsa.DEVICE_Search(byref(numFound), byref(devIDs), devSerial, devType)
+    foundDevices = {
+        ID : (devSerial[ID].value.decode(), devType[ID].value.decode()) \
+        for ID in devIDs
+    }
+
+    # If there are no devices, there is still a dict returned
+    # with a device ID, but the other elements are empty.
+    if foundDevices[0] == ('',''):
+        raise SDR_Error(
+            0,
+            "Could not find a matching Tektronix RSA device.",
+            "Please check the connection and try again."
+        )
+    else:
+        return foundDevices
+
+def startFrameTransfer():
+    """
+    Start data transfer.
+
+    This is typically used as the trigger to start data streaming after
+    a call to prepareForRun(). If the system is in the stopped state,
+    this call places it back into the run state with no changes to any
+    internal data or settings, and data streaming will begin assuming
+    there are no errors.
+    """
+    rsa.DEVICE_StartFrameTransfer()
+
+def stop():
+    """
+    Stop data acquisition.
+
+    This method must be called when changes are made to values that
+    affect the signal."""
+    rsa.DEVICE_Stop()
+
+# NOT WORKING (I think?)
+def getEventStatus(eventID):
+    """
+    Return global device real-time event status.
+
+    The device should be in the Run state when this method is called.
+    Event information is only updated in the Run state, not in the Stop
+    state.
+
+    Overrange event detection requires no additional configuration to
+    activate. The event indicates that the ADC input signal exceeded
+    the allowable range, and signal clipping has likely occurred. The
+    reported timestamp value is the most recent USB transfer frame in
+    which a signal overrange was detected.
+
+    Trigger event detection requires the appropriate HW trigger
+    settings to be configured. These include trigger mode, source,
+    transition, and IF power level (if IF power trigger is selected).
+    The event indicates that the trigger condition has occurred. The
+    reported timestamp value is of the most recent sample instant when
+    a trigger event was detected. The forceTrigger() method can be used
+    to simulate a trigger event.
+
+    1PPS event detection (RSA500A/600A only) requires the GNSS receiver
+    to be enabled and have navigation lock. The even indicates that the
+    1PPS event has occurred. The reported timestamp value is of the
+    most recent sample instant when the GNSS Rx 1PPS pulse rising edge
+    was detected.
+
+    Querying an event causes the information for that event to be
+    cleared after its state is returned. Subsequent queries will
+    report "no event" until a new one occurs. All events are cleared
+    when the device state transitions from Stop to Run.
+
+    Parameters
+    ----------
+    eventID : string
+        Identifier for the event status to query. Valid settings:
+            OVERRANGE : Overrange event detection.
+            TRIGGER : Trigger event detection.
+            1PPS : 1PPS event detection (RSA500A/600A only).
+
+    Returns
+    -------
+    occurred : bool
+        Indicates whether the event has occurred.
+    timestamp : int
+        Event occurrence timestamp. Only valid if occurred is True.
+    """
+    occurred  = c_bool()
+    timestamp = c_uint64()
+    if eventID in DEVEVENT:
+        value = c_int(DEVEVENT.index(eventID))
+    else:
+        raise SDR_Error(
+            0,
+            "Input string does not match one of the valid settings.",
+            "Please input one of: OVERRANGE, TRIGGER, or 1PPS."
+        )
+    try:
+        rsa.DEVICE_GetEventStatus(byref(value), byref(occurred), byref(timestamp))
+        return occurred.value, timestamp.value
+    except Exception as e:
+        raise SDR_Error(
+            0,
+            "Failed to get event status.",
+            e
+        )
+
 """ IQ BLOCK METHODS """
-def get_iqBandwidth():
+
+# Naming: identical to official API names
+# possibly remove IQBLK_ later? assure no conflicts
+# or possible confusion
+
+# def IQBLK_GetIQAcqInfo():
+# def IQBLK_AcquireIQData():
+
+def IQBLK_GetIQBandwidth():
     """
     Query the IQ bandwidth value.
 
@@ -570,7 +769,11 @@ def get_iqBandwidth():
     rsa.IQBLK_GetIQBandwidth(byref(iqBandwidth))
     return iqBandwidth.value
 
-def get_iqRecordLength():
+# def IQBLK_GetIQData():
+# def IQBLK_GetIQDataCplx():
+# def IQBLK_GetIQDataDeinterleaved():
+
+def IQBLK_GetIQRecordLength():
     """
     Query the IQ record length.
 
@@ -587,7 +790,7 @@ def get_iqRecordLength():
     rsa.IQBLK_GetIQRecordLength(byref(recordLength))
     return recordLength.value
 
-def get_iqSampleRate():
+def IQBLK_GetIQSampleRate():
     """
     Query the IQ sample rate value.
 
@@ -603,7 +806,7 @@ def get_iqSampleRate():
     rsa.IQBLK_GetIQSampleRate(byref(iqSampleRate))
     return iqSampleRate.value
 
-def get_maxIqBandwidth():
+def IQBLK_GetMaxIQBandwidth():
     """
     Query the maximum IQ bandwidth of the connected device.
 
@@ -616,7 +819,7 @@ def get_maxIqBandwidth():
     rsa.IQBLK_GetMaxIQBandwidth(byref(maxBandwidth))
     return maxBandwidth.value
 
-def get_maxIqRecordLength():
+def IQBLK_GetMaxIQRecordLength():
     """
     Query the maximum IQ record length.
 
@@ -638,7 +841,7 @@ def get_maxIqRecordLength():
     rsa.IQBLK_GetMaxIQRecordLength(byref(maxIqRecLen))
     return maxIqRecLen.value
 
-def get_minIqBandwidth():
+def IQBLK_GetMinIQBandwidth():
     """
     Query the minimum IQ bandwidth of the connected device.
 
@@ -651,7 +854,7 @@ def get_minIqBandwidth():
     rsa.IQBLK_GetMinIQBandwidth(byref(minBandwidth))
     return minBandwidth.value
 
-def set_iqBandwidth(iqBandwidth):
+def IQBLK_SetIQBandwidth(iqBandwidth):
     """
     Set the IQ bandwidth value.
 
@@ -673,8 +876,8 @@ def set_iqBandwidth(iqBandwidth):
     SDR_Error
         If desired IQ bandwidth is not in the allowed range.
     """
-    minBandwidth = get_minIqBandwidth()
-    maxBandwidth = get_maxIqBandwidth()
+    minBandwidth = IQBLK_GetMinIQBandwidth()
+    maxBandwidth = IQBLK_GetMaxIQBandwidth()
 
     if minBandwidth <= iqBandwidth <= maxBandwidth:
         rsa.IQBLK_SetIQBandwidth(c_double(iqBandwidth))
@@ -686,7 +889,7 @@ def set_iqBandwidth(iqBandwidth):
                 minBandwidth, maxBandwidth)
         )
 
-def set_iqRecordLength(recordLength):
+def IQBLK_SetIQRecordLength(recordLength):
     """
     Set the number of IQ samples generated by each IQ block acquisition.
 
@@ -709,9 +912,8 @@ def set_iqRecordLength(recordLength):
     SDR_Error
         If desired IQ record length is not in the allowed range.
     """
-    recordLength = int(recordLength)
     minIqRecLen = int(2)
-    maxIqRecLen = get_maxIqRecordLength()
+    maxIqRecLen = IQBLK_GetMaxIQRecordLength()
 
     if minIqRecLen <= recordLength <= maxIqRecLen:
         rsa.IQBLK_SetIQRecordLength(c_int(recordLength))
@@ -722,6 +924,8 @@ def set_iqRecordLength(recordLength):
             "Please choose a value between {} and {} samples.".format(
                 minIqRecLen, maxIqRecLen)
         )
+
+# !!! def IQBLK_WaitForIQDataReady():
 
 """ IQ STREAM METHODS """
 
@@ -794,8 +998,42 @@ def IQSTREAM_GetAcqParameters():
     rsa.IQSTREAM_GetAcqParameters(byref(bwHz_act), byref(srSps))
     return bwHz_act.value, srSps.value
 
-# def IQSTREAM_GetDiskFileInfo():
-    
+def IQSTREAM_GetDiskFileInfo():
+    """
+    Retrieve information about the previous file output operation.
+
+    This information is intended to be queried after the file output
+    operation has completed. It can be queried during file writing as
+    an ongoing status, but some of the results may not be valid at that
+    time.
+
+    Note: This method does not return the filenames parameter as shown
+    in the official API documentation.
+
+    Note: If acqStatus indicators show "Output buffer overflow", it is
+    likely that the disk is too slow to keep up with writing the data
+    generated by IQ stream processing. Use a faster disk (SSD is
+    recommended), or a smaller acquisition bandwidth which generates
+    data at a lower rate.
+
+    Returns
+    -------
+    dict
+
+    """
+    fileinfo = IQSTRMFILEINFO()
+    rsa.IQSTREAM_GetDiskFileInfo(byref(fileinfo))
+    # filenames omitted because of unicode ValueErrors
+    dictRes =  {
+        'numberSamples' : fileinfo.numberSamples,
+        'sample0Timestamp' : fileinfo.sample0Timestamp,
+        'triggerSampleIndex' : fileinfo.triggerSampleIndex,
+        'triggerTimestamp' : fileinfo.triggerTimestamp,
+        'acqStatus' : fileinfo.acqStatus,
+        'filenames' : fileinfo.filenames.value.decode('utf-8')
+    }
+    return dictRes
+        
 def IQSTREAM_GetDiskFileWriteStatus():
     """
     Allow monitoring the progress of file output.
@@ -842,15 +1080,8 @@ def IQSTREAM_GetEnable():
     rsa.IQSTREAM_GetEnable(byref(enabled))
     return enabled.value
 
+# This doesn't seem necessary
 # def IQSTREAM_GetIQData():
-    """
-    Retrieve IQ data blocks generated by the IQ stream processing.
-
-    ## More info needed
-
-    Returns
-    -------
-    """
 
 def IQSTREAM_GetIQDataBufferSize():
     """
@@ -974,7 +1205,7 @@ def IQSTREAM_SetDiskFilenameBase(filenameBase):
     """
     rsa.IQSTREAM_SetDiskFilenameBaseW(c_wchar_p(filenameBase))
 
-def IQSTREAM_SetDiskFilenameSuffix(suffixCtl=-1):
+def IQSTREAM_SetDiskFilenameSuffix(suffixCtl):
     """
     Set the control that determines the appended filename suffix.
 
@@ -1021,7 +1252,7 @@ def IQSTREAM_SetDiskFilenameSuffix(suffixCtl=-1):
 
 # def IQSTREAM_SetIQDataBufferSize(reqSize):
 
-def IQSTREAM_SetOutputConfiguration(dest="FILE_SIQ", dtype="INT32"):
+def IQSTREAM_SetOutputConfiguration(dest, dtype):
     """
     Set the output data destination and IQ data type.
 
@@ -1098,7 +1329,7 @@ def IQSTREAM_Start():
     triggering is not enabled, data starts to be written to the file
     immediately. If triggering is enabled, data will not start to be
     written to the file until a trigger event is detected.
-    TRIG_ForceTrigger() can be used to generate a trigger even if the 
+    forceTrigger() can be used to generate a trigger even if the 
     specified one does not occur.
 
     If the data destination is the client application, data will become
@@ -1126,4 +1357,218 @@ def IQSTREAM_Stop():
     """
     rsa.IQSTREAM_Stop()
 
-# def IQSTREAM_WaitForIQDataReady():
+# !!! def IQSTREAM_WaitForIQDataReady():
+
+""" TRIGGER FUNCTIONS """
+
+# All tested and functional
+
+def forceTrigger():
+    """Force the device to trigger."""
+    rsa.TRIG_ForceTrigger()
+
+def getIFPowerTriggerLevel():
+    """
+    Return the trigger power level.
+
+    Returns
+    -------
+    float
+        Detection power level for the IF power trigger source
+    """
+    level = c_double()
+    rsa.TRIG_GetIFPowerTriggerLevel(byref(level))
+    return level.value
+
+def getTriggerMode():
+    """
+    Return the trigger mode (either freeRun or triggered).
+
+    When the mode is set to freeRun, the signal is continually updated.
+
+    When the mode is set to Triggered, the data is only updated when a trigger occurs.
+
+    Returns
+    -------
+    string
+        Either "freeRun" or "Triggered".
+    """
+    mode = c_int()
+    rsa.TRIG_GetTriggerMode(byref(mode))
+    return TRIGGER_MODE[mode.value]
+
+def getTriggerPositionPercent():
+    """
+    Return the trigger position percent.
+
+    Note: The trigger position setting only affects IQ Block and
+    Spectrum acquisitions.
+
+    Returns
+    -------
+    float
+        Trigger position percent value when the function completes.
+    """
+    trigPosPercent = c_double()
+    rsa.TRIG_GetTriggerPositionPercent(byref(trigPosPercent))
+    return trigPosPercent.value
+
+def getTriggerSource():
+    """
+    Return the trigger source.
+
+    When set to external, acquisition triggering looks at the external
+    trigger input for a trigger signal. When set to IF power level, the
+    power of the signal itself causes a trigger to occur.
+
+    Returns
+    -------
+    string
+        The trigger source type. Valid results:
+            External : External source.
+            IFPowerLevel : IF power level source.
+    """
+    source = c_int()
+    rsa.TRIG_GetTriggerSource(byref(source))
+    return TRIGGER_SOURCE[source.value]
+
+def getTriggerTransition():
+    """
+    Return the current trigger transition mode.
+
+    Returns
+    -------
+    string
+        Name of the trigger transition mode. Valid results:
+            LH : Trigger on low-to-high input level change.
+            HL : Trigger on high-to-low input level change.
+            Either : Trigger on either LH or HL transitions.
+    """
+    transition = c_int()
+    rsa.TRIG_GetTriggerTransition(byref(transition))
+    return TRIGGER_TRANSITION[transition.value]
+
+def setIFPowerTriggerLevel(level):
+    """
+    Set the IF power detection level.
+
+    When set to the IF power level trigger source, a trigger occurs
+    when the signal power level crosses this detection level.
+
+    Parameters
+     ----------
+    level : float
+        The detection power level setting for the IF power trigger
+        source.
+    """
+    rsa.TRIG_SetIFPowerTriggerLevel(c_double(level))
+
+def setTriggerMode(mode):
+    """
+    Set the trigger mode.
+
+    Parameters
+    ----------
+    mode : string
+        The trigger mode. Valid settings:
+            freeRun : to continually gather data
+            Triggered : do not acquire new data unless triggered
+
+    Raises
+    ------
+    SDR_Error
+        If the input string is not one of the valid settings.
+    """
+    if mode in TRIGGER_MODE:
+        modeValue = TRIGGER_MODE.index(mode)
+        rsa.TRIG_SetTriggerMode(c_int(modeValue))
+    else:
+        raise SDR_Error(
+            0,
+            "Invalid trigger mode input string.",
+            "Input is case sensitive. Please input one of: freeRun, "
+            + "Triggered."
+        )
+
+def setTriggerPositionPercent(trigPosPercent):
+    """
+    Set the trigger position percentage.
+
+    This value determines how much data to store before and after a 
+    trigger event. The stored data is used to update the signal's image
+    when a trigger occurs. The trigger position setting only affects IQ
+    Block and Spectrum acquisitions.
+
+    Default setting is 50%.
+
+    Parameters
+    ----------
+    trigPosPercent : float
+        The trigger position percentage, from 1% to 99%.
+
+    Raises
+    ------
+    SDR_Error
+        If the input is not in the valid range from 1 to 99 percent.
+    """
+    if 1 <= trigPosPercent <= 99:
+        rsa.TRIG_SetTriggerPositionPercent(c_double(trigPosPercent))
+    else:
+        raise SDR_Error(
+            0,
+            "Input percentage invalid.",
+            "Please enter a value in the range: 1 to 99 percent."
+        )
+
+def setTriggerSource(source):
+    """
+    Set the trigger source.
+
+    Parameters
+    ----------
+    source : string
+        A trigger source type. Valid settings:
+            External : External source.
+            IFPowerLevel: IF power level source.
+
+    Raises
+    ------
+    SDR_Error
+        If the input string does not match one of the valid settings.
+    """
+    if source in TRIGGER_SOURCE:
+        sourceValue = TRIGGER_SOURCE.index(source)
+        rsa.TRIG_SetTriggerSource(c_int(sourceValue))
+    else:
+        raise SDR_Error(
+            0,
+            "Invalid trigger source input string.",
+            "Please input either 'External' or 'IFPowerLevel'"
+        )
+
+def setTriggerTransition(transition):
+    """
+    Set the trigger transition detection mode.
+
+    Parameters
+    ----------
+    transition : string
+        A trigger transition mode. Valid settings:
+            LH : Trigger on low-to-high input level change.
+            HL : Trigger on high-to-low input level change.
+            Either : Trigger on either LH or HL transitions.
+
+    Raises
+    ------
+    SDR_Error
+        If the input string does not match one of the valid settings.
+    """
+    if transition in TRIGGER_TRANSITION:
+        transValue = TRIGGER_TRANSITION.index(transition)
+        rsa.TRIG_SetTriggerTransition(c_int(transValue))
+    else:
+        raise SDR_Error(
+            0,
+            "Invalid trigger transition mode input string.",
+            "Please input either: 'LH', 'HL', or 'Either'"
+        )
