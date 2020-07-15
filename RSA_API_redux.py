@@ -2,13 +2,22 @@
 Notes:
 
 - Currently, ALL SDR_Error codes thrown are arbitrary placeholders
-- Method "Returns" are only included in docstring if they return something
-    other than None
+- Method "Returns" are only included in docstring if they return
+    something other than None
 - Method "Raises" are only documented if specifically implemented
     - Catch-all try statements will feed API errors into SDR_Error
         - These do not appear in the docstring as of now
 - ANYTHING that can't run on a 306B is completely untested
     - would need an RSA 500/600 series to fully test
+- Some methods are given default parameter values which aren't
+    specified in the original API. This is done for convenience for
+    certain methods.
+    - Ex: setExternalRefEnable() defaults to "enable", but can be used
+        to disable the external reference as well.
+- Some methods require string input. Should I make these case-insensitive?
+    - Would be convenient for use, but nothing is unclear as of now because
+        of the documentation
+    - Slight headache to implement but might be worth it for ease of use
 
 To Do's / Ideas:
 - Error handling:
@@ -44,6 +53,9 @@ API_VERSION_STRLEN = 8 # Bytes allocated for API version number string
 # These are defined as tuples, in which the index of each item corresponds
 # to the integer value for the item as defined in the API manual
 FREQREF_SOURCE = ("INTERNAL", "EXTREF", "GNSS", "USER")
+GFR_MODE = ("OFF", "FREQTRACK", "PHASETRACK", "HOLD")
+GFR_STATE = ('OFF', 'ACQUIRING', 'FREQTRACKING', 'PHASETRACKING', 'HOLDING')
+GFR_QUALITY = ('INVALID', 'LOW', 'MEDIUM', 'HIGH')
 DEVEVENT = ("OVERRANGE", "TRIGGER", "1PPS")
 IQSOUTDEST = ("CLIENT", "FILE_TIQ", "FILE_SIQ", "FILE_SIQ_SPLIT")
 IQSOUTDTYPE = ("SINGLE", "INT32", "INT16", "SINGLE_SCALE_INT32")
@@ -52,6 +64,20 @@ TRIGGER_SOURCE = ("External", "IFPowerLevel")
 TRIGGER_TRANSITION = ("LH", "HL", "Either")
 
 """ CUSTOM DATA STRUCTURES """
+class FREQREF_USER_INFO(Structure):
+    _fields_ = [('isvalid', c_bool),
+                ('dacValue', c_int),
+                ('datetime', c_char_p),
+                ('temperature', c_double)]
+
+class DEVICE_INFO(Structure):
+    _fields_ = [('nomenclature', c_char_p),
+                ('serialNum', c_char_p),
+                ('apiVersion', c_char_p),
+                ('fwVersion', c_char_p),
+                ('fpgaVersion', c_char_p),
+                ('hwVersion', c_char_p)]
+
 class IQSTRMFILEINFO(Structure):
     _fields_ = [('numberSamples', c_uint64),
                 ('sample0Timestamp', c_uint64),
@@ -110,17 +136,72 @@ def search_connect(loadPreset=True):
 
 """ CONFIG METHODS """
 
+# Tested ? F
+
 # Naming: CONFIG_SomeCommand() --> someCommand()
+
+#            Omitted method
+# ---------------------------------------
+# CONFIG_DecodeFreqRefUserSettingString()
+#
+#         Reason for Omission
+# ---------------------------------------
+# Underlying data structure unclear.
+#
+
+# Untested RSA500/600 commands:
+# -------------------------------
+# getModeGnssFreqRefCorrection()
+# decodeFreqRefUserSettingString() (not implemented)
+# getEnableGnssTimeRefAlign()
+# setEnableGnssTimeRefAlign()
+# Some options for setFrequencyReferenceSource()
+# Some options for getFrequencyReferenceSource()
+# getStatusGnssFreqRefCorrection()
+# setModeGnssFreqRefCorrection()
+# getStatusGnssTimeRefAlign()
+# getFreqRefUserSetting() - data type weirdness, likely broken
+# setFreqRefUserSetting()
+# getAutoAttenuationEnable()
+# setAutoAttenuationEnable()
+# getRFPreampEnable()
+# setRFPreampEnable()
+# getRFAttenuator()
+# setRFAttenuator()
 
 def getCenterFreq():
     """Return the current center frequency in Hz."""
-    cf = c_double()
-    rsa.CONFIG_GetCenterFreq(byref(cf))
-    return cf.value
+    try:
+        cf = c_double()
+        rsa.CONFIG_GetCenterFreq(byref(cf))
+        return cf.value
+    except Exception as e:
+        raise SDR_Error(0, "Failed to get center frequency.", e)
+
+def getExternalRefEnable():
+    """
+    Return the state of the external reference.
+
+    This method is less useful than getFrequencyReferenceSource(),
+    because it only indicates if the external reference is chosen or
+    not. The getFrequencyReferenceSource() method indicates all
+    available sources, and should often be used in place of this one.
+
+    Returns
+    -------
+    bool
+        True means external reference is enabled, False means disabled.
+    """
+    try:
+        exRefEn = c_bool()
+        rsa.CONFIG_GetExternalRefEnable(byref(exRefEn))
+        return exRefEn.value
+    except Exception as e:
+        raise SDR_Error(0, "Failed to get external reference state.", e)
 
 def getExternalRefFrequency():
     """
-    Return the frequency, in Hz, of the external reference"
+    Return the frequency, in Hz, of the external reference.
 
     The external reference input must be enabled for this method to
     return useful results.
@@ -143,53 +224,92 @@ def getExternalRefFrequency():
             "The external reference input must be enabled for useful results."
         )
     else:
-        extFreq = c_double()
-        rsa.CONFIG_GetExternalRefFrequency(byref(extFreq))
-        return extFreq.value
+        try:
+            extFreq = c_double()
+            rsa.CONFIG_GetExternalRefFrequency(byref(extFreq))
+            return extFreq.value
+        except Exception as e:
+            raise SDR_Error(0, "Failed to get external reference frequency.",
+                e)
 
 def getFrequencyReferenceSource():
     """
     Return a string representing the frequency reference source.
 
-    Valid results are FRS_INTERNAL, FRS_EXTREF, FRS_GNSS, and FRS_USER.
-    Note that the RSA306 and RSA306b support only the FRS_INTERNAL and
-    FRS_EXTREF sources.
+    Note: The RSA306 and RSA306B support only INTERNAL and EXTREF
+    sources.
 
     Returns
     -------
     string
-        A representative name of the frequency reference source.
+        Name of the frequency reference source. Valid results:
+            INTERNAL : Internal frequency reference.
+            EXTREF : External (Ref In) frequency reference.
+            GNSS : Internal GNSS receiver reference
+            USER : Previously set USER setting, or, if none, INTERNAL.
     """
-    src = c_int()
-    rsa.CONFIG_GetFrequencyReferenceSource(byref(src))
-    return FREQREF_SOURCE[src.value]
+    try:
+        src = c_int()
+        rsa.CONFIG_GetFrequencyReferenceSource(byref(src))
+        return FREQREF_SOURCE[src.value]
+    except Exception as e:
+        raise SDR_Error(0, "Failed to get frequency reference source.", e)
 
 def getMaxCenterFreq():
     """Return the maximum center frequency in Hz."""
-    maxCF = c_double()
-    rsa.CONFIG_GetMaxCenterFreq(byref(maxCF))
-    return maxCF.value
+    try:
+        maxCF = c_double()
+        rsa.CONFIG_GetMaxCenterFreq(byref(maxCF))
+        return maxCF.value
+    except Exception as e:
+        raise SDR_Error(0, "Failed to get maximum center frequency.", e)
 
 def getMinCenterFreq():
     """Return the minimum center frequency in Hz."""
-    minCF = c_double()
-    rsa.CONFIG_GetMinCenterFreq(byref(minCF))
-    return minCF.value
+    try:
+        minCF = c_double()
+        rsa.CONFIG_GetMinCenterFreq(byref(minCF))
+        return minCF.value
+    except Exception as e:
+        raise SDR_Error(0, "Failed to get minimum center frequency.", e)
 
-def getReferenceLevel():
+def getModeGnssFreqRefCorrection():
     """
-    Return the current reference level in dBm.
+    Return the operating mode of the GNSS freq. reference correction.
 
-    The reference level must fall between -130 dBm and +30 dBm.
+    Note: This method is for RSA500A and RSA600A series instruments
+    only. 
+
+    Please refer to the setModeGnssFreqRefCorrection() documentation
+    for an explanation for the various operating modes.
 
     Returns
     -------
-    float
-        The reference level, measured in dBm.
+    string
+        The GNSS frequency reference operating mode. Valid results:
+            OFF : GNSS source is not selected. 
+            FREQTRACK : FREQTRACK mode enabled.
+            PHASETRACK : PHASETRACK mode enabled.
+            HOLD : HOLD mode enabled.
     """
-    refLevel = c_double()
-    rsa.CONFIG_GetReferenceLevel(byref(refLevel))
-    return refLevel.value
+    try:
+        mode = c_int()
+        rsa.CONFIG_GetModeGnssFreqRefCorrection(byref(mode))
+        if mode.value != 0:
+            return GFR_MODE[mode.value + 1]
+        else:
+            return GFR_MODE[mode.value]
+    except Exception as e:
+        raise SDR_Error(0, "Failed to get frequency reference mode.", e)
+
+def getReferenceLevel():
+    """Return the current reference level, measured in dBm."""
+    try:
+        refLevel = c_double()
+        rsa.CONFIG_GetReferenceLevel(byref(refLevel))
+        return refLevel.value
+    except Exception as e:
+        raise SDR_Error(0, "Failed to get reference level.", e)
 
 def preset():
     """
@@ -199,15 +319,17 @@ def preset():
     to 1.5 GHz, the span to 40 MHz, the IQ record length to 1024 
     samples, and the reference level to 0 dBm.
     """
-    rsa.CONFIG_Preset()
+    try:
+        rsa.CONFIG_Preset()
+    except Exception as e:
+        raise SDR_Error(0, "Failed to load device preset configuration.", e)
 
 def setCenterFreq(cf):
     """
-    Set the center frequency value.
+    Set the center frequency value, in Hz.
 
-    A check is performed to ensure that the desired value is within the
-    allowed range. When using the tracking generator, be sure to set the
-    tracking generator output level before setting the center frequency.
+    When using the tracking generator, be sure to set the tracking
+    generator output level before setting the center frequency.
 
     Parameters
     ----------
@@ -221,11 +343,12 @@ def setCenterFreq(cf):
     """
     minCF = getMinCenterFreq()
     maxCF = getMaxCenterFreq()
-
     if minCF <= cf <= maxCF:
-        rsa.CONFIG_SetCenterFreq(c_double(cf))
+        try:
+            rsa.CONFIG_SetCenterFreq(c_double(cf))
+        except Exception as e:
+            raise SDR_Error(0, "Failed to set center frequency.", e)
     else:
-        # Error has placeholder numerical ID. Update later.
         raise SDR_Error(
             0,
             "Desired center frequency not in range.",
@@ -233,9 +356,89 @@ def setCenterFreq(cf):
                 maxCF)
         )
 
-def setExternalRefEnable(exRefEn):
+# def decodeFreqRefUserSettingString(i_usstr):
+    """
+    Decodes a formatted User setting string into component elements.
+
+    Parameters
+    ----------
+    i_usstr : string
+        Formatted User setting string.
+
+    Returns
+    -------
+    isvalid : bool
+        True if User setting string has valid data, False if not.
+        If False, the remaining elements below are invalid.
+    dacValue : int
+        Control DAC value.
+    datetime : string
+        String of date+time the User setting was created. Format:
+        "YYYY-MM-DDThh:mm:ss".
+    temperature : float
+        Device temperature when the User setting data was created.
+    """
+
+def getEnableGnssTimeRefAlign():
+    """
+    Return the setting of time ref. alignment from the GNSS receiver.
+
+    Note: This method is for RSA500A and RSA600A series instruments
+    only.
+
+    The GNSS receiver must be enabled to use this method.
+
+    Returns
+    -------
+    bool
+        True means the time reference setting is enabled. False means
+        the time reference setting is disabled.
+    """
+    try:
+        enable = c_bool()
+        rsa.CONFIG_GetEnableGnssTimeRefAlign(byref(enable))
+        return enable.value
+    except Exception as e:
+        raise SDR_Error(0,
+            "Failed to check if time ref setting is enabled.", e)
+
+def setEnableGnssTimeRefAlign(enable=True):
+    """
+    Control the time reference alignment from the internal GNSS receiver.
+
+    The GNSS receiver must be enabled to use this function.
+
+    The default control setting of True enables the API time reference
+    system to be aligned precisely to UTC time from the GNSS navigation
+    message and 1PPS signal. The GNSS receiver must achieve navigation
+    lock for the time reference alignment to occur. While GNSS is
+    locked, the time reference is updated every 10 seconds to keep
+    close synchronization with GNSS time. Setting the control to False
+    disables the time reference updating from GNSS, but retains the
+    current time reference setting. This control allows the user
+    application to independently set the time reference, or simply
+    prevent time updates from the GNSS.
+
+    Parameters
+    ----------
+    enable : bool
+        True enables setting time reference. False disables setting
+        time reference. Defaults to True.
+    """
+    try:
+        rsa.CONFIG_SetEnableGnssTimeRefAlign(c_bool(enable))
+    except Exception as e:
+        if enable:
+            raise SDR_Error(0,"Failed to enable setting time reference.", e)
+        else:
+            raise SDR_Error(0,
+                "Failed to disable setting time reference.", e)
+
+def setExternalRefEnable(exRefEn=True):
     """
     Enable or disable the external reference.
+
+    If no parameter is specified, external reference is enabled.
 
     When the external reference is enabled, an external reference signal must
     be connected to the "Ref In" port. The signal must have a frequency of 10
@@ -247,17 +450,25 @@ def setExternalRefEnable(exRefEn):
     ----------
     exRefEn : bool
         True enables the external reference. False disables it.
+        Defaults to True.
     """
-    rsa.CONFIG_SetExternalRefEnable(c_bool(exRefEn))
+    try:
+        rsa.CONFIG_SetExternalRefEnable(c_bool(exRefEn))
+    except Exception as e:
+        if exRefEn:
+            raise SDR_Error(0, "Failed to enable external reference.", e)
+        else:
+            raise SDR_Error(0, "Failed to disable external reference.", e)
 
-def setFrequencyReferenceSource(src="INTERNAL"):
+def setFrequencyReferenceSource(src='INTERNAL'):
     """
     Select the device frequency reference source.
 
     Note: RSA306B and RSA306 support only INTERNAL and EXTREF sources.
 
     The INTERNAL source is always a valid selection, and is never
-    switched out of automatically.
+    switched out of automatically. If no input is provided to this
+    method, setting to INTERNAL is the default behavior.
 
     The EXTREF source uses the signal input to the Ref In connector as
     frequency reference for the internal oscillators. If EXTREF is
@@ -294,8 +505,12 @@ def setFrequencyReferenceSource(src="INTERNAL"):
         If the input string is not a valid setting listed above.
     """
     if src in FREQREF_SOURCE:
-        value = c_int(FREQREF_SOURCE.index(src))
-        rsa.CONFIG_SetFrequencyReferenceSource(value)
+        try:
+            value = c_int(FREQREF_SOURCE.index(src))
+            rsa.CONFIG_SetFrequencyReferenceSource(value)
+        except Exception as e:
+            raise SDR_Error(0,
+                "Failed to set frequency reference source.", e)
     else:
         raise SDR_Error(
             0,
@@ -303,21 +518,198 @@ def setFrequencyReferenceSource(src="INTERNAL"):
             "Please input one of: INTERNAL, EXTREF, GNSS, or USER."
         )
 
+def getStatusGnssFreqRefCorrection():
+    """
+    Return the status of the GNSS frequency reference correction.
+
+    Note: This method is for RSA500A and RSA600A series instruments
+    only.
+
+    The GNSS receiver must be enabled and selected as the frequency
+    reference source ("GNSS") to use this method.
+
+    The "state" value indicates the current internal state of the GNSS
+    frequency reference adjustment system. The states mostly correspond
+    to the possible control modes, but also indicate how initialization
+    and/or tracking is going.
+
+    When GNSS source is selected, the frequency reference adjustment
+    system enters the ACQUIRING state, until it achieves navigation
+    lock. Until the receiver locks, no frequency adjustments are done.
+    It continues in this state until oscillator adjustments bring the
+    internal oscillator frequency within +/- 1 ppm of the ideal GNSS
+    1PPS frequency.
+
+    In the FREQTRACKING state, only small adjustments are allowed. The
+    adjustments attempt to minimize the difference between the 1PPS
+    pulse frequency and the internal oscillator frequency.
+
+    In the PHASETRACKING state, only small adjustments are allowed. The
+    adjustments attempt to maintain the sample timing at a consistent
+    relationship to the 1PPS signal interval. If the timing cannot be
+    maintained within +/- 100 microsecond range, the state will
+    transition to FREQTRACKING.
+
+    The HOLDING state may be caused by intentionally setting the mode
+    to HOLD (see setModeGnssFreqRefCorrection()). It may also occur if
+    GNSS navigation lock is lost. During the unlock interval, the
+    HOLDING state is in effect and the most recent adjustment setting
+    is maintained.
+
+    The "quality" value indicates how well the frequency adjustment is
+    performing. It is valid only when "state" is FREQTRACKING or
+    PHASETRACKING. Otherwise, it returns INVALID. See below for more
+    specific information about each possible returned value.
+
+    Returns
+    -------
+    state : string
+        GNSS frequency reference correction state. Valid results:
+            OFF : GNSS not selected as frequency reference source.
+            ACQUIRING : Initial synchronization and alignment of the
+                oscillator is occurring.
+            FREQTRACKING : Fine adjustment of the reference oscillator
+                is occurring. See above for more info.
+            PHASETRACKING : Fine adjustment of the reference oscillator
+                is occurring. See above for more info.
+            HOLDING : Frequency adjustments are disabled.
+    quality : string
+        Quality of frequency adjustment performance. Valid results:
+            INVALID : 
+            LOW : Frequency error is > 0.2 ppm
+            MEDIUM : 0.2 ppm > Frequency error > 0.025 ppm
+            HIGH : Frequency error < 0.025 ppm
+    """
+    if getFrequencyReferenceSource() == "GNSS":
+        try:
+            state = c_int()
+            quality = c_int()
+            rsa.CONFIG_GetStatusGnssFreqRefCorrection(byref(state),
+                byref(quality))
+            return GFR_STATE[state.value], GFR_QUALITY[quality.value]
+        except Exception as e:
+            raise SDR_Error(0,
+                "Failed to get GNSS freq. reference correction status.", e)
+    else:
+        raise SDR_Error(0, "Frequency reference source not set to GNSS.",
+            "Unable to get correction status for non-GNSS sources."
+        )
+
+def setModeGnssFreqRefCorrection(mode):
+    """
+    Control the operating mode of GNSS frequency reference correction.
+
+    Note: This method is for RSA500A and RSA600A series instruments
+    only.
+
+    The GNSS receiver must be enabled and selected as the frequency
+    reference source ("GNSS") to use this method.
+
+    When the GNSS source is selected, the mode is always initially set
+    to FREQTRACK. Other modes must be explicitly set after selecting
+    the GNSS source. If the GNSS source is deselected and later re-
+    selected, the mode is set to FREQTRACK. There is no memory of
+    previous mode settings. The mode setting may be changed at any time
+    while GNSS is selected. However, control changes may take up to 50
+    msec to be processed, so should not be posted at a high rate. If
+    multiple control changes are posted quickly, the function will
+    "stall" after the first one until each change is accepted and
+    processed, taking 50 msec per change.
+
+    FREQTRACK mode uses the GNSS internal 1PPS pulse as a high-accuracy
+    frequency source to correct the internal reference oscillator
+    frequency. It adjusts the oscillator to minimize the frequency
+    difference between it and the 1PPS signal. This is the normal
+    operating mode, and can usually be left in this mode unless special
+    conditions call for switching to the other modes. When need for the
+    other modes is over, FREQTRACK mode should be restored.
+
+    PHASETRACK mode is similar to FREQTRACK mode, as it adjusts the
+    reference oscillator based on the 1PPS signal. However, it attempts
+    to maintain, on average, a consistent number of oscillator cycles
+    within a 1PPS interval. This is useful when recording long IF or IQ
+    data records, as it keeps the data sample timing aligned over the
+    record, to within +/- 100 nsec of the 1PPS time location when the
+    mode is initiated. PHASETRACK mode does more oscillator adjustments
+    than FREQTRACK mode, so it should only be used when specifically
+    needed for long-term recording. When GNSS source is first selected,
+    FREQTRACK mode should be selected until the tracking quality has
+    reached MEDIUM, before using PHASETRACK mode.
+
+    HOLD mode pauses the oscillator adjustments without stopping the
+    GNSS monitoring. This can be used to prevent oscillator adjustments
+    during acquisitions. Remember that the mode change can take up to
+    50 msec to be accepted.
+
+    Parameters
+    ----------
+    mode : string
+        The GNSS frequency reference operating mode. Valid settings:
+            FREQTRACK : Set to FREQTRACK; more detail given above.
+            PHASETRACK : Set to PHASETRACK; more detail given above.
+            HOLD : Set to HOLD; more detail given above.
+    """
+    if mode in GFR_MODE && mode != 'OFF':
+        try:
+            value = GFR_MODE.index(mode) + 1
+            rsa.CONFIG_SetModeGnssFreqRefCorrection(c_int(value))
+        except Exception as e:
+            raise SDR_Error(0,
+                "Failed to set GNSS freq. reference correction mode.", e)
+    else:
+        raise SDR_Error(0,
+            "Input string does not match one of the valid settings.",
+            "Please input one of: FREQTRACK, PHASETRACK, or HOLD.")
+
+def getStatusGnssTimeRefAlign():
+    """
+    Get status of API time reference alignment from the GNSS receiver.
+
+    Note: This method is for RSA500A and RSA600A series instruments
+    only.
+
+    The GNSS receiver must be enabled to use this function. If GNSS
+    time ref. setting is disabled (see getEnableGnssTimeRefAlign()),
+    this method returns False even if the time reference was previously
+    set from the GNSS receiver.
+
+    Returns
+    -------
+    bool
+        True if time ref. was set from GNSS receiver, False if not.
+    """
+    try:
+        aligned = c_bool()
+        rsa.CONFIG_GetStatusGnssTimeRefAlign(byref(aligned))
+    except Exception as e:
+        raise SDR_Error(0, "Failed to get alignment status.", e)
+
+def getFreqRefUserSetting():
+    """
+    Get the frequency reference User-source setting value.
+
+    Note: This method is for RSA500A and RSA600A series instruments
+    only.
+    """
+
+
+
+#def setFreqRefUserSetting():
+
 def setReferenceLevel(refLevel):
     """
     Set the reference level
 
-    A check is performed to ensure that the desired value is within the
-    allowed range. The reference level controls the signal path gain and
-    attenuation settings. The value should be set to the maximum expected
-    signal power level in dBm. Setting the value too low may result in over-
-    driving the signal path and ADC, while setting it too high results in
-    excess noise in the signal.
+    The reference level controls the signal path gain and attenuation
+    settings. The value should be set to the maximum expected signal
+    power level in dBm. Setting the value too low may result in over-
+    driving the signal path and ADC, while setting it too high results
+    in excess noise in the signal.
 
     Parameters
     ----------
     refLevel : float or int
-        Reference level measured in dBm. Range: -130 dBm to 30 dBm.
+        Reference level, in dBm. Valid range: -130 dBm to 30 dBm.
 
     Raises
     ------
@@ -327,15 +719,30 @@ def setReferenceLevel(refLevel):
     minRefLev = -130 # Min. value, dBm
     maxRefLev = 30 # Max. value, dBm
     if minRefLev <= refLevel <= maxRefLev:
-        rsa.CONFIG_SetReferenceLevel(c_double(refLevel))
+        try:
+            rsa.CONFIG_SetReferenceLevel(c_double(refLevel))
+        except Exception as e:
+            raise SDR_Error(0, "Failed to set reference level.", e)
     else:
-        # Error has placeholder numerical ID. Update later.
         raise SDR_Error(
             0,
             "Desired reference level not in range.",
             "Please choose a value between {} and {} dBm.".format(minRefLev,
                 maxRefLev)
         )
+"""
+def getAutoAttenuationEnable():
+
+def setAutoAttenuationEnable():
+
+def getRFPreampEnable():
+
+def setRFPreampEnable():
+
+def getRFAttenuator():
+
+def setRFAttenuator():
+"""
 
 """ DEVICE METHODS """
 
