@@ -1,21 +1,25 @@
 """
+Notes:
 
-Notes/To Do's
+- Currently, ALL SDR_Error codes thrown are arbitrary placeholders
+- Method "Returns" are only included in docstring if they return something
+    other than None
+- Method "Raises" are only documented if specifically implemented
+    - Catch-all try statements will feed API errors into SDR_Error
+        - These do not appear in the docstring as of now
+- ANYTHING that can't run on a 306B is completely untested
+    - would need an RSA 500/600 series to fully test
 
-Currently, ALL SDR_Error codes thrown are arbitrary placeholders
-If no returns are specified in a method's docstring, it returns None
-
-error handling:
-possibly should add general catch-all's for all commands which could
-return an error from the API. For example, look at reset() command
-if doing this^, include it in "Raises" part of docstring? Don't think
-this is necessary.
-alternatively, implement "RSA_Error" for these types and use internal
-API error codes
-
-Support multiple devices? search/connect could allow for selection 
-among multiple
-
+To Do's / Ideas:
+- Error handling:
+    - should add general catch-all's for all commands which could
+    return an error from the API. For example, look at reset() command
+    - add these to docstrings?
+    - should these use SDR_Error or their own type? 
+        - Should they somehow use internal API error codes?
+- Support multiple devices?
+    - currently the search method errors if more than one is found
+    - could allow for selection by user input among multiple devices
 """
 from ctypes import *
 from SDR_Error import SDR_Error
@@ -210,10 +214,6 @@ def setCenterFreq(cf):
     cf : float or int
         Value to set center frequency, in Hz.
 
-    Returns
-    -------
-    None
-
     Raises
     ------
     SDR_Error
@@ -247,10 +247,6 @@ def setExternalRefEnable(exRefEn):
     ----------
     exRefEn : bool
         True enables the external reference. False disables it.
-
-    Returns
-    -------
-    None
     """
     rsa.CONFIG_SetExternalRefEnable(c_bool(exRefEn))
 
@@ -322,10 +318,6 @@ def setReferenceLevel(refLevel):
     ----------
     refLevel : float or int
         Reference level measured in dBm. Range: -130 dBm to 30 dBm.
-
-    Returns
-    -------
-    None
 
     Raises
     ------
@@ -510,10 +502,6 @@ def prepareForRun():
     transfer. See startFrameTransfer(). This is in comparison to the
     run() function, which immediately starts data streaming without
     waiting for a "go" signal.
-
-    Returns
-    -------
-    None
     """
     rsa.DEVICE_PrepareForRun()
 
@@ -867,10 +855,6 @@ def IQBLK_SetIQBandwidth(iqBandwidth):
     iqBandwidth : float or int
         IQ bandwidth value measured in Hz
 
-    Returns
-    -------
-    None
-
     Raises
     ------
     SDR_Error
@@ -902,10 +886,6 @@ def IQBLK_SetIQRecordLength(recordLength):
     ----------
     recordLength : int
         IQ record length, measured in samples. Minimum value of 2.
-
-    Returns
-    -------
-    None
 
     Raises
     ------
@@ -967,10 +947,6 @@ def IQSTREAM_ClearAcqStatus():
     an IQ streaming run interval.
 
     This is effective for both client and file destination runs.
-
-    Returns
-    -------
-    None
     """
     rsa.IQSTREAM_ClearAcqStatus()
 
@@ -1119,10 +1095,6 @@ def IQSTREAM_SetAcqBandwidth(bwHz_req):
     bwHz_req : float
         Requested acquisition bandwidth of IQ streaming data, in Hz.
 
-    Returns
-    -------
-    None
-
     Raises
     ------
     SDR_Error
@@ -1159,10 +1131,6 @@ def IQSTREAM_SetDiskFileLength(msec):
     msec : int
         Length of time in milliseconds to record IQ samples to file.
 
-    Returns
-    -------
-    None
-
     Raises
     ------
     SDR_Error
@@ -1198,10 +1166,6 @@ def IQSTREAM_SetDiskFilenameBase(filenameBase):
     ----------
     filenameBase : string
         Base filename for file output.
-
-    Returns
-    -------
-    None
     """
     rsa.IQSTREAM_SetDiskFilenameBaseW(c_wchar_p(filenameBase))
 
@@ -1228,10 +1192,6 @@ def IQSTREAM_SetDiskFilenameSuffix(suffixCtl):
     ----------
     suffixCtl : int
         The filename suffix control value.
-
-    Returns
-    -------
-    None
 
     Raises
     ------
@@ -1284,10 +1244,6 @@ def IQSTREAM_SetOutputConfiguration(dest, dtype):
                 data scaled the same as INT32 data type (not valid with
                 TIQ file destination)
 
-    Returns
-    -------
-    None
-
     Raises
     ------
     SDR_Error
@@ -1337,10 +1293,6 @@ def IQSTREAM_Start():
     is enabled, the data will begin flowing to the client without need
     for a trigger event. The client must begin retrieving data as soon
     after IQSTREAM_Start() as possible.
-
-    Returns
-    -------
-    None
     """
     rsa.IQSTREAM_Start()
 
@@ -1350,10 +1302,6 @@ def IQSTREAM_Stop():
 
     If the data destination is file, file writing is stopped and the
     output file is closed.
-
-    Returns
-    -------
-    None
     """
     rsa.IQSTREAM_Stop()
 
