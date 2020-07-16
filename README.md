@@ -1,12 +1,12 @@
-Tektronix RSA306b scos Testing
+Tektronix RSA scos Testing
 ==============================
 
-Building a Python interface for the Tektronix RSA API which will eventually be used to integrate the [Tektronix RSA306b](https://www.tek.com/spectrum-analyzer/rsa306) into [`scos-sensor`](https://github.com/NTIA/scos-sensor). At the moment, this repository serves mostly as a backup for in-progress code while the RSA306b is characterized. Eventually, it will morph into a plugin which adds RSA support into `scos-sensor`. It will also be possible to relatively easily extend this code to support a larger variety of devices in the Tektronix RSA line of real time spectrum analyzers.
+Building a Python wrapper for the Tektronix RSA API which will eventually be used to integrate the [Tektronix RSA306b](https://www.tek.com/spectrum-analyzer/rsa306) into [`scos-sensor`](https://github.com/NTIA/scos-sensor). At the moment, this repository serves mostly as a backup for in-progress code while the RSA306b is characterized. Eventually, it will morph into a plugin which adds RSA support into `scos-sensor`. It will also be possible to relatively easily extend this code to support a larger variety of devices in the Tektronix RSA line of real time spectrum analyzers.
 
 Brief Overview of Files
 -----------------------
 
-- `RSA_API.py` contains Python implementations of commands that are a part of the Tektronix RSA API, which is implemented in C. It makes use of `ctypes` as well as a few shared object files, and essentially serves to abstract API calls for easier use in other Python scripts.
+- `RSA_API.py` contains Python implementations of commands that are a part of the Tektronix RSA API, which is implemented in C. It makes use of `ctypes` as well as a few shared object files, and essentially serves to abstract API calls for easier use in other Python scripts. It does some error handling and makes some minor changes for the sake of usability, and aims to be well-documented enough to serve as the sole reference for future development. This API supports Tektronix RSA: 306, 306B, 500A Series, and 600A Series.
 
 - `testbed.py` is, well, exactly that. This is where I'm currently writing various methods used for different tests and characterizations of the RSA306b. It is a temporary file, and is a little messier as a result.
 
@@ -31,7 +31,7 @@ Next you can get started by making API calls. The first thing you might want to 
 To do this, simply add to your code:
 
 ```
-connect()
+search_connect()
 disconnect()
 ```
 
