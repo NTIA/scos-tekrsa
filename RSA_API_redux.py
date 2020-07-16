@@ -29,6 +29,9 @@ To Do's / Ideas:
 - Support multiple devices?
     - currently the search method errors if more than one is found
     - could allow for selection by user input among multiple devices
+- Check usage of global constants
+    - device getInfo function, and freqRefUserSettingString functions
+
 """
 from ctypes import *
 from SDR_Error import SDR_Error
@@ -48,6 +51,7 @@ FW_VERSION_STRLEN = 6 # Bytes allocated for FW version number string
 HW_VERSION_STRLEN = 4 # Bytes allocated for HW version number string
 NOMENCLATURE_STRLEN = 8 # Bytes allocated for device nomenclature string
 API_VERSION_STRLEN = 8 # Bytes allocated for API version number string
+DEVINFO_MAX_STRLEN = 100 # Bytes for date/time string
 
 """ CUSTOM ENUMERATION TYPES """
 # These are defined as tuples, in which the index of each item corresponds
@@ -67,7 +71,7 @@ TRIGGER_TRANSITION = ("LH", "HL", "Either")
 class FREQREF_USER_INFO(Structure):
     _fields_ = [('isvalid', c_bool),
                 ('dacValue', c_int),
-                ('datetime', c_char_p),
+                ('datetime', c_char * DEVINFO_MAX_STRLEN),
                 ('temperature', c_double)]
 
 class DEVICE_INFO(Structure):
@@ -123,11 +127,9 @@ def search_connect(loadPreset=True):
         # Add list of found devices to error body text
         for (ID, key) in foundDevices.items():
             err_body += "\r\n{}".format(str(ID) + ": " + str(key))
-        raise SDR_Error(
-            0,
+        raise SDR_Error(0,
             "Found {} devices, need exactly 1.".format(numFound),
-            err_body
-        )
+            err_body)
 
     connect()
 
@@ -140,15 +142,6 @@ def search_connect(loadPreset=True):
 
 # Naming: CONFIG_SomeCommand() --> someCommand()
 
-#            Omitted method
-# ---------------------------------------
-# CONFIG_DecodeFreqRefUserSettingString()
-#
-#         Reason for Omission
-# ---------------------------------------
-# Underlying data structure unclear.
-#
-
 # Untested RSA500/600 commands:
 # -------------------------------
 # getModeGnssFreqRefCorrection()
@@ -160,7 +153,8 @@ def search_connect(loadPreset=True):
 # getStatusGnssFreqRefCorrection()
 # setModeGnssFreqRefCorrection()
 # getStatusGnssTimeRefAlign()
-# getFreqRefUserSetting() - data type weirdness, likely broken
+# decodeFreqRefUserSettingString() - likely broken
+# getFreqRefUserSetting() - string weirdness, likely broken
 # setFreqRefUserSetting()
 # getAutoAttenuationEnable()
 # setAutoAttenuationEnable()
@@ -277,8 +271,7 @@ def getModeGnssFreqRefCorrection():
     """
     Return the operating mode of the GNSS freq. reference correction.
 
-    Note: This method is for RSA500A and RSA600A series instruments
-    only. 
+    Note: This method is for RSA500/600A series instruments only.
 
     Please refer to the setModeGnssFreqRefCorrection() documentation
     for an explanation for the various operating modes.
@@ -356,9 +349,11 @@ def setCenterFreq(cf):
                 maxCF)
         )
 
-# def decodeFreqRefUserSettingString(i_usstr):
+def decodeFreqRefUserSettingString(i_usstr):
     """
     Decodes a formatted User setting string into component elements.
+
+    Note: This method is for RSA500/600A series instruments only.
 
     Parameters
     ----------
@@ -378,13 +373,22 @@ def setCenterFreq(cf):
     temperature : float
         Device temperature when the User setting data was created.
     """
+    try:
+        i_usstr = c_char_p(i_usstr)
+        o_fui = FREQREF_USER_INFO()
+        rsa.CONFIG_DecodeFreqRefUserSettingString(byref(i_usstr),
+            byref(o_fui))
+        return (o_fui.isvalid.value, o_fui.dacValue.value,
+            o_fui.datetime.value, o_fui.temperature.value)
+    except Exception as e:
+        raise SDR_Error(0, "Failed to decode freq. ref. user setting string",
+            e)
 
 def getEnableGnssTimeRefAlign():
     """
     Return the setting of time ref. alignment from the GNSS receiver.
 
-    Note: This method is for RSA500A and RSA600A series instruments
-    only.
+    Note: This method is for RSA500/600A series instruments only.
 
     The GNSS receiver must be enabled to use this method.
 
@@ -522,8 +526,7 @@ def getStatusGnssFreqRefCorrection():
     """
     Return the status of the GNSS frequency reference correction.
 
-    Note: This method is for RSA500A and RSA600A series instruments
-    only.
+    Note: This method is for RSA500/600A series instruments only.
 
     The GNSS receiver must be enabled and selected as the frequency
     reference source ("GNSS") to use this method.
@@ -599,8 +602,7 @@ def setModeGnssFreqRefCorrection(mode):
     """
     Control the operating mode of GNSS frequency reference correction.
 
-    Note: This method is for RSA500A and RSA600A series instruments
-    only.
+    Note: This method is for RSA500/600A series instruments only.
 
     The GNSS receiver must be enabled and selected as the frequency
     reference source ("GNSS") to use this method.
@@ -665,8 +667,7 @@ def getStatusGnssTimeRefAlign():
     """
     Get status of API time reference alignment from the GNSS receiver.
 
-    Note: This method is for RSA500A and RSA600A series instruments
-    only.
+    Note: This method is for RSA500/600A series instruments only.
 
     The GNSS receiver must be enabled to use this function. If GNSS
     time ref. setting is disabled (see getEnableGnssTimeRefAlign()),
@@ -688,13 +689,88 @@ def getFreqRefUserSetting():
     """
     Get the frequency reference User-source setting value.
 
-    Note: This method is for RSA500A and RSA600A series instruments
-    only.
+    Note: This method is for RSA500/600A series instruments only.
+
+    This method is normally used when creating a User setting string
+    for external non-volatile storage. It can also be used to query the
+    current User setting data incase the ancillary information is
+    desired. The decodeFreqRefUserSettingString() method can then be
+    used to extract the individual items.
+
+    The format of the returned string is: "$FRU,<devType>,<devSN>,
+    <dacVal>,<dateTime>,<devTemp>*<CS>", where:
+        <devType> : device type.
+        <devSN> : device serial number.
+        <dacVal> integer DAC value.
+        <dateTime> : date/time of creation (fmt: YYYY-MM-DDThh:mm:ss).
+        <devTemp> : device temperature (deg. C) at creation.
+        <CS> : integer checksum of chars before '*' char
+
+    Ex: "$FRU,RSA503A,Q000098,2062,2016-06-06T18:11:08,51.41*87"
+
+    If the User setting is not valid, the user string result returns
+    the string "Invalid User Setting".
+
+    Returns
+    -------
+    string
+        Formatted user setting string. See above for details.
     """
+    try:
+        o_usstr = c_char_p()
+        rsa.CONFIG_GetFreqRefUserSetting(byref(o_usstr))
+        return o_usstr.value
+    except Exception as e:
+        raise SDR_Error(0, "Failed to get freq. reference User setting.", e)
 
+def setFreqRefUserSetting(i_usstr):
+    """
+    Set the frequency reference User-source setting value.
 
+    Note: This method is for RSA500/600A series instruments only.
 
-#def setFreqRefUserSetting():
+    The user setting string input must be formatted correctly, as per
+    the getFreqRefUserSetting() method. If it is valid (format decodes
+    correctly and matches the device), it is used to set the User
+    setting memory. If the string is invalid, the User setting is not
+    changed.
+
+    This method is provided to support store and recall of User
+    frequency reference setting. This function only sets the User
+    setting value used during the current device connected session. The
+    value is lost when disconnected.
+
+    With a NULL input, this method causes the current frequency
+    reference control setting to be copied to the internal User setting
+    memory. Then the User setting can be retrieved as a formatted
+    string by using the getFreqRefUserSetting() method, for storage by
+    the user application. These operations are normally done only after
+    GNSS frequency reference correction has been used to produce an
+    improved frequency reference setting which the user wishes to use
+    in place of the default INTERNAL factory setting. After using
+    setFreqRefUserSetting(), setFrequencyReferenceSource() can be used
+    to select the new User setting for use as the frequency reference.
+
+    This method can be used to set the internal User setting memory to
+    the values in a valid previously-generated formatted string
+    argument. This allows applications to recall previously stored User
+    frequency reference settings as desired. The USER source should
+    then  be selected with the setFrequencyReferenceSource() method.
+
+    The formatted user setting string is specific to the device it was
+    generated on and will not be accepted if input to this method on
+    another device.
+
+    Parameters
+    ----------
+    i_usstr : string
+        A string as formatted by the getFreqRefUserSetting() method.
+    """
+    try:
+        i_usstr = c_char(i_usstr)
+        rsa.CONFIG_SetFreqRefUserSetting(byref(i_usstr))
+    except Exception as e:
+        SDR_Error(0, "Failed to set freq. ref. user setting string.", e)
 
 def setReferenceLevel(refLevel):
     """
@@ -730,19 +806,175 @@ def setReferenceLevel(refLevel):
             "Please choose a value between {} and {} dBm.".format(minRefLev,
                 maxRefLev)
         )
-"""
-def getAutoAttenuationEnable():
 
-def setAutoAttenuationEnable():
+def getAutoAttenuationEnable():
+    """
+    Return the signal path auto-attenuation enable state.
+
+    Note: This method is for RSA500/600A series instruments only.
+
+    This method returns the enable state value set by the last call to
+    setAutoAttenuationEnable(), regarless of whether it has been
+    applied to the hardware yet.
+
+    Returns
+    -------
+    bool
+        True indicates auto-attenuation enabled, False for disabled.
+    """
+    try:
+        enable = c_bool()
+        rsa.CONFIG_GetAutoAttenuationEnable(byref(enable))
+        return enable.value
+    except Exception as e:
+        raise SDR_Error(0, "Failed to get auto-attenuation enable state.", e)
+
+def setAutoAttenuationEnable(enable):
+    """
+    Set the signal path auto-attenuation enable state.
+
+    Note: This method is for RSA500/600A series instruments only.
+
+    When auto-attenuation operation is enabled, the RF input attenuator
+    is automatically configured to an optimal value which accomodates
+    input signal levels up to the reference level. Auto-attenuation
+    operation bases the attenuator setting on the current reference
+    level, center frequency, and RF preamplifier state. When the RF
+    preamplifier is enabled, the RF attenuator setting is adjusted to
+    account for the additional gain. Note that auto-attenuation state
+    does not affect the RF preamplifier state.
+
+    The device Run state must be re-applied to apply the new state
+    value to the hardware. At device connect time, the auto-attenuation
+    state is initialized to enabled (True).
+
+    Parameters
+    ----------
+    enable : bool
+        True enabled auto-attenuation operation. False disables it.
+    """
+    try:
+        rsa.CONFIG_SetAutoAttenuationEnable(c_bool(enable))
+    except Exception as e:
+        raise SDR_Error(0, "Failed to set auto-attenuation enable state.", e)
 
 def getRFPreampEnable():
+    """
+    Return the state of the RF preamplifier.
 
-def setRFPreampEnable():
+    Note: This method is for RSA500/600A series instruments only.
+
+    This method returns the RF preamplifier enable state value set by
+    the last call to setRFPreampEnable(), regardless of whether it has
+    been applied to the hardware yet.
+
+    Returns
+    -------
+    bool
+        True indicates RF preamp is enabled, False indicates disabled.
+    """
+    try:
+        enable = c_bool()
+        rsa.CONFIG_GetRFPreampEnable(byref(c_bool))
+    except Exception as e:
+        raise SDR_Error(0, "Failed to get RF preamp enable state.", e)
+
+def setRFPreampEnable(enable):
+    """
+    Set the RF preamplifier enable state.
+
+    Note: This method is for RSA500/600A series instruments only.
+
+    This method provides direct control of the RF preamplifier. The
+    preamplifier state is independent of the auto-attenuation state or
+    RF attenuator setting.
+
+    The preamplifier provides nominally 25 dB of gain when enabled,
+    with gain varying over the device RF frequency range (refer to the
+    device data sheet for detailed preamp response specifications).
+    When the preamplifier is enabled, the device reference level
+    setting should be –15 dBm or lower to avoid saturating internal
+    signal path components.
+
+    The device Run state must be re-applied to cause a new state value
+    to be applied to the hardware.
+
+    Parameters
+    ----------
+    enable : bool
+        True enables the RF preamplifier. False disables it.
+    """
+    refLev = getReferenceLevel()
+    if refLev > -15:
+        raise SDR_Error(0, "Reference level too high for preamp usage.",
+            "Set the ref. level <= -15 dBm to avoid saturation.")
+    else:
+        try:
+            rsa.CONFIG_SetRFPreampEnable(c_bool(enable))
+        except Exception as e:
+            raise SDR_Error(0, "Failed to set RF preamp enable state.", e)
 
 def getRFAttenuator():
+    """
+    Return the setting of the RF input attenuator.
 
-def setRFAttenuator():
-"""
+    Note: This method is for RSA500/600A series instruments only.
+
+    If auto-attenuation is enabled, the returned value is the current
+    RF attenuator hardware configuration. If auto-attenuation is
+    disabled (manual attenuation mode), the returned value is the last
+    value set by setRFAttenuator(), regardless of whether it has been
+    applied to the hardware.
+
+    Returns
+    -------
+    float
+        The RF input attenuator setting value in dB.
+    """
+    try:
+        value = c_double()
+        rsa.CONFIG_GetRFAttenuator(byref(value))
+        return value.value
+    except Exception as e:
+        raise SDR_Error(0, "Failed to get RF attenuator setting.", e)
+
+def setRFAttenuator(value):
+    """
+    Set the RF input attenuator value manually.
+
+    Note: This method is for RSA500/600A series instruments only.
+
+    This method allows direct control of the RF input attenuator
+    setting. The attenuator can be set in 1 dB steps, over the range
+    -51 dB to 0 dB. Input values outside the range are converted to the
+    closest allowed value. Input values with fractional parts are
+    rounded to the nearest integer value, giving 1 dB steps.
+
+    The device auto-attenuation state must be disabled for this control
+    to have effect. Setting the attenuator value with this function
+    does not change the auto-attenuation state. To change the auto-
+    attenuation state, use the setAutoAttenuationEnable() method.
+
+    The device Run state must be re-applied to cause a new setting
+    value to be applied to the hardware.
+
+    Improper manual attenuator setting may cause signal path saturation
+    resulting in degraded performance. This is particularly true if the
+    RF preamplifier state is changed. When making significant changes
+    to the attenuator or preamp settings, it is recommended to use
+    auto-attenuation mode to set the initial RF attenuator level for a
+    desired reference level, then query the attenuator setting to
+    determine reasonable values for further manual control.
+
+    Parameters
+    ----------
+    value : float or int
+        Setting to configure the RF input attenuator, in dB units.
+    """
+    try:
+        rsa.CONFIG_SetRFAttenuator(c_double(value))
+    except Exception as e:
+        raise SDR_Error(0, "Failed to set RF attenuator value.", e)
 
 """ DEVICE METHODS """
 
