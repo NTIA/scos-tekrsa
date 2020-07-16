@@ -1,6 +1,8 @@
 """
 Notes:
-
+- Function names changed from API reference:
+    - PREFIX_SomeCommand() --> someCommand()
+    - ex. ALIGN_RunAlignment() --> runAlignment()
 - Currently, ALL SDR_Error codes thrown are arbitrary placeholders
 - Method "Returns" are only included in docstring if they return
     something other than None
@@ -31,6 +33,16 @@ To Do's / Ideas:
     - could allow for selection by user input among multiple devices
 - Check usage of global constants
     - device getInfo function, and freqRefUserSettingString functions
+- Some commands return a series of values, one of which is a bool that
+    indicates whether or not the values are valid.
+        - should throw SDR Error if isValid = False. No point in returning
+            junk data.
+- Add GNSS hardware/enable check for all GNSS commands where needed
+- Make each section of functions a class?
+    - call by CONFIG.someCommand(), etc
+    - avoids any naming confusion
+    - a bit longer to type but more clear
+    - maybe device and/or config functions could be globally defined?
 
 """
 from ctypes import *
@@ -61,6 +73,7 @@ GFR_MODE = ("OFF", "FREQTRACK", "PHASETRACK", "HOLD")
 GFR_STATE = ('OFF', 'ACQUIRING', 'FREQTRACKING', 'PHASETRACKING', 'HOLDING')
 GFR_QUALITY = ('INVALID', 'LOW', 'MEDIUM', 'HIGH')
 DEVEVENT = ("OVERRANGE", "TRIGGER", "1PPS")
+GNSS_SATSYS = ('GPS_GLONASS', 'GPS_BEIDOU', 'GPS', 'GLONASS', 'BEIDOU')
 IQSOUTDEST = ("CLIENT", "FILE_TIQ", "FILE_SIQ", "FILE_SIQ_SPLIT")
 IQSOUTDTYPE = ("SINGLE", "INT32", "INT16", "SINGLE_SCALE_INT32")
 TRIGGER_MODE = ("freeRun", "Triggered")
@@ -136,13 +149,58 @@ def search_connect(loadPreset=True):
     if loadPreset:
         preset()
 
+""" ALIGNMENT METHODS """
+
+def getAlignmentNeeded():
+    """
+    Determine if an alignment is needed or not.
+
+    This is based on the difference between the current temperature
+    and the temperature from the last alignment.
+
+    Returns
+    -------
+    bool
+        True indicates an alignment is needed, False for not needed.
+    """
+    try:
+        needed = c_bool()
+        rsa.ALIGN_GetAlignmentNeeded(byref(needed))
+        return needed.value
+    except Exception as e:
+        raise SDR_Error(0, "Failed to get alignment needed status.", e)
+
+def getWarmupStatus():
+    """
+    Report device warm-up status.
+
+    Devices start in the "warm-up" state after initial power up until
+    the internal temperature stabilizes. The warm-up interval is
+    different for different devices.
+
+    Returns
+    -------
+    bool
+        True indicates device warm-up interval reached.
+        False indicates warm-up has not been reached
+    """
+    try:
+        warmedUp = c_bool()
+        rsa.ALIGN_GetWarmupStatus(byref(warmedUp))
+        return warmedUp.value
+    except Exception as e:
+        raise SDR_Error(0, "Failed to get warmed-up status.", e)
+
+def runAlignment():
+    """Run the device alignment process."""
+    try:
+        rsa.ALIGN_RunAlignment()
+    except Exception as e:
+        raise SDR_Error(0, "Failed to run device alignment.", e)
+
 """ CONFIG METHODS """
 
-# Tested ? F
-
-# Naming: CONFIG_SomeCommand() --> someCommand()
-
-# Untested RSA500/600 commands:
+# Untestable RSA500A/600 commands:
 # -------------------------------
 # getModeGnssFreqRefCorrection()
 # decodeFreqRefUserSettingString() (not implemented)
@@ -271,7 +329,7 @@ def getModeGnssFreqRefCorrection():
     """
     Return the operating mode of the GNSS freq. reference correction.
 
-    Note: This method is for RSA500/600A series instruments only.
+    Note: This method is for RSA500A/600A series instruments only.
 
     Please refer to the setModeGnssFreqRefCorrection() documentation
     for an explanation for the various operating modes.
@@ -353,7 +411,7 @@ def decodeFreqRefUserSettingString(i_usstr):
     """
     Decodes a formatted User setting string into component elements.
 
-    Note: This method is for RSA500/600A series instruments only.
+    Note: This method is for RSA500A/600A series instruments only.
 
     Parameters
     ----------
@@ -388,7 +446,7 @@ def getEnableGnssTimeRefAlign():
     """
     Return the setting of time ref. alignment from the GNSS receiver.
 
-    Note: This method is for RSA500/600A series instruments only.
+    Note: This method is for RSA500A/600A series instruments only.
 
     The GNSS receiver must be enabled to use this method.
 
@@ -404,7 +462,7 @@ def getEnableGnssTimeRefAlign():
         return enable.value
     except Exception as e:
         raise SDR_Error(0,
-            "Failed to check if time ref setting is enabled.", e)
+            "Failed to check if time ref. setting is enabled.", e)
 
 def setEnableGnssTimeRefAlign(enable=True):
     """
@@ -464,15 +522,14 @@ def setExternalRefEnable(exRefEn=True):
         else:
             raise SDR_Error(0, "Failed to disable external reference.", e)
 
-def setFrequencyReferenceSource(src='INTERNAL'):
+def setFrequencyReferenceSource(src):
     """
     Select the device frequency reference source.
 
     Note: RSA306B and RSA306 support only INTERNAL and EXTREF sources.
 
     The INTERNAL source is always a valid selection, and is never
-    switched out of automatically. If no input is provided to this
-    method, setting to INTERNAL is the default behavior.
+    switched out of automatically.
 
     The EXTREF source uses the signal input to the Ref In connector as
     frequency reference for the internal oscillators. If EXTREF is
@@ -526,7 +583,7 @@ def getStatusGnssFreqRefCorrection():
     """
     Return the status of the GNSS frequency reference correction.
 
-    Note: This method is for RSA500/600A series instruments only.
+    Note: This method is for RSA500A/600A series instruments only.
 
     The GNSS receiver must be enabled and selected as the frequency
     reference source ("GNSS") to use this method.
@@ -602,7 +659,7 @@ def setModeGnssFreqRefCorrection(mode):
     """
     Control the operating mode of GNSS frequency reference correction.
 
-    Note: This method is for RSA500/600A series instruments only.
+    Note: This method is for RSA500A/600A series instruments only.
 
     The GNSS receiver must be enabled and selected as the frequency
     reference source ("GNSS") to use this method.
@@ -667,7 +724,7 @@ def getStatusGnssTimeRefAlign():
     """
     Get status of API time reference alignment from the GNSS receiver.
 
-    Note: This method is for RSA500/600A series instruments only.
+    Note: This method is for RSA500A/600A series instruments only.
 
     The GNSS receiver must be enabled to use this function. If GNSS
     time ref. setting is disabled (see getEnableGnssTimeRefAlign()),
@@ -689,7 +746,7 @@ def getFreqRefUserSetting():
     """
     Get the frequency reference User-source setting value.
 
-    Note: This method is for RSA500/600A series instruments only.
+    Note: This method is for RSA500A/600A series instruments only.
 
     This method is normally used when creating a User setting string
     for external non-volatile storage. It can also be used to query the
@@ -727,7 +784,7 @@ def setFreqRefUserSetting(i_usstr):
     """
     Set the frequency reference User-source setting value.
 
-    Note: This method is for RSA500/600A series instruments only.
+    Note: This method is for RSA500A/600A series instruments only.
 
     The user setting string input must be formatted correctly, as per
     the getFreqRefUserSetting() method. If it is valid (format decodes
@@ -811,7 +868,7 @@ def getAutoAttenuationEnable():
     """
     Return the signal path auto-attenuation enable state.
 
-    Note: This method is for RSA500/600A series instruments only.
+    Note: This method is for RSA500A/600A series instruments only.
 
     This method returns the enable state value set by the last call to
     setAutoAttenuationEnable(), regarless of whether it has been
@@ -833,7 +890,7 @@ def setAutoAttenuationEnable(enable):
     """
     Set the signal path auto-attenuation enable state.
 
-    Note: This method is for RSA500/600A series instruments only.
+    Note: This method is for RSA500A/600A series instruments only.
 
     When auto-attenuation operation is enabled, the RF input attenuator
     is automatically configured to an optimal value which accomodates
@@ -862,7 +919,7 @@ def getRFPreampEnable():
     """
     Return the state of the RF preamplifier.
 
-    Note: This method is for RSA500/600A series instruments only.
+    Note: This method is for RSA500A/600A series instruments only.
 
     This method returns the RF preamplifier enable state value set by
     the last call to setRFPreampEnable(), regardless of whether it has
@@ -883,7 +940,7 @@ def setRFPreampEnable(enable):
     """
     Set the RF preamplifier enable state.
 
-    Note: This method is for RSA500/600A series instruments only.
+    Note: This method is for RSA500A/600A series instruments only.
 
     This method provides direct control of the RF preamplifier. The
     preamplifier state is independent of the auto-attenuation state or
@@ -918,7 +975,7 @@ def getRFAttenuator():
     """
     Return the setting of the RF input attenuator.
 
-    Note: This method is for RSA500/600A series instruments only.
+    Note: This method is for RSA500A/600A series instruments only.
 
     If auto-attenuation is enabled, the returned value is the current
     RF attenuator hardware configuration. If auto-attenuation is
@@ -942,7 +999,7 @@ def setRFAttenuator(value):
     """
     Set the RF input attenuator value manually.
 
-    Note: This method is for RSA500/600A series instruments only.
+    Note: This method is for RSA500A/600A series instruments only.
 
     This method allows direct control of the RF input attenuator
     setting. The attenuator can be set in 1 dB steps, over the range
@@ -978,14 +1035,13 @@ def setRFAttenuator(value):
 
 """ DEVICE METHODS """
 
-# Tested ? F
-
-# Naming: DEVICE_SomeCommand --> someCommand()
-
 #      Omitted method     |    Reason for omission
 #  ---------------------  | -------------------------
 #  DEVICE_GetErrorString  | Not currently using Tek's error codes
 # DEVICE_GetNomenclatureW | Implemented getNomenclature() instead
+
+# Methods not following standard naming:
+# DEVICE_GetEnable() --> getEnableRun()
 
 def connect(deviceID=0):
     """
@@ -1015,7 +1071,7 @@ def disconnect():
     """Stop data acquisition and disconnect from connected device."""
     rsa.DEVICE_Disconnect()
 
-def getEnable():
+def getEnableRun():
     """
     Query the run state.
 
@@ -1328,7 +1384,7 @@ def getEventStatus(eventID):
     a trigger event was detected. The forceTrigger() method can be used
     to simulate a trigger event.
 
-    1PPS event detection (RSA500A/600A only) requires the GNSS receiver
+    1PPS event detection (RSA500AA/600A only) requires the GNSS receiver
     to be enabled and have navigation lock. The even indicates that the
     1PPS event has occurred. The reported timestamp value is of the
     most recent sample instant when the GNSS Rx 1PPS pulse rising edge
@@ -1345,7 +1401,7 @@ def getEventStatus(eventID):
         Identifier for the event status to query. Valid settings:
             OVERRANGE : Overrange event detection.
             TRIGGER : Trigger event detection.
-            1PPS : 1PPS event detection (RSA500A/600A only).
+            1PPS : 1PPS event detection (RSA500AA/600A only).
 
     Returns
     -------
@@ -1373,6 +1429,234 @@ def getEventStatus(eventID):
             "Failed to get event status.",
             e
         )
+
+""" GNSS METHODS """
+
+# All of these methods are untestable due to being RSA500A/600A only
+
+# Not following naming scheme:
+# GNSS_GetEnable --> getEnableGnss()
+# GNSS_SetEnable --> setEnableGnss()
+
+def clearNavMessageData():
+    """
+    Clear the navigation message data queue.
+
+    Note: This method is for RSA500A/600A series instruments only.
+
+    The data queue which holds GNSS navigation message character
+    strings is emptied by this method.
+    """
+    try:
+        rsa.GNSS_ClearNavMessageData()
+    except Exception as e:
+        raise SDR_Error(0, "Failed to clear navigation message data.", e)
+
+def get1PPSTimestamp():
+    """
+    Return the timestamp of the most recent internal 1PPS timing pulse.
+
+    Note: This method is for RSA500A/600A series instruments only.
+
+    The internal GNSS receiver must be enabled and have navigation lock
+    for this method to return the internal timestamp of the 1PPS pulse.
+    1PPS pulses occur each second, so the user application should call
+    this method at least once per second to retrieve the 1PPS
+    information correctly.
+
+    The 1PPS timestamp along with the decoded UTC time from the
+    navigation messages can be used to set the API system time to GNSS-
+    accurate time reference. See setReferenceTime() for more
+    information on setting reference time based on these values.
+
+    Returns
+    -------
+    int
+        Timestamp of the most recent 1PPS pulse.
+    """
+    # check if GNSS enabled
+    # Check if navigation lock
+    try:
+        isValid = c_bool()
+        timestamp1PPS = c_uint64()
+        rsa.GNSS_Get1PPSTimestamp(byref(isValid), byref(timestamp1PPS))
+        if isValid.value:
+            return timestamp1PPS.value
+        else:
+            raise SDR_Error(0, "1PPS timestamp not valid, or not detected.",
+                "GNSS receiver must be enabled and have navigation lock.")
+    except Exception as e:
+        raise SDR_Error(0, "Failed to get 1PPS timestamp.", e)
+
+def getAntennaPower():
+    """
+    Return the GNSS antenna power output state.
+
+    Note: This method is for RSA500A/600A series instruments only.
+
+    The returned value indicates the state set by setAntennaPower(),
+    although the actual output state may be different. See the entry
+    for setAntennaPower() for more information on GNSS antenna power
+    control.
+
+    Returns
+    -------
+    bool
+        True for GNSS antenna power output enabled, False for disabled.
+    """
+    try:
+        powered = c_bool()
+        rsa.GNSS_GetAntennaPower(byref(powered))
+        return powered.value
+    except Exception as e:
+        raise SDR_Error(0,
+            "Failed to get GNSS antenna power output state.", e)
+
+def getEnableGnss():
+    """
+    Return the internal GNSS receiver enable state.
+
+    Note: This method is for RSA500A/600A series instruments only.
+
+    Returns
+    -------
+    bool
+        True indicates GNSS receiver is enabled, False for disabled.
+    """
+    try:
+        enable = c_bool()
+        rsa.GNSS_GetEnable(byref(enable))
+        return enable.value
+    except Exception as e:
+        raise SDR_Error(0, "Failed to get GNSS receiver enable state.",
+            e)
+
+def getHwInstalled():
+    """
+    Return whether internal GNSS receiver HW is installed.
+
+    GNSS HW is only installed in RSA500AA and RSA600A devices. All other
+    devices will indicate no HW installed.
+
+    Returns
+    -------
+    bool
+        True indicates GNSS receiver HW installed, False for no HW.
+    """
+    try:
+        installed = c_bool()
+        rsa.GNSS_GetHwInstalled(byref(installed))
+        return installed.value
+    except Exception as e:
+        raise SDR_Error(0, "Failed to get GNSS HW installed state.", e)
+
+def getNavMessageData():
+    """
+    Return navigation message data.
+
+    Note: This method is for RSA500A/600A Series instruments only.
+
+    The internal GNSS receiver must be enabled for this method to
+    return useful data, otherwise it will always return msgLen = 0,
+    indicating no data. The message output consists of contiguous
+    segments of the ASCII character serial stream from the GNSS
+    receiver, following the NMEA 0183 Version 3.0 standard. The
+    character output rate is approximately 1000 character per second,
+    originating from an internal 9600 baud serial interface.
+
+    The GNSS navigation message output includes RMC, GGA, GSA, GSV, and
+    other NMEA sentence types. The two character Talker Identifier
+    following the starting "$" character may be "GP", "GL", "BD", or
+    "GN" depending on the configuration of the receiver. The method
+    does not decode the NMEA sentences. It passes them through in raw
+    form, including all characters in the original serial stream.
+
+    The message queue holding the message chars may overflow if this
+    method is not called often enough to keep up with the data
+    generation by the GNSS receiver. It is recommended to retrieve
+    message data at least 4 times per second to avoid this overflow.
+
+    Returns
+    -------
+    msgLen : int
+        Number of characters in the message buffer. Can be zero.
+    message : string
+        Navigation message.
+    """
+    try:
+        msgLen = c_int()
+        message = c_char_p()
+        rsa.GNSS_GetNavMessageData(byref(msgLen), byref(message))
+        return msgLen.value, message.value
+    except Exception as e:
+        raise SDR_Error(0, "Failed to get navigation message.", e)
+
+def getSatSystem():
+    """
+    Return the GNSS satellite system selection.
+
+    Note: This method is for RSA500A/600A series instruments only.
+
+    This method should only be called when the GNSS receiver is
+    enabled. It will not return valid parameter data when the receiver
+    is disabled.
+    """
+    try:
+
+def getStatusRxLock():
+
+def setAntennaPower():
+
+def setEnableGnss():
+
+def setSatSystem(satSystem):
+    """
+    Set the GNSS satellite system selection.
+
+    Note: This method is for RSA500A/600A series instruments only.
+
+    The satellite system selection limits the GNSS receiver to using
+    only signals from the specified system(s). Only the choices listed
+    below are valid; entering multiple strings to get combinations not
+    listed will not work.
+
+    Each time the GNSS receiver is enabled, the satellite system
+    selection is set to the default value of GPS_GLONASS. Satellite
+    system selections are not persistent or recallable, even within the
+    same connection session. Any non-default setting must be explicitly
+    applied after each receiver enable operation.
+
+    The setting can only be changed when the GNSS receiver is enabled.
+    If the method is called when the receiver is disabled, the
+    selection is ignored and an error is returned.
+
+    If the selected system(s) do not provide sufficient signal coverage
+    at the antenna location, the GNSS receiver will not be able to
+    acquire navigation lock. In most cases, the default selection
+    provides the best coverage.
+
+    Parameters
+    ----------
+    satSystem : string
+        The GNSS satellite system selection. Valid settings:
+            GPS_GLONASS : GPS + Glonass systems used.
+            GPS_BEIDOU : GPS + Beidou systems used.
+            GPS : Only GPS system used.
+            GLONASS : Only Glonass system used.
+            BEIDOU : Only Beidou system used.
+    """
+    if satSystem in GNSS_SATSYS:
+        try:
+            value = GNSS_SATSYS.index(satSystem) + 1
+            rsa.GNSS_SetSatSystem(c_int(value))
+        except Exception as e:
+            raise SDR_Error(0, "Failed to set GNSS satellite system.", e)
+    else:
+        raise SDR_Error(0,
+            "Input string does not match one of the valid settings.",
+            "Select from: GPS_GLONASS, GPS_BEIDOU, GPS, GLONASS, or BEIDOU.")
+
+""" IF STREAMING METHODS """
 
 """ IQ BLOCK METHODS """
 
@@ -1945,6 +2229,14 @@ def IQSTREAM_Stop():
     rsa.IQSTREAM_Stop()
 
 # !!! def IQSTREAM_WaitForIQDataReady():
+
+""" POWER FUNCTIONS """
+
+
+
+""" TRACKING GENERATOR FUNCTIONS """
+
+
 
 """ TRIGGER FUNCTIONS """
 
