@@ -11,7 +11,7 @@ from time import sleep, strftime
 # The next import also loads the RSA driver and device
 # It may be better to load the driver/device in this file instead
 #from RSA_API import *
-from RSA_API_redux import *
+from RSA_API_backup import *
 
 """ PLOT FORMATTING STUFF """
 mpl_rc('xtick', direction='in', top=True)
