@@ -74,6 +74,9 @@ GFR_STATE = ('OFF', 'ACQUIRING', 'FREQTRACKING', 'PHASETRACKING', 'HOLDING')
 GFR_QUALITY = ('INVALID', 'LOW', 'MEDIUM', 'HIGH')
 DEVEVENT = ("OVERRANGE", "TRIGGER", "1PPS")
 GNSS_SATSYS = ('GPS_GLONASS', 'GPS_BEIDOU', 'GPS', 'GLONASS', 'BEIDOU')
+SPECTRUM_WINDOWS = ('Kaiser', 'Mil6dB', 'BlackmanHarris', 'Rectangular',
+    'FlatTop', 'Hann')
+SPECTRUM_VERTICAL_UNITS = ('dBm', 'Watt', 'Volt', 'Amp', 'dBmV')
 IQSOUTDEST = ("CLIENT", "FILE_TIQ", "FILE_SIQ", "FILE_SIQ_SPLIT")
 IQSOUTDTYPE = ("SINGLE", "INT32", "INT16", "SINGLE_SCALE_INT32")
 TRIGGER_MODE = ("freeRun", "Triggered")
@@ -94,6 +97,43 @@ class DEVICE_INFO(Structure):
                 ('fwVersion', c_char_p),
                 ('fpgaVersion', c_char_p),
                 ('hwVersion', c_char_p)]
+
+class POWER_INFO(Structure):
+    _fields_ = [('externalPowerPresent', c_bool),
+                ('batteryPresent', c_bool),
+                ('batteryChargeLevel', c_double),
+                ('batteryCharging', c_bool),
+                ('batteryOverTemperature', c_bool),
+                ('batteryHardwareError', c_bool)]
+
+class SPECTRUM_LIMITS(Structure):
+    _fields_ = [('maxSpan', c_double),
+                ('minSpan', c_double),
+                ('maxRBW', c_double),
+                ('minRBW', c_double),
+                ('maxVBW', c_double),
+                ('minVBW', c_double),
+                ('maxTraceLength', c_int),
+                ('minTraceLength', c_int)]
+
+class SPECTRUM_SETTINGS(Structure):
+    _fields_ = [('span', c_double),
+                ('rbw', c_double),
+                ('enableVBW', c_bool),
+                ('vbw', c_double),
+                ('traceLength', c_int),
+                ('window', c_int),
+                ('verticalUnit', c_int),
+                ('actualStartFreq', c_double),
+                ('actualStopFreq', c_double),
+                ('actualFreqStepSize', c_double),
+                ('actualRBW', c_double),
+                ('actualVBW', c_double),
+                ('actualNumIQSamples', c_double)]
+
+class SPECTRUM_TRACEINFO(Structure):
+    _fields_ = [('timestamp', c_int64),
+                ('acqDataStatus', c_uint16)]
 
 class IQSTRMFILEINFO(Structure):
     _fields_ = [('numberSamples', c_uint64),
@@ -149,7 +189,25 @@ def search_connect(loadPreset=True):
     if loadPreset:
         preset()
 
+def config_spectrum(cf, refLevel, span, rbw):
+    """
+    Performs spectrum configurations.
+    """
+    SPECTRUM_SetEnable(True)
+    setCenterFreq(cf)
+    setReferenceLevel(refLevel)
+    SPECTRUM_SetDefault()
+    specSet = SPECTRUM_SETTINGS()
+
 """ ALIGNMENT METHODS """
+
+def  aNewFunction():
+    """
+
+    Returns
+    -------
+
+    """
 
 def getAlignmentNeeded():
     """
@@ -708,7 +766,7 @@ def setModeGnssFreqRefCorrection(mode):
             PHASETRACK : Set to PHASETRACK; more detail given above.
             HOLD : Set to HOLD; more detail given above.
     """
-    if mode in GFR_MODE && mode != 'OFF':
+    if mode in GFR_MODE and mode is not 'OFF':
         try:
             value = GFR_MODE.index(mode) + 1
             rsa.CONFIG_SetModeGnssFreqRefCorrection(c_int(value))
@@ -1218,7 +1276,7 @@ def getInfo():
     fpgaVersion = getFPGAVersion()
     hwVersion = getHWVersion()
     apiVersion = getAPIVersion()
-
+    # All these values are already strings
     info = {
         "Nomenclature" : nomenclature,
         "Serial Number" : serialNum,
@@ -1227,7 +1285,6 @@ def getInfo():
         "HW Version" : hwVersion,
         "API Version" : apiVersion
     }
-
     return info
 
 def getOverTemperatureStatus():
@@ -1437,6 +1494,7 @@ def getEventStatus(eventID):
 # Not following naming scheme:
 # GNSS_GetEnable --> getEnableGnss()
 # GNSS_SetEnable --> setEnableGnss()
+# GNSS_GetHwInstalledd --> getHwInstalledGnss()
 
 def clearNavMessageData():
     """
@@ -1531,7 +1589,7 @@ def getEnableGnss():
         raise SDR_Error(0, "Failed to get GNSS receiver enable state.",
             e)
 
-def getHwInstalled():
+def getHwInstalledGnss():
     """
     Return whether internal GNSS receiver HW is installed.
 
@@ -2307,15 +2365,304 @@ def IQSTREAM_Stop():
 
 """ POWER FUNCTIONS """
 
+# Name matches manual
+
+def POWER_GetStatus():
+    """
+    Return the device power and battery status information.
+
+    Note: This method is for the RSA500A series instruments only.
+
+    If the returned value batteryPresent is False, the following
+    battery-related status indicators which are returned are invalid
+    and should be ignored.
+
+    During charge, the over temp alarm can be set if the pack exceeds
+    45 deg C. The charger should stop charging when the alarm is set.
+    If charging doesn't stop, the pack will open a resettable
+    protection FET.
+
+    During discharge, the over temp alarm will set if the pack exceeds
+    60 deg C. The pack will set the alarm bit, but if the temperature
+    doesn't decrease, the pack will open a resettable protection FET
+    and shut down the device.
+
+    RSA600A series devices can also return a result from this method.
+    However, since they do not have an internal battery, they will
+    always report a status of externalPowerPresent = True, and
+    batteryPresent = False, and the following returned values being
+    invalid.
+
+    Returns
+    -------
+    externalPowerPresent : bool
+        True for external power connected, False for no external power.
+    batteryPresent : bool
+        True for batter installed, False for no battery installed.
+    batteryChargeLevel : float
+        Battery charge level in percent (100.0 indicating full charge).
+    batteryOverTemperature : bool
+        True if battery pack over temperature. More details above.
+    bateryHardwareError : bool
+        True when battery controller has detected a battery HW error.
+        False when the battery HW is operating normally.
+    """
+    try:
+        pwrInfo = POWER_INFO()
+        rsa.POWER_GetStatus(byref(pwrInfo))
+        return (pwrInfo.externalPowerPresent.value,
+            pwrInfo.batteryPresent.value, pwrInfo.batteryChargeLevel.value,
+            pwrInfo.batteryOverTemperature.value,
+            pwrInfo.batteryHardwareError.value
+        )
+    except Exception as e:
+        raise SDR_Error(0, "Failed to get power and battery status.", e)
+
+""" SPECTRUM METHODS """
+
+def SPECTRUM_AcquireTrace():
+    """
+    Initiate a spectrum trace acquisition.
+
+    Before calling this method, all acquisition parameters must be set
+    to valid states. These include center frequency, reference level,
+    any desired trigger conditions, and the spectrum configuration
+    settings.
+    """
+    try:
+        rsa.SPECTRUM_AcquireTrace()
+    except Exception as e:
+        raise SDR_Error(0,
+            "Failed to initiate spectrum trace acquisition.", e)
+
+def SPECTRUM_GetEnable():
+    """
+    Return the spectrum measurement enable status.
+
+    Returns
+    -------
+    bool
+        True if spectrum measurement enabled, False if disabled.
+    """
+    try:
+        enable = c_bool()
+        rsa.SPECTRUM_GetEnable(byref(enable))
+        return enable.value
+    except Exception as e:
+        raise SDR_Error(0,
+            "Failed ot get spectrum measurement enable status.", e)
+
+def SPECTRUM_GetLimits():
+    """
+    Return the limits of the spectrum settings.
+
+    Returns
+    -------
+    dict
+        Current settings, including the values:
+            maxSpan : float
+                Maximum span, device dependent.
+            minSpan : float
+                Minimum span.
+            maxRBW : float
+                Maximum resolution bandwidth.
+            minRBW : float
+                Minimum resolution bandwidth.
+            maxVBW : float
+                Maximum video bandwidth.
+            minVBW : float
+                Minimum video bandwidth.
+            maxTraceLength : int
+                Maximum trace length.
+            minTraceLength : int
+                Minimum trace length.
+    """
+    try:
+        limits = SPECTRUM_LIMITS()
+        rsa.SPECTRUM_GetLimits(byref(limits))
+        lim_dict = {
+            'maxSpan' : float(limits.maxSpan.value),
+            'minSpan' : float(limits.minSpan.value),
+            'maxRBW' : float(limits.maxRBW.value),
+            'minRBW' : float(limits.minRBW.value),
+            'maxVBW' : float(limits.maxVBW.value),
+            'maxTraceLength' : int(limits.maxTraceLength.value),
+            'minTraceLength' : int(limits.minTraceLength.value)
+        }
+        return lim_dict
+    except Exception as e:
+        raise SDR_Error(0, "Failed to get spectrum setting limits.", e)
+
+def SPECTRUM_GetSettings():
+    """
+    Return the spectrum settings.
+
+    In addition to user settings, this method also returns some
+    internal setting values.
+
+    Returns
+    -------
+    SPECTRUM_SETTINGS object
+        Contains 
+    """
+    try:
+        settings = SPECTRUM_SETTINGS()
+        rsa.SPECTRUM_GetSettings(byref(sets))
+        return (sets.span, sets.rbw, sets.enableVBW,
+            sets.vbw, sets.traceLength,
+            SPECTRUM_WINDOWS[sets.window],
+            SPECTRUM_VERTICAL_UNITS[sets.verticalUnit],
+            sets.actualStartFreq, sets.actualStopFreq,
+            sets.actualFreqStepSize, sets.actualRBW,
+            sets.actualVBW, sets.actualNumIQSamples)
+    except Exception as e:
+        raise SDR_Error(0, "Failed to get spectrum settings.", e)
+
+def SPECTRUM_GetTrace(trace, maxTracePoints):
+    """
+    Return the spectrum trace data.
+
+    Parameters
+    ----------
+    trace : int
+        Either 0, 1, or 2, corresponding to the desired spectrum trace.
+    maxTracePoints : int
+        Maximum number of trace points to retrieve. The traceData array
+        should be at least this size.
+
+    Returns
+    -------
+    traceData : float
+
+    outTracePoints : int
+        Actual number of valid trace points in traceData array.
+    """
+    if 1 == 0:
+        traceArray = c_float * maxTracePoints
+        traceData = traceArray()
+    else:
+        return None
+
+def SPECTRUM_GetTraceInfo():
+    """
+    Return the spectrum result information.
+
+    Returns
+    -------
+    timestamp : int
+
+    acqDataStatus : string
+    """
+    return None
 
 
-""" TRACKING GENERATOR FUNCTIONS """
+""" TRACKING GENERATOR METHODS """
 
+# Names match manual
 
+def TRKGEN_GetEnable():
+    """
+    Return the tracking generator enabled status.
 
-""" TRIGGER FUNCTIONS """
+    Note: This method is for RSA500A/600A series instruments only.
+
+    Returns
+    -------
+    bool
+        True for enabled and powered on. False for disabled and off.
+    """
+    try:
+        enable = c_bool()
+        rsa.TRKGEN_GetEnable(byref(enable))
+        return enable.value
+    except Exception as e:
+        raise SDR_Error(0,
+            "Failed to get tracking generator enable status.", e)
+
+def TRKGEN_GetHwInstalled():
+    """
+    Return the tracking generator hardware present status.
+
+    Note: This method is for RSA500A/600A series instruments only.
+
+    Returns
+    -------
+    bool
+        True for trk. gen. HW is installed in the unit. False if not.
+    """
+    try:
+        installed = c_bool()
+        rsa.TRKGEN_GetHwInstalled(byref(installed))
+        return installed.value
+    except Exception as e:
+        raise SDR_Error(0,
+            "Failed to get tracking gen. HW present status.", e)
+
+def TRKGEN_GetOutputLevel():
+    """
+    Return the output level of the tracking generator.
+
+    Note: This method is for RSA500A/600A series instruments only.
+
+    Returns
+    -------
+    float
+        Value of the tracking generator output level in dBm.
+        Range: -43 dBm to -3 dBm
+    """
+    try:
+        level = c_double()
+        rsa.TRKGEN_GetOutputLevel(byref(level))
+        return level.value
+    except Exception as e:
+        raise SDR_Error(0, "Failed to get trk. gen. output level.", e)
+
+def TRKGEN_SetEnable(enable):
+    """
+    Set the tracking generator enable status.
+
+    Note: This method is for RSA500A/600A series instruments only.
+
+    Parameters
+    ----------
+    enable : bool
+        True to enable, False to disable
+    """
+    try:
+        rsa.TRKGEN_SetEnable(c_bool(enable))
+    except Exception as e:
+        raise SDR_Error(0,
+            "Failed to set tracking generator enable status.", e)
+
+def TRKGEN_SetOutputLevel(level):
+    """
+    Set the output power of the tracking generator in dBm.
+
+    Note: This method is for RSA500A/600A series instruments only.
+
+    The tracking generator output should be set prior to setting the
+    center frequency. See the setCenterFreq() and preset() methods to
+    set the center frequency.
+
+    Parameters
+    ----------
+    level : float
+        Requested output level of tracking generator in dBm.
+        Range: -43 to -3 dBm.
+    """
+    if -43 <= level <= -3:
+        try:
+            rsa.TRKGEN_SetOutputLevel(c_double(level))
+        except Exception as e:
+            raise SDR_Error(0, "Failed to set trk. gen. output level.", e)
+    else:
+        raise SDR_Error(0, "Input value is not within the valid range.",
+            "Please enter a value between -43 and -3 dBm.")
+
+""" TRIGGER METHODS """
 
 # All tested and functional
+# Except maybe forceTrigger()???
 
 def forceTrigger():
     """Force the device to trigger."""
