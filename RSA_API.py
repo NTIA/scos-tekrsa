@@ -1598,16 +1598,91 @@ def getSatSystem():
     Note: This method is for RSA500A/600A series instruments only.
 
     This method should only be called when the GNSS receiver is
-    enabled. It will not return valid parameter data when the receiver
-    is disabled.
+    enabled.
+
+    Returns
+    -------
+    string
+        The GNSS satellite system selection. Valid results:
+            GPS_GLONASS : GPS + Glonass systems used.
+            GPS_BEIDOU : GPS + Beidou systems used.
+            GPS : Only GPS system used.
+            GLONASS : Only Glonass system used.
+            BEIDOU : Only Beidou system used.
     """
     try:
+        satSystem = c_int()
+        rsa.GNSS_GetSatSystem(byref(satSystem))
+        return GNSS_SATSYS[satSystem.value - 1]
+    except Exception as e:
+        raise SDR_Error(0, "Failed to get GNSS satellite system.", e)
 
 def getStatusRxLock():
+    """
+    Return the GNSS receiver navigation lock status.
 
-def setAntennaPower():
+    Note: This method is for RSA500A/600A series instruments only.
 
-def setEnableGnss():
+    The lock status changes only once per second at most. GNSS-derived
+    time reference and frequency reference alignments are only applied
+    with the GNSS receiver is locked.
+
+    Returns
+    -------
+    bool
+        True for enabled and locked, False for disabled or not locked.
+    """
+    try:
+        locked = c_bool()
+        rsa.GNSS_GetStatusRxLock(byref(locked))
+        return locked.value
+    except Exception as e:
+        raise SDR_Error(0, "Failed to get GNSS nav. lock status.", e)
+
+def setAntennaPower(powered):
+    """
+    Set the GNSS antenna power output state.
+
+    Note: This method is for RSA500A/600A series instruments only.
+
+    The GNSS receiver must be enabled for antenna power to be output.
+    If the receiver is disabled, the antenna power output is also
+    disabled, even when set to the enabled state by this method. When
+    antenna power is enabled, 3.0 V DC is switched to the antenna
+    center conductor  line for powering  an external antenna. When
+    disabled, the voltage source is disconnected from the antenna.
+
+    Parameters:
+    -----------
+    powered : bool
+        True to enable antenna power output, False to disable it.
+    """
+    try:
+        rsa.GNSS_SetAntennaPower(c_bool(powered))
+    except Exception as e:
+        raise SDR_Error(0, "Failed to set GNSS antenna power.", e)
+
+def setEnableGnss(enable):
+    """
+    Enable or disable the internal GNSS receiver operation.
+
+    Note: This method is for RSA500A/600A series instruments only.
+
+    If the GNSS receiver functions are not needed, it should be
+    disabled to conserve battery power.
+
+    Parameters
+    ----------
+    enable : bool
+        True enabled the GNSS receiver. False disables it.
+    """
+    try:
+        rsa.GNSS_SetEnable(c_bool(enable))
+    except Exception as e:
+        if enable:
+            raise SDR_Error(0, "Failed to enable GNSS receiver.", e)
+        else:
+            raise SDR_Error(0, "Failed to disable GNSS receiver.", e)
 
 def setSatSystem(satSystem):
     """
