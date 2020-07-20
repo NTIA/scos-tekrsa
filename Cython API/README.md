@@ -1,14 +1,21 @@
 Cython API
 ==========
 
-This allows for the RSA API to be used in Python without having to think about data type conversion for compatibility. Generally, you'll import either the `.so` or `.pyd` file which is built by Cython, and then make any API calls as normal, but without worrying about converting to C data types! API functions are renamed as their original name with a `_py` appended: `API_SomeFunction()` --> `API_SomeFunction_py()`.
+This allows for the RSA API to be used in Python without having to think about data type conversion for compatibility. Generally, you'll import the `.so` file which is built by Cython, and then make any API calls as normal, but without worrying about converting to C data types! API functions are renamed as their original name with a `_py` appended: `API_SomeFunction()` --> `API_SomeFunction_py()`.
 
-This code is originally forked from [tektronix/RSA_API](https://github.com/tektronix/RSA_API/tree/master/Python/Cython%20Version). Most of the functions available in the RSA API are implemented here (exceptions/notes listed below). In addition, a few helper methods are added which wrap multiple functions in order to make common acquisitions a little easier.
+This code is originally forked from [tektronix/RSA_API](https://github.com/tektronix/RSA_API/tree/master/Python/Cython%20Version). Most of the functions available in the RSA API are implemented here (exceptions/notes listed below). In addition, a few helper methods are added which wrap multiple functions in order to make common acquisitions a little easier. Currently, this code is made for use on Ubuntu with the Linux API from Tektronix, and would require some modification to run properly on Windows.
 
 Usage
 -----
-1. Compile the `.pyd` or `.so` file by running `python3 setup.py build_ext --inplace`.
+1. Compile the `.so` file by running `python3 setup.py build_ext --inplace`.
 2. Import the compiled file from Python as needed: `import RSA_API`
+
+Requirements
+------------
+- Python 3.6+, Cython, and NumPy
+- The RSA API for Linux files:
+	- `libRSA_API.so`
+	- `RSA_API.h` 
 
 To Do
 -----
