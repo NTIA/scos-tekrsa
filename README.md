@@ -1,6 +1,8 @@
 Tektronix RSA scos Testing
 ==============================
 
+Note : This repository is currently undergoing a transformation. The information below is outdated and will be updated soon.
+
 Building a Python wrapper for the Tektronix RSA API which will eventually be used to integrate the [Tektronix RSA306b](https://www.tek.com/spectrum-analyzer/rsa306) into [`scos-sensor`](https://github.com/NTIA/scos-sensor). At the moment, this repository serves mostly as a backup for in-progress code while the RSA306b is characterized. Eventually, it will morph into a plugin which adds RSA support into `scos-sensor`. It will also be possible to relatively easily extend this code to support a larger variety of devices in the Tektronix RSA line of real time spectrum analyzers.
 
 Brief Overview of Files
