@@ -28,39 +28,34 @@ Specific Function Notes
 - All TRKGEN functions
 	- Completely missing with no explanation
 - CONFIG_DecodeFreqRefUserSettingString
-	- Implementation commented out [1.481]
-	- Required struct commented out [2.301]
+	- Commented out, no explanation
+	- Required FREQREF_USER_INFO struct commented out
 	- Can't test, RSA500/600 only
 - IQBLK_GetIQDataCplx
-	- Commented out, not working [1.753]
+	- Commented out, not working
 - DPX_Configure
-	- Incorporated into DPX_SetParameters_py() [1.916]
+	- Incorporated into DPX_SetParameters_py()
 	- Not implemented by itself
 - DPX_FinishFrameBuffer
-	- Incorporated into DPX_GetFrameBuffer_py() [1.986]
+	- Incorporated into DPX_GetFrameBuffer_py()
 	- Not implemented by itself
 - AUDIO_GetData
-	- Comment says error checking not working [1.1136]
+	- Comment says error checking not working
 - IFSTREAM_SetDiskFileMode
-	- Commented out, "Legacy" [1.1167]
+	- Commented out for being "Legacy"
 	- Use IFSTREAM_SetOutputConfiguration_py() instead
 - IFSTREAM_GetEQParameters
-	- Commented out, not working [1.1216]
+	- Commented out, not working
 - IFSTREAM_GetIFFFrames
-	- Commented out, not working [1.1253]
+	- Commented out, not working
 - IQSTREAM_GetDiskFileInfo
-	- Commented, no explanation [1.1376]
-	- Data structure needed appears to be implemented [2.754]
+	- Commented out, no explanation
+	- Required IQSTRMFILEINFO struct appears to be implemented
 - REFTIME_GetReferenceTimeSource()
 	- Completely missing, no explanation
 
 Helper Methods
 --------------
-- IQBLK_Acquire_py() [1.761]
-- SPECTRUM_Acquire_py() [1.867]
-- DPX_AcquireFB_py() [1.1017]
-
-Code References
----------------
-[1] RSA_API.pyx
-[2] RSA_API_h.pxd
+- IQBLK_Acquire_py()
+- SPECTRUM_Acquire_py()
+- DPX_AcquireFB_py()
