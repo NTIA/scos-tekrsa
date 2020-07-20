@@ -478,11 +478,11 @@ def CONFIG_GetFreqRefUserSetting_py():
     return o_usstr
     
 
-def CONFIG_DecodeFreqRefUserSettingString_py(i_usstr):
-    cdef char* _i_usstr = i_usstr
-    cdef FREQREF_USER_INFO o_fui
-    err_check(CONFIG_DecodeFreqRefUserSettingString(_i_usstr, &o_fui))
-    return o_fui
+# def CONFIG_DecodeFreqRefUserSettingString_py(i_usstr):
+#     cdef char* _i_usstr = i_usstr
+#     cdef FREQREF_USER_INFO o_fui
+#     err_check(CONFIG_DecodeFreqRefUserSettingString(_i_usstr, &o_fui))
+#     return o_fui
 
 
 ##########################################################
