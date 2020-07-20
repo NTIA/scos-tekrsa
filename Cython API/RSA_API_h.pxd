@@ -298,13 +298,13 @@ cdef extern from 'RSA_API.h':
     ReturnStatus CONFIG_SetFreqRefUserSetting(const char* i_usstr);
     ReturnStatus CONFIG_GetFreqRefUserSetting(char* o_usstr);
 
-    ctypedef struct FREQREF_USER_INFO:
-        bint isValid
-        uint32_t dacValue
-        char datetime[200]
-        double temperature
-    
-    ReturnStatus CONFIG_DecodeFreqRefUserSettingString(const char* i_usstr, FREQREF_USER_INFO* o_fui)
+    # ctypedef struct FREQREF_USER_INFO:
+    #     bint isValid
+    #     uint32_t dacValue
+    #     char datetime[200]
+    #     double temperature
+    #
+    # ReturnStatus CONFIG_DecodeFreqRefUserSettingString(const char* i_usstr, FREQREF_USER_INFO* o_fui)
 
 
     ##########################################################
@@ -486,7 +486,7 @@ cdef extern from 'RSA_API.h':
 
     ctypedef struct Spectrum_TraceInfo:
         uint64_t timestamp       # timestamp of the first acquisition sample
-        int acqDataStatus	# See AcqDataStatus enumeration for bit definitions
+        int acqDataStatus   # See AcqDataStatus enumeration for bit definitions
 
     ReturnStatus SPECTRUM_SetEnable(bint enable)
     ReturnStatus SPECTRUM_GetEnable(bint* enable)
@@ -615,7 +615,7 @@ cdef extern from 'RSA_API.h':
     #     ADM_FM_75KHZ = 2
     #     ADM_FM_200KHZ = 3
     #     ADM_AM_8KHZ = 4
-    #     # ADM_NONE	// internal use only
+    #     # ADM_NONE    // internal use only
 
     # ReturnStatus AUDIO_SetMode(AudioDemodMode mode)
     # ReturnStatus AUDIO_GetMode(AudioDemodMode* mode)
