@@ -1,4 +1,4 @@
 __pycache__
-build
-rsa_api.cpython-36m-x86_64-linux-gnu.so
+Cython\ API/build
+Cython\ API/rsa_api.cpython-36m-x86_64-linux-gnu.so
 rsa_api.c
