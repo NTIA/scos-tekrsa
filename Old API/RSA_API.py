@@ -2153,7 +2153,7 @@ def IQSTREAM_SetAcqBandwidth(bwHz_req):
 
     if minAcBW <= bwHz_req <= maxAcBW:
         rsa.IQSTREAM_SetAcqBandwidth(c_double(bwHz_req))
-        newCF = get_centerFreq()
+        newCF = getCenterFreq()
         return newCF
     else:
         # Error has placeholder numerical ID. Update later.
