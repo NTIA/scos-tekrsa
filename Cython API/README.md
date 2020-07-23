@@ -8,7 +8,7 @@ This code is originally forked from [tektronix/RSA_API](https://github.com/tektr
 Usage
 -----
 1. Compile the `.so` file by running `python3 setup.py build_ext --inplace`.
-2. Import the compiled file from Python as needed: `import RSA_API`
+2. Import the compiled file from Python as needed: `import rsa_api`
 
 Requirements
 ------------
@@ -16,6 +16,7 @@ Requirements
 - The RSA API for Linux files:
 	- `libRSA_API.so`
 	- `RSA_API.h` 
+- File path for `libRSA_API.so` added to `$LD_LIBRARY_PATH`
 
 To Do
 -----
