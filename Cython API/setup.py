@@ -7,10 +7,14 @@ from distutils.extension import Extension
 from Cython.Build import cythonize
 import numpy as np
 
-api_h_loc = '/usr/local/lib/RSA_API' # Location of RSA_API.h
-api_lib_loc = '/usr/local/lib/RSA_API' # location of libRSA_API.so
+# Location of RSA_API.h and libRSA_API.so
+# 	Make sure to also add this path to your $LD_LIBRARY_PATH env. variable
+# 	For example, add to ~/.bashrc:
+# 	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/RSA_API
+# 	And then run ldconfig
+api_loc = '/usr/local/lib/RSA_API'
 
-# clean previous build
+# Clean previous build (not required)
 for root, dirs, files in os.walk(".", topdown=False):
 	for name in files:
 		if (name.startswith('rsa_api') and not(name.endswith(".pyx") or name.endswith(".pxd"))):
@@ -23,9 +27,8 @@ setup(ext_modules=cythonize(
 	[Extension('rsa_api',
 		['rsa_api.pyx'],
 		libraries=['RSA_API'],
-		extra_compile_args=['-g', '-Wall'],
-		define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
-		include_dirs=[api_h_loc, np.get_include()],
-		library_dirs=[api_lib_loc])],
+		extra_compile_args=['-Wall'], # Add extra gcc flags
+		include_dirs=[api_loc, np.get_include()],
+		library_dirs=[api_loc])],
 		compiler_directives={'language_level':'3'})
 )
