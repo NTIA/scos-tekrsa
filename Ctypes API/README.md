@@ -1,69 +1,44 @@
-Cython API
+
+Ctypes API
 ==========
 
-This allows for the RSA API to be used in Python without having to think about data type conversion for compatibility. Generally, you'll import the `.so` file which is built by Cython, and then make any API calls as normal, but without worrying about converting to C data types! API functions are renamed as their original name with a `_py` appended: `API_SomeFunction()` --> `API_SomeFunction_py()`.
+This allows for the RSA API to be used in Python without having to think about data type conversion for compatibility. Generally, you'll import the `RSA_API.py` module, and then make any API calls as normal, but without worrying about converting to C data types! API functions are all named exactly as they appear in the RSA API reference manual for ease of use, and most of the information from that manual is included in docstring format along with the relevant Python functions.
 
-This code is originally forked from [tektronix/RSA_API](https://github.com/tektronix/RSA_API/tree/master/Python/Cython%20Version). Most of the functions available in the RSA API are implemented here (exceptions/notes listed below). In addition, a few helper methods are added which wrap multiple functions in order to make common acquisitions a little easier. Currently, this code is made for use on Ubuntu with the Linux API from Tektronix, and would require some modification to run properly on Windows.
+Due to the RSA API's use of custom C data structures and enumeration types, some of the Python versions of these API functions work slightly differently. All the information you need about inputs and outputs is contained within the docstring for each function.
+
+Most of the functions available in the RSA API are implemented here (exceptions/notes listed below). In addition, a few helper methods are added which wrap multiple functions in order to make common tasks a little easier.
 
 Usage
 -----
-1. Compile the `.so` file by running `python3 setup.py build_ext --inplace`.
-2. Import the compiled file from Python as needed: `import rsa_api`
+1. Import the module into your Python script: `import RSA_API`
 
 Requirements
 ------------
-- Python 3.6+, Cython, and NumPy
-- The RSA API for Linux files:
-	- `libRSA_API.so`
-	- `RSA_API.h` 
-- File path for `libRSA_API.so` added to `$LD_LIBRARY_PATH`
+- Python 3.6+, ctypes, and enum
+- The [RSA API](https://www.tek.com/spectrum-analyzer/rsa306-software/rsa-application-programming-interface--api-for-64bit-linux--v100014) for Linux:
+	- Install according to documentation included in download
+	- Place the following files in a folder called `drivers`, in the same directory as `RSA_API.py`:
+		- `libRSA_API.so`
+		- `libcyusb_shared.so` 
+
+The following sections are incomplete:
 
 To Do
 -----
-- Route RSAError's to SDR_Error
-- Implement Tracking Generator functions (low priority, RSA500/600 only)
+- Implement remaining API functions
+- Finish testing implemented functions
+- Make functions which require string inputs case-insensitive
+- Create IQ block and IQ stream acquisition helper methods
 
 General Notes
 -------------
-- API throws errors to RSAError class defined in RSA_API.pyx
-	- Can easily route these to SDR_Error
-- Cython builds from .pyx and .pxd files
-	- Creates either a .so (unix) or .pyd (Windows) file
-	- Could affect compatibility/usage down the line
+
 
 Specific Function Notes
 -----------------------
-- All TRKGEN functions
-	- Completely missing with no explanation
-- CONFIG_DecodeFreqRefUserSettingString
-	- Commented out, no explanation
-	- Required FREQREF_USER_INFO struct commented out
-	- Can't test, RSA500/600 only
-- IQBLK_GetIQDataCplx
-	- Commented out, not working
-- DPX_Configure
-	- Incorporated into DPX_SetParameters_py()
-	- Not implemented by itself
-- DPX_FinishFrameBuffer
-	- Incorporated into DPX_GetFrameBuffer_py()
-	- Not implemented by itself
-- AUDIO_GetData
-	- Comment says error checking not working
-- IFSTREAM_SetDiskFileMode
-	- Commented out for being "Legacy"
-	- Use IFSTREAM_SetOutputConfiguration_py() instead
-- IFSTREAM_GetEQParameters
-	- Commented out, not working
-- IFSTREAM_GetIFFFrames
-	- Commented out, not working
-- IQSTREAM_GetDiskFileInfo
-	- Commented out, no explanation
-	- Required IQSTRMFILEINFO struct appears to be implemented
-- REFTIME_GetReferenceTimeSource()
-	- Completely missing, no explanation
+
 
 Helper Methods
 --------------
-- IQBLK_Acquire_py()
-- SPECTRUM_Acquire_py()
-- DPX_AcquireFB_py()
+- `search_connect()`
+- `config_spectrum()`
