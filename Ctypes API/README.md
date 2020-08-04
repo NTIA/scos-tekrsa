@@ -21,24 +21,84 @@ Requirements
 		- `libRSA_API.so`
 		- `libcyusb_shared.so` 
 
-The following sections are incomplete:
-
-To Do
------
-- Implement remaining API functions
-- Finish testing implemented functions
-- Make functions which require string inputs case-insensitive
-- Create IQ block and IQ stream acquisition helper methods
-
-General Notes
--------------
-
-
-Specific Function Notes
------------------------
-
-
 Helper Methods
 --------------
 - `search_connect()`
 - `config_spectrum()`
+
+To Do
+-----
+- Make functions which require string inputs case-insensitive
+- Create IQ block and IQ stream acquisition helper methods
+- Add 'verbose' option to helper methods
+- Test all functions that can be tested with RSA306b
+
+
+Testing Needed (Can Test with RSA306b)
+--------------------------------------
+- All `IQBLK` methods
+- All `IQSTREAM` methods
+- All `SPECTRUM` methods
+- All `TIME` methods
+- ALL `TRIG` methods
+
+Currently Not Working
+---------------------
+- `AUDIO_GetData()`
+	- Returns all zeros instead of data as expected.
+	- Low priority functionality.
+- `CONFIG_SetExternalRefEnable()`
+	- Can't set to anything other than internal.
+- `CONFIG_SetFrequencyReferenceSource()`
+	- Can't set to anything other than internal.
+- `CONFIG_GetExternalRefFrequency()`
+	- Probably works, but can't test due to above two commands being broken.
+
+Testing Needed (RSA500A/600A Only)
+----------------------------------
+	- These functions would require an RSA500/600A device to test
+		- `CONFIG_GetModeGnssFreqRefCorrection()`
+		- `CONFIG_DecodeFreqRefUserSettingString()`
+		- `CONFIG_GetEnableGnssTimeRefAlign()`
+		- `CONFIG_SetEnableGnssTimeRefAlign()`
+		- Some options for `CONFIG_SetFrequencyReferenceSource()`
+		- Some options for `CONFIG_GetFrequencyReferenceSource()`
+		- `CONFIG_GetStatusGnssFreqRefCorrection()`
+		- `CONFIG_SetModeGnssFreqRefCorrection()`
+		- `CONFIG_GetStatusGnssTimeRefAlign()`
+		- `CONFIG_GetFreqRefUserSetting()`
+		- `CONFIG_SetFreqRefUserSetting()`
+		- `CONFIG_GetAutoAttenuationEnable()`
+		- `CONFIG_SetAutoAttenuationEnable()`
+		- `CONFIG_GetRFPreampEnable()`
+		- `CONFIG_SetRFPreampEnable()`
+		- `CONFIG_GetRFAttenuator()`
+		- `CONFIG_SetRFAttenuator()`
+		- Some options for `DEVICE_GetEventStatus()`
+		- All `GNSS` functions
+		- `POWER_GetStatus()`
+		- All `TRKGEN` functions
+
+Functions Omitted from API Wrapper
+----------------------------------
+- `DEVICE_GetErrorString()`
+	- Using `err_check()` and `SDR_Error` to handle and identify errors.
+	- This would be useful to have but the string decoding isn't working right now.
+- `DEVICE_GetNomenclatureW()`
+	- Using `DEVICE_GetNomenclature()` instead.
+	- No reason to implement; redundant.
+- All `DPX` functions
+	- Low priority functionality, but could be added later.
+- All `IFSTREAM` functions
+	- Low priority functionality, but could be added later.
+- `IQBLK_GetIQData()` and `IQBLK_GetIQDataCplx()`
+	- Using `IQBLK_GetIQDataDeinterleaved()` instead.
+	- Could add these for even more flexibility, but ultimately unnecessary.
+- `IQSTREAM_GetIQData()`, `IQSTREAM_GetIQDataBufferSize()`, `IQSTREAM_SetIQDataBufferSize()`
+	- These are only useful if directly receiving IQ data from the IQ Streaming processing, rather than writing IQ Streaming data to file.
+	- Currently not necessary, but could be added later.
+- `IQSTREAM_SetDiskFilenameBaseW()`
+	- Using `IQSTREAM_SetDiskFilenameBase()` instead.
+	- No reason to implement; redundant.
+- `PLAYBACK_OpenDiskFile()`
+	- Low priority functionality, but could be added later.
