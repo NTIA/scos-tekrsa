@@ -56,28 +56,28 @@ Currently Not Working
 
 Testing Needed (RSA500A/600A Only)
 ----------------------------------
-	- These functions would require an RSA500/600A device to test
-		- `CONFIG_GetModeGnssFreqRefCorrection()`
-		- `CONFIG_DecodeFreqRefUserSettingString()`
-		- `CONFIG_GetEnableGnssTimeRefAlign()`
-		- `CONFIG_SetEnableGnssTimeRefAlign()`
-		- Some options for `CONFIG_SetFrequencyReferenceSource()`
-		- Some options for `CONFIG_GetFrequencyReferenceSource()`
-		- `CONFIG_GetStatusGnssFreqRefCorrection()`
-		- `CONFIG_SetModeGnssFreqRefCorrection()`
-		- `CONFIG_GetStatusGnssTimeRefAlign()`
-		- `CONFIG_GetFreqRefUserSetting()`
-		- `CONFIG_SetFreqRefUserSetting()`
-		- `CONFIG_GetAutoAttenuationEnable()`
-		- `CONFIG_SetAutoAttenuationEnable()`
-		- `CONFIG_GetRFPreampEnable()`
-		- `CONFIG_SetRFPreampEnable()`
-		- `CONFIG_GetRFAttenuator()`
-		- `CONFIG_SetRFAttenuator()`
-		- Some options for `DEVICE_GetEventStatus()`
-		- All `GNSS` functions
-		- `POWER_GetStatus()`
-		- All `TRKGEN` functions
+- These functions would require an RSA500/600A device to test
+	- `CONFIG_GetModeGnssFreqRefCorrection()`
+	- `CONFIG_DecodeFreqRefUserSettingString()`
+	- `CONFIG_GetEnableGnssTimeRefAlign()`
+	- `CONFIG_SetEnableGnssTimeRefAlign()`
+	- Some options for `CONFIG_SetFrequencyReferenceSource()`
+	- Some options for `CONFIG_GetFrequencyReferenceSource()`
+	- `CONFIG_GetStatusGnssFreqRefCorrection()`
+	- `CONFIG_SetModeGnssFreqRefCorrection()`
+	- `CONFIG_GetStatusGnssTimeRefAlign()`
+	- `CONFIG_GetFreqRefUserSetting()`
+	- `CONFIG_SetFreqRefUserSetting()`
+	- `CONFIG_GetAutoAttenuationEnable()`
+	- `CONFIG_SetAutoAttenuationEnable()`
+	- `CONFIG_GetRFPreampEnable()`
+	- `CONFIG_SetRFPreampEnable()`
+	- `CONFIG_GetRFAttenuator()`
+	- `CONFIG_SetRFAttenuator()`
+	- Some options for `DEVICE_GetEventStatus()`
+	- All `GNSS` functions
+	- `POWER_GetStatus()`
+	- All `TRKGEN` functions
 
 Functions Omitted from API Wrapper
 ----------------------------------
