@@ -40,7 +40,7 @@ Testing Needed (Can Test with RSA306b)
 - All `IQSTREAM` methods
 - All `SPECTRUM` methods
 - All `TIME` methods
-- ALL `TRIG` methods
+- All `TRIG` methods
 
 Currently Not Working
 ---------------------
