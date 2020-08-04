@@ -295,7 +295,6 @@ def err_check(rs):
             + ReturnStatus(rs).name
         )
 
-# Add a 'verbose' option to these
 def search_connect(loadPreset=True):
     """
     Search for and connect to a Tektronix RSA device. 
@@ -353,8 +352,6 @@ def config_spectrum(cf, refLevel, span, rbw):
 
 """ ALIGNMENT METHODS """
 
-# All tested and working
-
 def ALIGN_GetAlignmentNeeded():
     """
     Determine if an alignment is needed or not.
@@ -394,13 +391,6 @@ def ALIGN_RunAlignment():
     err_check(rsa.ALIGN_RunAlignment())
 
 """ AUDIO METHODS """
-
-# All tested and working EXCEPT:
-# AUDIO_GetData()
-# - Does not seem to be writing data correctly
-#   - Returns all zeros
-# - As written, requires adding a numpy import
-# - So all audio methods are mostly useless right now
 
 def AUDIO_SetFrequencyOffset(freqOffsetHz):
     """
@@ -448,7 +438,6 @@ def AUDIO_GetEnable():
     err_check(rsa.AUDIO_GetEnable(byref(enable)))
     return enable.value
 
-# Currently NOT WORKING:
 def AUDIO_GetData(inSize):
     """
     Return audio sample data in a user buffer.
@@ -579,32 +568,6 @@ def AUDIO_Stop():
     err_check(rsa.AUDIO_Stop())
 
 """ CONFIG METHODS """
-
-# All tested and working EXCEPT
-# CONFIG_SetExternalRefEnable()
-# CONFIG_SetFrequencyReferenceSource()
-# CONFIG_GetExternalRefFrequency
-# - Likely works, but can't test due to not being able to set ext ref
-
-# Untestable RSA500A/600 commands:
-# -------------------------------
-# CONFIG_GetModeGnssFreqRefCorrection()
-# CONFIG_DecodeFreqRefUserSettingString()
-# CONFIG_GetEnableGnssTimeRefAlign()
-# CONFIG_SetEnableGnssTimeRefAlign()
-# Some options for CONFIG_SetFrequencyReferenceSource()
-# Some options for CONFIG_GetFrequencyReferenceSource()
-# CONFIG_GetStatusGnssFreqRefCorrection()
-# CONFIG_SetModeGnssFreqRefCorrection()
-# CONFIG_GetStatusGnssTimeRefAlign()
-# CONFIG_GetFreqRefUserSetting() - likely broken
-# CONFIG_SetFreqRefUserSetting()
-# CONFIG_GetAutoAttenuationEnable()
-# CONFIG_SetAutoAttenuationEnable()
-# CONFIG_GetRFPreampEnable()
-# CONFIG_SetRFPreampEnable()
-# CONFIG_GetRFAttenuator()
-# CONFIG_SetRFAttenuator()
 
 def CONFIG_GetCenterFreq():
     """Return the current center frequency in Hz."""
@@ -1344,14 +1307,6 @@ def CONFIG_SetRFAttenuator(value):
 
 """ DEVICE METHODS """
 
-# All tested and working EXCEPT for untestable RSA500/600
-# options for DEVICE_GetEventStatus()
-
-#      Omitted method     |    Reason for omission
-#  ---------------------  | -------------------------
-#  DEVICE_GetErrorString  | Using err_check and SDR_Error instead
-# DEVICE_GetNomenclatureW | Using DEVICE_GetNomenclature() instead
-
 def DEVICE_Connect(deviceID=0):
     """
     Connect to a device specified by the deviceID parameter.
@@ -1730,8 +1685,6 @@ def DEVICE_GetEventStatus(eventID):
 
 """ GNSS METHODS """
 
-# All these methods are untestable due to being RSA500A/600A only
-
 def GNSS_ClearNavMessageData():
     """
     Clear the navigation message data queue.
@@ -2007,13 +1960,6 @@ def GNSS_SetSatSystem(satSystem):
 
 """ IQ BLOCK METHODS """
 
-# Not yet tested
-
-#      Omitted method     |    Reason for omission
-#  ---------------------  | -------------------------
-#    IQBLK_GetIQData()    | Using IQBLK_GetIQDataDeinterleaved
-#  IQBLK_GetIQDataCplx()  | Using IQBLK_GetIQDataDeinterleaved
-
 def IQBLK_GetIQAcqInfo():
     """
     Return IQ acquisition status info for the most recent IQ block.
@@ -2276,15 +2222,6 @@ def IQBLK_WaitForIQDataReady(timeoutMsec):
     return ready.value
 
 """ IQ STREAM METHODS """
-
-# Not yet tested
-
-#          Omitted method         |    Reason for omission
-#  -----------------------------  | -------------------------
-#      IQSTREAM_GetIQData()       | Only streaming to file for now
-#  IQSTREAM_GetIQDataBufferSize() | Only streaming to file for now
-# IQSTREAM_SetDiskFilenameBaseW() | Using IQSTREAM_SetDiskFilenameBase() instead
-#  IQSTREAM_SetIQDataBufferSize() | Only streaming to file for now
 
 def IQSTREAM_GetMaxAcqBandwidth():
     """
@@ -2767,8 +2704,6 @@ def IQSTREAM_WaitForIQDataReady(timeoutMsec):
 
 """ PLAYBACK FUNCTIONS """
 
-# Not yet implemented
-
 # def PLAYBACK_OpenDiskFile(filename, startPercentage, stopPercentage,
 #                           skipTimeBetweenFullAcquisitions, loopAtEndOfFile,
 #                           emulateRealTime):
@@ -2790,8 +2725,6 @@ def PLAYBACK_GetReplayComplete():
     return complete.value
 
 """ POWER FUNCTIONS """
-
-# Untestable due to being RSA500A only
 
 def POWER_GetStatus():
     """
@@ -2841,8 +2774,6 @@ def POWER_GetStatus():
         pwrInfo.batteryHardwareError.value)
 
 """ SPECTRUM METHODS """
-
-# Not yet tested
 
 def SPECTRUM_AcquireTrace():
     """
@@ -3144,8 +3075,6 @@ def SPECTRUM_WaitForTraceReady(timeoutMsec):
 
 """ TIME METHODS """
 
-# Not yet tested.
-
 def REFTIME_SetReferenceTime(refTimeSec, refTimeNsec, refTimestamp):
     """
     Set the RSA API time system association.
@@ -3359,8 +3288,6 @@ def REFTIME_GetTimestampRate():
 
 """ TRACKING GENERATOR METHODS """
 
-# Not yet tested
-
 def TRKGEN_GetEnable():
     """
     Return the tracking generator enabled status.
@@ -3448,8 +3375,6 @@ def TRKGEN_SetOutputLevel(level):
             "Please enter a value between -43 and -3 dBm.")
 
 """ TRIGGER METHODS """
-
-# Not yet tested
 
 def TRIG_ForceTrigger():
     """Force the device to trigger."""
