@@ -10,7 +10,8 @@ Most of the functions available in the RSA API are implemented here (exceptions/
 
 Usage
 -----
-1. Import the module into your Python script: `import RSA_API`
+1. Install the [RSA API](https://www.tek.com/spectrum-analyzer/rsa306-software/rsa-application-programming-interface--api-for-64bit-linux--v100014) for Linux
+2. Import the module into your Python script: `import RSA_API`
 
 Requirements
 ------------
