@@ -1,43 +1,42 @@
-Tektronix RSA scos Testing
-==============================
+scos_tekrsa
+============
 
-Note : This repository is currently undergoing a transformation. The information below is outdated and will be updated soon.
+Tektronix RSA support for [`scos-sensor`](https://github.com/NTIA/scos-sensor). Currently WIP.
 
-Building a Python wrapper for the Tektronix RSA API which will eventually be used to integrate the [Tektronix RSA306b](https://www.tek.com/spectrum-analyzer/rsa306) into [`scos-sensor`](https://github.com/NTIA/scos-sensor). At the moment, this repository serves mostly as a backup for in-progress code while the RSA306b is characterized. Eventually, it will morph into a plugin which adds RSA support into `scos-sensor`. It will also be possible to relatively easily extend this code to support a larger variety of devices in the Tektronix RSA line of real time spectrum analyzers.
+This will eventually become a plugin which adds support for the [Tektronix RSA306b](https://www.tek.com/spectrum-analyzer/rsa306) into [`scos-sensor`](https://github.com/NTIA/scos-sensor). It will also be possible to relatively easily extend this code to support a wider range of Tektronix RSA devices which use the same API: the RSA306, RSA500A series, and RSA600A series real time spectrum analyzers. 
 
-Brief Overview of Files
------------------------
+Brief Overview of Repo Structure
+--------------------------------
 
-- `RSA_API.py` contains Python implementations of commands that are a part of the Tektronix RSA API, which is implemented in C. It makes use of `ctypes` as well as a few shared object files, and essentially serves to abstract API calls for easier use in other Python scripts. It does some error handling and makes some minor changes for the sake of usability, and aims to be well-documented enough to serve as the sole reference for future development. This API supports Tektronix RSA: 306, 306B, 500A Series, and 600A Series.
+- `scos_tekrsa` and the top level directory contain the main files which will incorporate the RSA into `scos-sensor`. Right now, there isn't much here, but this will be the main content of this repository when finished.
 
-- `testbed.py` is, well, exactly that. This is where I'm currently writing various methods used for different tests and characterizations of the RSA306b. It is a temporary file, and is a little messier as a result.
+- `Ctypes API` contains a custom-made Python wrapper for the RSA API.
+	- The `RSA_API.py` file contains Python methods which wrap API calls in order to make them more Pythonic and easier to use. This wrapper handles data type conversions under the hood, so you can interface with the RSA using standard Python data types, instead of worrying about converting to the proper C data types for every function call. API calls are documented using a standard docstring format to allow for quick reference of API functionality in a development environment.
 
-- `drivers` contains the two shared object files required to interface with the RSA. These are loaded up within `RSA_API.py`.
-
-- `SDR_Error.py` is a simple class, borrowed from [`sdrcalibrator`](https://github.com/NTIA/sdrcalibrator/) which is used to handle errors.
+- `Cython API` contains another version of the API, which is currently not functional. This version is forked from the Tektronix [Cython RSA API](https://github.com/tektronix/RSA_API/tree/master/Python/Cython%20Version), with adaptations made to the `setup.py` file in order to run on Linux. There are some limitations to this version of the API, as documented in the [`README`](https://github.com/NTIA/scos_tekrsa/blob/master/Cython%20API/README.md). Also, it currently has errors which cause the module it compiles not to import into a Python script. This makes it currently unusable, although in the future this may be fixed and used instead of the Ctypes version. This version likely runs faster than the Ctypes implementation.
 
 Usage
 -----
-As mentioned, this code isn't really ready for any real usage. If you do wish to try it out, though, here's the way to go about it.
+As of right now, only the custom Ctypes API is worth trying to use. If you do wish to try it out, here's the way to go about it.
 
-Clone this repository, and connect the RSA306b to your computer via a USB 3.0 port. Then, you can either run the testbed code (not necessarily recommended), or start by writing your own code (recommended).
+Clone this repository (or just the `Ctypes API` folder), and connect the RSA306b to your computer via a USB 3.0 port. Then, you can start by writing your own code to control the RSA 306b.
 
-To run the testbed code, open a terminal in the directory where you cloned the repository. Run `python3 testbed.py`. That's it! Keep in mind that the testbed file is unpredictable in function, as it is updated to run different tests, and in functionality, as I may commit something that's currently not working.
+To start writing your own RSA script, create a new Python file in the cloned `Ctypes API` directory, and start out by importing the RSA API at the beginning of the file:
 
-To start writing your own RSA script, create a new Python file in the cloned directory, and start out by importing the RSA API at the beginning of the file:
-
-`from RSA_API import *`
+```python
+from RSA_API import *
+```
 
 Next you can get started by making API calls. The first thing you might want to do is simply connect to, then disconnect from, the device. If no errors are thrown, everything is working well!
 
 To do this, simply add to your code:
 
-```
+```python
 search_connect()
-disconnect()
+DEVICE_Disconnect()
 ```
 
-Now you can get started using other API calls. The methods within `RSA_API.py` are documented using the standard Python docstring format, which should be enough information to get going.
+Now you can get started using other API calls. The methods within `RSA_API.py` are documented using a standard docstring format, which should be enough information to get going. The [Ctypes API `README`](https://github.com/NTIA/scos_tekrsa/blob/master/Ctypes%20API/README.md) might also be helpful.
 
 Questions/Comments
 ------------------
