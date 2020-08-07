@@ -8,7 +8,7 @@ This will eventually become a plugin which adds support for the [Tektronix RSA30
 Brief Overview of Repo Structure
 --------------------------------
 
-- `scos_tekrsa` and the top level directory contain the main files which will incorporate the RSA into `scos-sensor`. Right now, there isn't much here, but this will be the main content of this repository when finished.
+- `scos_tekrsa` and the top level directory contain the main files which will incorporate the RSA into `scos-sensor`. Right now, there isn't much here, but this will be the main content of this repository when finished. Most of what is present is borrowed from [`scos_usrp`](https://github.com/NTIA/scos_usrp) and will be replaced or adapted soon.
 
 - `Ctypes API` contains a custom-made Python wrapper for the RSA API.
 	- The `RSA_API.py` file contains Python methods which wrap API calls in order to make them more Pythonic and easier to use. This wrapper handles data type conversions under the hood, so you can interface with the RSA using standard Python data types, instead of worrying about converting to the proper C data types for every function call. API calls are documented using a standard docstring format to allow for quick reference of API functionality in a development environment.
@@ -36,7 +36,7 @@ search_connect()
 DEVICE_Disconnect()
 ```
 
-Now you can get started using other API calls. The methods within `RSA_API.py` are documented using a standard docstring format, which should be enough information to get going. The [Ctypes API `README`](https://github.com/NTIA/scos_tekrsa/blob/master/Ctypes%20API/README.md) might also be helpful.
+Now you can get started using other API calls. The methods within `RSA_API.py` are documented using a standard docstring format, which should be enough information to get going. The Ctypes API [`README`](https://github.com/NTIA/scos_tekrsa/blob/master/Ctypes%20API/README.md) might also be helpful.
 
 Questions/Comments
 ------------------
