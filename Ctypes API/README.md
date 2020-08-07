@@ -15,7 +15,7 @@ Usage
 
 Requirements
 ------------
-- Python 3.6+, ctypes, and enum
+- Python 3.6+, ctypes, numpy, and enum
 - The [RSA API](https://www.tek.com/spectrum-analyzer/rsa306-software/rsa-application-programming-interface--api-for-64bit-linux--v100014) for Linux:
 	- Install according to documentation included in download
 	- Place the following files in a folder called `drivers`, in the same directory as `RSA_API.py`:
@@ -26,12 +26,13 @@ Helper Methods
 --------------
 - `search_connect()`
 - `config_spectrum()`
+- `config_iqblk()`
+- `iqblk_collect()`
 
 To Do
 -----
 - Make functions which require string inputs case-insensitive
 - Create IQ block and IQ stream acquisition helper methods
-- Add 'verbose' option to helper methods
 - Test all functions that can be tested with RSA306b
 
 

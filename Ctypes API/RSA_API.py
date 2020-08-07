@@ -22,6 +22,7 @@ To Do's / Ideas:
 from ctypes import *
 from SDR_Error import SDR_Error
 from enum import Enum
+import numpy as np
 
 """ LOAD RSA DRIVER """
 RTLD_LAZY = 0x0001
@@ -295,13 +296,16 @@ def err_check(rs):
             + ReturnStatus(rs).name
         )
 
-def search_connect(loadPreset=True):
+def search_connect(loadPreset=True, verbose=False):
     """
     Search for and connect to a Tektronix RSA device. 
     
     More than 10 devices cannot be found at once. Search criteria are
     not implemented, and connection only occurs if exactly one device is
-    found.
+    found. It may be more convenient to simply use DEVICE_Connect(),
+    however this helper method is useful if preset configuration is
+    desired or if problems are encountered when searching for or
+    connecting to a device. 
 
     Preset configuration is optionally loaded upon connection. This
     results in: trigger mode set to Free Run, center frequency to 1.5
@@ -313,6 +317,8 @@ def search_connect(loadPreset=True):
     ----------
     loadPreset : bool
         Whether to load the preset configuration upon connection.
+    verbose : bool
+        Whether to print the steps of the process as they happen.
 
     Raises
     ------
@@ -321,34 +327,92 @@ def search_connect(loadPreset=True):
         device are found, or if a single device is found but connection
         fails.
     """
+    if verbose:
+        print("Searching for devices...")
+
     foundDevices = DEVICE_Search()
     numFound = len(foundDevices)
 
-    # Zero devices found case handled within search()
+    if numFound == 1:
+        foundDevString = "The following device was found:"
+    elif numFound > 1:
+        foundDevString = "The following devices were found:"
+    for (ID, key) in foundDevices.items():
+        foundDevString += '\r\n{}'.format(str(ID) + ': ' + str(key))
+
+    if verbose:
+        print("Device search completed.\n")
+        print(foundDevString + '\n')
+
+    # Zero devices found case handled within DEVICE_Search()
     # Multiple devices found case:
     if numFound > 1:
-        err_body = "The following devices were found:"
-        # Add list of found devices to error body text
-        for (ID, key) in foundDevices.items():
-            err_body += "\r\n{}".format(str(ID) + ": " + str(key))
         raise SDR_Error(0,
             "Found {} devices, need exactly 1.".format(numFound),
-            err_body)
-
-    DEVICE_Connect()
+            foundDevString)
+    else:
+        if verbose:
+            print("Connecting to device...")
+        DEVICE_Connect()
+        if verbose:
+            print("Device connected.\n")
 
     if loadPreset:
+        if verbose:
+            print("Loading device preset configuration...")
         CONFIG_Preset()
+        if verbose:
+            print("Device preset configuration loaded.\n")
 
-def config_spectrum(cf, refLevel, span, rbw):
+def config_spectrum(cf, refLevel, span, rbw, verbose=False):
     """
     Performs spectrum configurations.
     """
     SPECTRUM_SetEnable(True)
-    setCenterFreq(cf)
-    setReferenceLevel(refLevel)
+    CONFIG_SetCenterFreq(cf)
+    CONFIG_SetReferenceLevel(refLevel)
     SPECTRUM_SetDefault()
-    specSet = SPECTRUM_SETTINGS()
+    (spnVal, rbwVal, enVBW, vbw, trcLn, win, vrtUnt) = SPECTRUM_GetSettings()
+    spnVal = span
+    win = 'Kaiser'
+    vrtUnt = 'dBm'
+    rbwVal = rbw
+    SPECTRUM_SetSettings(spnVal, rbwVal, enVBW, vbw, trcLn, win, vrtUnt)
+    if verbose:
+        (spnVal, rbwVal, enVBW, vbw, trcLn, win, vrtUnt) = SPECTRUM_GetSettings()
+        print(f"Span: {spnVal}\n RBW: {rbwVal}\nVBW Enable: {enVBW}\nVBW: {vbw}\n"
+        + f"Trace Length: {trcLn}\nWindow: {win}\nVertical Unit: {vrtUnt}")
+
+def config_iqblk(cf, refLevel, iqBw, recordLength):
+    """Configure device for IQ block collecion"""
+    CONFIG_SetCenterFreq(cf)
+    CONFIG_SetReferenceLevel(refLevel)
+    IQBLK_SetIQBandwidth(iqBw)
+    IQBLK_SetIQRecordLength(recordLength)
+
+def iqblk_collect(recordLength=1024, timeoutMsec=100):
+    # Acquire and return IQ Block data
+    # !! Configure device BEFORE calling this method
+    # Input: Record length [num. of samples]
+    # Returns single complex IQ numpy array
+
+    # Begin data acquisition
+    DEVICE_Run()
+    IQBLK_AcquireIQData()
+
+    # Wait for device to be ready to send data
+    ready = False
+    while not ready:
+        # Default 100ms timeout
+        ready = IQBLK_WaitForIQDataReady(timeoutMsec)
+
+    # Retrieve data
+    (iData, qData, outLen) = IQBLK_GetIQDataDeinterleaved(recordLength)
+
+    # Stop device before exiting
+    DEVICE_Stop()
+
+    return iData + 1j * qData
 
 """ ALIGNMENT METHODS """
 
@@ -2053,18 +2117,19 @@ def IQBLK_GetIQDataDeinterleaved(reqLength):
 
     Returns
     -------
-    iData : array of floats
+    iData : Numpy array
         Array of I-data.
-    qData : array of floats
+    qData : Numpy array
         Array of Q-data.
     outLength : int
         Actual number of I and Q sample values returned in data arrays.
     """
-    iData, qData = (c_float * reqLength)()
+    iData = (c_float * reqLength)()
+    qData = (c_float * reqLength)()
     outLength = c_int()
     err_check(rsa.IQBLK_GetIQDataDeinterleaved(byref(iData), byref(qData), 
         byref(outLength), c_int(reqLength)))
-    return iData, qData, outLength
+    return np.array(iData), np.array(qData), outLength.value
 
 def IQBLK_GetIQRecordLength():
     """
@@ -2218,7 +2283,7 @@ def IQBLK_WaitForIQDataReady(timeoutMsec):
         the data is not ready and the timeout value is exceeded.
     """
     ready = c_bool()
-    err_check(IQBLK_WaitForIQDataReady(c_int(timeoutMsec), byref(ready)))
+    err_check(rsa.IQBLK_WaitForIQDataReady(c_int(timeoutMsec), byref(ready)))
     return ready.value
 
 """ IQ STREAM METHODS """
