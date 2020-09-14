@@ -1,80 +1,18 @@
-## COPIED FROM TekRSA IMPLEMENTATION
-## NOT YET RE-WRITTEN FOR RSA
-
-"""
-Maintains a persistent connection to the TekRSA.
-
-Example usage:
-    >>> from scos_tekrsa.hardware import radio
-    >>> radio.is_available
-    True
-    >>> rx = radio
-    >>> rx.sample_rate = 10e6
-    >>> rx.frequency = 700e6
-    >>> rx.gain = 40
-    >>> samples = rx.acquire_time_domain_samples(1000)
-"""
-
 import logging
 from datetime import datetime
 
 import numpy as np
 
+# from hardware.radio_iface import RadioInterface
 from scos_actions import utils
 from scos_actions.hardware.radio_iface import RadioInterface
 
 from scos_tekrsa import settings
 from scos_tekrsa.hardware import calibration
-from scos_tekrsa.hardware.mocks.tekrsa_block import MockTekRSA
-from scos_tekrsa.hardware.tests.resources.utils import create_dummy_calibration
 
 logger = logging.getLogger(__name__)
 
-# Testing determined these gain values provide a good mix of sensitivity and
-# dynamic range performance
-VALID_GAINS = (0, 20, 40, 60)
-
-# Define the default calibration dicts
-DEFAULT_SIGAN_CALIBRATION = {
-    "gain_sigan": None,  # Defaults to gain setting
-    "enbw_sigan": None,  # Defaults to sample rate
-    "noise_figure_sigan": 0,
-    "1db_compression_sigan": 100,
-}
-
-DEFAULT_SENSOR_CALIBRATION = {
-    "gain_sensor": None,  # Defaults to sigan gain
-    "enbw_sensor": None,  # Defaults to sigan enbw
-    "noise_figure_sensor": None,  # Defaults to sigan noise figure
-    "1db_compression_sensor": None,  # Defaults to sigan compression + preselector gain
-    "gain_preselector": 0,
-    "noise_figure_preselector": 0,
-    "1db_compression_preselector": 100,
-}
-
-
-class TekRSARadio(RadioInterface):
-    @property
-    def last_calibration_time(self):
-        if self.sensor_calibration:
-            return utils.convert_string_to_millisecond_iso_format(
-                self.sensor_calibration.calibration_datetime
-            )
-        return None
-
-    @property
-    def overload(self):
-        return self._sigan_overload or self._sensor_overload
-
-    @property
-    def capture_time(self):
-        return self._capture_time
-
-    # Define thresholds for determining ADC overload for the sigan
-    ADC_FULL_RANGE_THRESHOLD = 0.98  # ADC scale -1<sample<1, magnitude threshold = 0.98
-    ADC_OVERLOAD_THRESHOLD = (
-        0.01  # Ratio of samples above the ADC full range to trigger overload
-    )
+class RSARadio(RadioInterface):
 
     def __init__(
         self,
@@ -82,7 +20,7 @@ class TekRSARadio(RadioInterface):
         sigan_cal_file=settings.SIGAN_CALIBRATION_FILE,
     ):
         self.uhd = None
-        self.tekrsa = None
+        self.usrp = None
         self._is_available = False
 
         self.sensor_calibration_data = None
@@ -104,10 +42,10 @@ class TekRSARadio(RadioInterface):
             return True
 
         if settings.RUNNING_TESTS or settings.MOCK_RADIO:
-            logger.warning("Using mock TekRSA.")
+            logger.warning("Using mock USRP.")
             # random = settings.MOCK_RADIO_RANDOM
             random = False
-            self.tekrsa = MockTekRSA(randomize_values=random)
+            self.usrp = MockUsrp(randomize_values=random)
             self._is_available = True
         else:
             try:
@@ -118,17 +56,17 @@ class TekRSARadio(RadioInterface):
                 logger.warning("uhd not available - disabling radio")
                 return False
 
-            tekrsa_args = "type=b200"  # find any b-series device
+            usrp_args = "type=b200"  # find any b-series device
 
             try:
-                self.tekrsa = self.uhd.tekrsa.MultiTekRSA(tekrsa_args)
+                self.usrp = self.uhd.usrp.MultiUSRP(usrp_args)
             except RuntimeError:
                 err = "No device found matching search parameters {!r}\n"
-                err = err.format(tekrsa_args)
+                err = err.format(usrp_args)
                 raise RuntimeError(err)
 
-            logger.debug("Using the following TekRSA:")
-            logger.debug(self.tekrsa.get_pp_string())
+            logger.debug("Using the following USRP:")
+            logger.debug(self.usrp.get_pp_string())
 
             try:
                 self._is_available = True
@@ -163,7 +101,7 @@ class TekRSARadio(RadioInterface):
                 logger.exception(err)
                 self.sigan_calibration = None
         else:  # If in testing, create our own test files
-            # from scos_tekrsa import hardware as test_utils
+            # from scos_usrp import hardware as test_utils
 
             dummy_calibration = create_dummy_calibration()
             self.sensor_calibration = dummy_calibration
@@ -171,14 +109,14 @@ class TekRSARadio(RadioInterface):
 
     @property
     def sample_rate(self):  # -> float:
-        return self.tekrsa.get_rx_rate()
+        return self.usrp.get_rx_rate()
 
     @sample_rate.setter
     def sample_rate(self, rate):
         """Sets the sample_rate and the clock_rate based on the sample_rate"""
-        self.tekrsa.set_rx_rate(rate)
+        self.usrp.set_rx_rate(rate)
         fs_MHz = self.sample_rate / 1e6
-        logger.debug("set TekRSA sample rate: {:.2f} MS/s".format(fs_MHz))
+        logger.debug("set USRP sample rate: {:.2f} MS/s".format(fs_MHz))
         # Set the clock rate based on calibration
         if self.sigan_calibration is not None:
             clock_rate = self.sigan_calibration.get_clock_rate(rate)
@@ -192,29 +130,29 @@ class TekRSARadio(RadioInterface):
 
     @property
     def clock_rate(self):  # -> float:
-        return self.tekrsa.get_master_clock_rate()
+        return self.usrp.get_master_clock_rate()
 
     @clock_rate.setter
     def clock_rate(self, rate):
-        self.tekrsa.set_master_clock_rate(rate)
+        self.usrp.set_master_clock_rate(rate)
         clk_MHz = self.clock_rate / 1e6
-        logger.debug("set TekRSA clock rate: {:.2f} MHz".format(clk_MHz))
+        logger.debug("set USRP clock rate: {:.2f} MHz".format(clk_MHz))
 
     @property
     def frequency(self):  # -> float:
-        return self.tekrsa.get_rx_freq()
+        return self.usrp.get_rx_freq()
 
     @frequency.setter
     def frequency(self, freq):
         self.tune_frequency(freq)
 
     def tune_frequency(self, rf_freq, dsp_freq=0):
-        if isinstance(self.tekrsa, MockTekRSA):
-            tune_result = self.tekrsa.set_rx_freq(rf_freq, dsp_freq)
+        if isinstance(self.usrp, MockUsrp):
+            tune_result = self.usrp.set_rx_freq(rf_freq, dsp_freq)
             logger.debug(tune_result)
         else:
             tune_request = self.uhd.types.TuneRequest(rf_freq, dsp_freq)
-            tune_result = self.tekrsa.set_rx_freq(tune_request)
+            tune_result = self.usrp.set_rx_freq(tune_request)
             # FIXME: report actual values when available - see note below
             msg = "rf_freq: {}, dsp_freq: {}"
             logger.debug(msg.format(rf_freq, dsp_freq))
@@ -229,7 +167,7 @@ class TekRSARadio(RadioInterface):
 
     @property
     def gain(self):  # -> float:
-        return self.tekrsa.get_rx_gain()
+        return self.usrp.get_rx_gain()
 
     @gain.setter
     def gain(self, gain):
@@ -239,9 +177,9 @@ class TekRSARadio(RadioInterface):
             logger.error(err)
             return
 
-        self.tekrsa.set_rx_gain(gain)
-        msg = "set TekRSA gain: {:.1f} dB"
-        logger.debug(msg.format(self.tekrsa.get_rx_gain()))
+        self.usrp.set_rx_gain(gain)
+        msg = "set USRP gain: {:.1f} dB"
+        logger.debug(msg.format(self.usrp.get_rx_gain()))
 
     def recompute_calibration_data(self):
         """Set the calibration data based on the currently tuning"""
@@ -357,14 +295,14 @@ class TekRSARadio(RadioInterface):
                 nsamps = num_samples + num_samples_skip
 
             self._capture_time = utils.get_datetime_str_now()
-            samples = self.tekrsa.recv_num_samps(
+            samples = self.usrp.recv_num_samps(
                 nsamps,  # number of samples
                 self.frequency,  # center frequency in Hz
                 self.sample_rate,  # sample rate in samples per second
                 [0],  # channel list
                 self.gain,  # gain in dB
             )
-            # tekrsa.recv_num_samps returns a numpy array of shape
+            # usrp.recv_num_samps returns a numpy array of shape
             # (n_channels, n_samples) and dtype complex64
             assert samples.dtype == np.complex64
             assert len(samples.shape) == 2 and samples.shape[0] == 1
@@ -376,7 +314,7 @@ class TekRSARadio(RadioInterface):
 
             if not len(data) == num_samples:
                 if retries > 0:
-                    msg = "TekRSA error: requested {} samples, but got {}."
+                    msg = "USRP error: requested {} samples, but got {}."
                     logger.warning(msg.format(num_samples + num_samples_skip, data_len))
                     logger.warning("Retrying {} more times.".format(retries))
                     retries = retries - 1
