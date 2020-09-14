@@ -1,9 +1,8 @@
 import logging
-from datetime import datetime
+import time
 
 import numpy as np
 
-# from hardware.radio_iface import RadioInterface
 from scos_actions import utils
 from scos_actions.hardware.radio_iface import RadioInterface
 
