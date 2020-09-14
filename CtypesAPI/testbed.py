@@ -10,8 +10,7 @@ from matplotlib.ticker import StrMethodFormatter
 from time import sleep, strftime
 # The next import also loads the RSA driver and device
 # It may be better to load the driver/device in this file instead
-#from RSA_API import *
-from RSA_API import *
+from rsa_api import *
 
 """ PLOT FORMATTING STUFF """
 mpl_rc('xtick', direction='in', top=True)

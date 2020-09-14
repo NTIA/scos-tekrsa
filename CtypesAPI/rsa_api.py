@@ -20,7 +20,7 @@ To Do's / Ideas:
     - FreqRefUserSettingString method
 """
 from ctypes import *
-from SDR_Error import SDR_Error
+from sdr_error import SDR_Error
 from enum import Enum
 import numpy as np
 
