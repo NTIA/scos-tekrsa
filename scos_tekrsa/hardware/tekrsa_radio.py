@@ -7,31 +7,52 @@ from scos_actions import utils
 from scos_actions.hardware.radio_iface import RadioInterface
 
 from scos_tekrsa import settings
+
+# Calibration not yet performed but these should be the right imports
+# or at least a decent starting point based on the keysight/usrp versions
+
+# Nothing that references calibration works yet, probably
 from scos_tekrsa.hardware import calibration
+from scos_tekrsa.hardware.calibration import (
+    DEFAULT_SENSOR_CALIBRATION,
+    DEFAULT_SIGAN_CALIBRATION
+)
+
+# RSA API import happens in connect method
 
 logger = logging.getLogger(__name__)
 
 class RSARadio(RadioInterface):
+
+    # Allowed SR's: 56e6, 28e6, 14e6, ...
+
+    ALLOWED_SAMPLE_RATES = []
 
     def __init__(
         self,
         sensor_cal_file=settings.SENSOR_CALIBRATION_FILE,
         sigan_cal_file=settings.SIGAN_CALIBRATION_FILE,
     ):
-        self.uhd = None
-        self.usrp = None
         self._is_available = False
+        
+        allowed_sample_rate = 56.0e6
+        while allowed_sample_rate > 13670.0:
+            # Note: IQ Block acquisition allows for lower SR's. This
+            # loop adds only the SR's available for BOTH IQ block and
+            # IQ streaming acquisitions.
+            self.ALLOWED_SAMPLE_RATES.append(allowed_sample_rate)
+            allowed_sample_rate /= 2
 
+        self.max_sample_rate = None
+        self.max_reference_level = 30 #dBm, constant
+        self.min_reference_level = -130 #dBm, constant
+        self.max_frequency = None
+        self.min_frequency = None
+        
         self.sensor_calibration_data = None
         self.sigan_calibration_data = None
         self.sensor_calibration = None
         self.sigan_calibration = None
-
-        self.lo_freq = None
-        self.dsp_freq = None
-        self._sigan_overload = False
-        self._sensor_overload = False
-        self._capture_time = None
 
         self.connect()
         self.get_calibration(sensor_cal_file, sigan_cal_file)
@@ -40,39 +61,23 @@ class RSARadio(RadioInterface):
         if self._is_available:
             return True
 
-        if settings.RUNNING_TESTS or settings.MOCK_RADIO:
-            logger.warning("Using mock USRP.")
-            # random = settings.MOCK_RADIO_RANDOM
-            random = False
-            self.usrp = MockUsrp(randomize_values=random)
+        try:
+            from rsa_api import *
+        except ImportError:
+            logger.warning("Tektronix RSA API not available - disabling radio")
+            return False
+
+        self.search_connect()
+
+        logger.debug("Using the following Tektronix RSA device:")
+        logger.debug(self.DEVICE_GetNomenclature())
+
+        try:
             self._is_available = True
-        else:
-            try:
-                import uhd
-
-                self.uhd = uhd
-            except ImportError:
-                logger.warning("uhd not available - disabling radio")
-                return False
-
-            usrp_args = "type=b200"  # find any b-series device
-
-            try:
-                self.usrp = self.uhd.usrp.MultiUSRP(usrp_args)
-            except RuntimeError:
-                err = "No device found matching search parameters {!r}\n"
-                err = err.format(usrp_args)
-                raise RuntimeError(err)
-
-            logger.debug("Using the following USRP:")
-            logger.debug(self.usrp.get_pp_string())
-
-            try:
-                self._is_available = True
-                return True
-            except Exception as err:
-                logger.exception(err)
-                return False
+            return True
+        except Exception as err:
+            logger.exception(err)
+            return False
 
     @property
     def is_available(self):
@@ -106,79 +111,40 @@ class RSARadio(RadioInterface):
             self.sensor_calibration = dummy_calibration
             self.sigan_calibration = dummy_calibration
 
+    # redo this section so that only some SR's are allowed
+    # and each SR results in the highest BW for that SR.
+    # also, make SR a value that can be queried by itself
     @property
-    def sample_rate(self):  # -> float:
-        return self.usrp.get_rx_rate()
+    def iq_bandwidth(self):
+        return self._iq_bandwidth
 
-    @sample_rate.setter
-    def sample_rate(self, rate):
-        """Sets the sample_rate and the clock_rate based on the sample_rate"""
-        self.usrp.set_rx_rate(rate)
-        fs_MHz = self.sample_rate / 1e6
-        logger.debug("set USRP sample rate: {:.2f} MS/s".format(fs_MHz))
-        # Set the clock rate based on calibration
-        if self.sigan_calibration is not None:
-            clock_rate = self.sigan_calibration.get_clock_rate(rate)
-        else:
-            clock_rate = self.sample_rate
-            # Maximize clock rate while keeping it under 40e6
-            while clock_rate <= 40e6:
-                clock_rate *= 2
-            clock_rate /= 2
-        self.clock_rate = clock_rate
+    @iq_bandwidth.setter
+    def iq_bandwidth(self, bw):
+        """ Sets the IQ Streaming acquisition BW, which determines sample rate """
+        
+        self.IQSTREAM_SetAcqBandwidth(bw)
+        self.iq_bandwidth = bw
 
     @property
-    def clock_rate(self):  # -> float:
-        return self.usrp.get_master_clock_rate()
-
-    @clock_rate.setter
-    def clock_rate(self, rate):
-        self.usrp.set_master_clock_rate(rate)
-        clk_MHz = self.clock_rate / 1e6
-        logger.debug("set USRP clock rate: {:.2f} MHz".format(clk_MHz))
-
-    @property
-    def frequency(self):  # -> float:
-        return self.usrp.get_rx_freq()
+    def frequency(self):
+        return self.CONFIG_GetCenterFreq()
 
     @frequency.setter
     def frequency(self, freq):
-        self.tune_frequency(freq)
-
-    def tune_frequency(self, rf_freq, dsp_freq=0):
-        if isinstance(self.usrp, MockUsrp):
-            tune_result = self.usrp.set_rx_freq(rf_freq, dsp_freq)
-            logger.debug(tune_result)
-        else:
-            tune_request = self.uhd.types.TuneRequest(rf_freq, dsp_freq)
-            tune_result = self.usrp.set_rx_freq(tune_request)
-            # FIXME: report actual values when available - see note below
-            msg = "rf_freq: {}, dsp_freq: {}"
-            logger.debug(msg.format(rf_freq, dsp_freq))
-
-        # FIXME: uhd.types.TuneResult doesn't seem to be implemented
-        #        as of uhd 3.13.1.0-rc1
-        #        Fake it til they make it
-        # self.lo_freq = tune_result.actual_rf_freq
-        # self.dsp_freq = tune_result.actual_dsp_freq
-        self.lo_freq = rf_freq
-        self.dsp_freq = dsp_freq
+        self.CONFIG_SetCenterFreq()
 
     @property
-    def gain(self):  # -> float:
-        return self.usrp.get_rx_gain()
+    def reference_level(self):
+        return self.CONFIG_GetReferenceLevel()
 
-    @gain.setter
-    def gain(self, gain):
-        if gain not in VALID_GAINS:
-            err = "Requested invalid gain {}. ".format(gain)
-            err += "Choose one of {!r}.".format(VALID_GAINS)
-            logger.error(err)
-            return
+    @reference_level.setter
+    def reference_level(self, reference_level):
+        self.CONFIG_SetReferenceLevel(reference_level)
+        msg = "set Tektronix RSA reference level: {:.1f} dB"
+        logger.debug(msg.format(self.CONFIG_GetReferenceLevel()))
 
-        self.usrp.set_rx_gain(gain)
-        msg = "set USRP gain: {:.1f} dB"
-        logger.debug(msg.format(self.usrp.get_rx_gain()))
+    # revist the following section once all setpoints implemented
+    # and calibration stuff is figured out
 
     def recompute_calibration_data(self):
         """Set the calibration data based on the currently tuning"""
