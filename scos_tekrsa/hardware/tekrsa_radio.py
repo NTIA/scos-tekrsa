@@ -11,7 +11,7 @@ from scos_tekrsa import settings
 # Calibration not yet performed but these should be the right imports
 # or at least a decent starting point based on the keysight/usrp versions
 
-# Nothing that references calibration works yet, probably
+# Nothing that references calibration works yet
 from scos_tekrsa.hardware import calibration
 from scos_tekrsa.hardware.calibration import (
     DEFAULT_SENSOR_CALIBRATION,
@@ -35,7 +35,7 @@ class RSARadio(RadioInterface):
     ):
         self._is_available = False
         
-        allowed_sample_rate = 56.0e6
+        allowed_sample_rate = 56.0e6 # maximum cardinal SR
         while allowed_sample_rate > 13670.0:
             # Note: IQ Block acquisition allows for lower SR's. This
             # loop adds only the SR's available for BOTH IQ block and
@@ -43,9 +43,9 @@ class RSARadio(RadioInterface):
             self.ALLOWED_SAMPLE_RATES.append(allowed_sample_rate)
             allowed_sample_rate /= 2
 
-        self.max_sample_rate = None
-        self.max_reference_level = 30 #dBm, constant
-        self.min_reference_level = -130 #dBm, constant
+        self.max_sample_rate = allowed_sample_rate
+        self.max_reference_level = 30 # dBm, constant
+        self.min_reference_level = -130 # dBm, constant
         self.max_frequency = None
         self.min_frequency = None
         
@@ -55,7 +55,11 @@ class RSARadio(RadioInterface):
         self.sigan_calibration = None
 
         self.connect()
-        self.get_calibration(sensor_cal_file, sigan_cal_file)
+        # self.get_calibration(sensor_cal_file, sigan_cal_file)
+
+    def get_constraints(self):
+        self.min_frequency = self.CONFIG_GetMinCenterFreq()
+        self.max_frequency = self.CONFIG_GetMaxCenterFreq()
 
     def connect(self):
         if self._is_available:
@@ -63,6 +67,7 @@ class RSARadio(RadioInterface):
 
         try:
             from rsa_api import *
+            self.get_constraints()
         except ImportError:
             logger.warning("Tektronix RSA API not available - disabling radio")
             return False
@@ -83,6 +88,7 @@ class RSARadio(RadioInterface):
     def is_available(self):
         return self._is_available
 
+    # get_calibration left untouched from USRP implementation so far
     def get_calibration(self, sensor_cal_file, sigan_cal_file):
         # Set the default calibration values
         self.sensor_calibration_data = DEFAULT_SENSOR_CALIBRATION.copy()
@@ -111,9 +117,28 @@ class RSARadio(RadioInterface):
             self.sensor_calibration = dummy_calibration
             self.sigan_calibration = dummy_calibration
 
-    # redo this section so that only some SR's are allowed
-    # and each SR results in the highest BW for that SR.
-    # also, make SR a value that can be queried by itself
+    # this section still not done
+    # need to be able to set SR as parameter, and automatically
+    # write the correct BW setting
+
+    @property
+    def sample_rate(self):
+        return self.IQSTREAM_GetAcqParameters()[1]
+
+    @sample_rate.setter
+    def sample_rate(self, sample_rate):
+        if sample_rate > self.max_sample_rate:
+            err_msg = f"Sample rate {sample_rate} too high. Max sample rate is {self.max_sample_rate}."
+            logger.error(err_msg)
+            raise Exception(err_msg)
+        if sample_rate not in self.ALLOWED_SAMPLE_RATES:
+            allowed_sample_rates_str = ", ".join(self.ALLOWED_SAMPLE_RATES)
+            err_msg = (f"Requested sample rate {sample_rate} not in allowed sample rates."
+                + " Allowed sample rates are {allowed_sample_rates_str}")
+            logger.error(err_msg)
+            raise Exception(err_msg)
+
+    
     @property
     def iq_bandwidth(self):
         return self._iq_bandwidth
