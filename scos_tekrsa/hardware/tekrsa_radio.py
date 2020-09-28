@@ -25,8 +25,10 @@ logger = logging.getLogger(__name__)
 class RSARadio(RadioInterface):
 
     # Allowed SR's: 56e6, 28e6, 14e6, ...
-
     ALLOWED_SAMPLE_RATES = []
+
+    # Allowed BW's : 40e6, 20e6, 10e6, ...
+    ALLOWED_ACQ_BW = []
 
     def __init__(
         self,
@@ -35,15 +37,23 @@ class RSARadio(RadioInterface):
     ):
         self._is_available = False
         
-        allowed_sample_rate = 56.0e6 # maximum cardinal SR
-        while allowed_sample_rate > 13670.0:
+        allowed_sr = 56.0e6 # maximum cardinal SR
+        allowed_acq_bw = 40.0e6 # maximum corresponding BW
+
+        while allowed_sr > 13670.0:
             # Note: IQ Block acquisition allows for lower SR's. This
             # loop adds only the SR's available for BOTH IQ block and
             # IQ streaming acquisitions.
-            self.ALLOWED_SAMPLE_RATES.append(allowed_sample_rate)
-            allowed_sample_rate /= 2
+            self.ALLOWED_SAMPLE_RATES.append(allowed_sr)
+            self.ALLOWED_ACQ_BW.append(allowed_acq_bw)
+            allowed_acq_bw /= 2
+            allowed_sr /= 2
 
-        self.max_sample_rate = allowed_sample_rate
+        # Create SR/BW mapping dictionary
+        # With SR as keys, BW as values
+        sr_bw_map = {allowed_sr[i] : allowed_acq_bw for i in range(len(allowed_sr))}
+
+        self.max_sample_rate = allowed_sr
         self.max_reference_level = 30 # dBm, constant
         self.min_reference_level = -130 # dBm, constant
         self.max_frequency = None
@@ -117,10 +127,6 @@ class RSARadio(RadioInterface):
             self.sensor_calibration = dummy_calibration
             self.sigan_calibration = dummy_calibration
 
-    # this section still not done
-    # need to be able to set SR as parameter, and automatically
-    # write the correct BW setting
-
     @property
     def sample_rate(self):
         return self.IQSTREAM_GetAcqParameters()[1]
@@ -137,18 +143,10 @@ class RSARadio(RadioInterface):
                 + " Allowed sample rates are {allowed_sample_rates_str}")
             logger.error(err_msg)
             raise Exception(err_msg)
-
-    
-    @property
-    def iq_bandwidth(self):
-        return self._iq_bandwidth
-
-    @iq_bandwidth.setter
-    def iq_bandwidth(self, bw):
-        """ Sets the IQ Streaming acquisition BW, which determines sample rate """
-        
+        # set bandwidth according to SR setting
+        bw = sr_bw_map.get(sample_rate)
         self.IQSTREAM_SetAcqBandwidth(bw)
-        self.iq_bandwidth = bw
+        logger.debug(f"Sample rate: {self.sample_rate}")
 
     @property
     def frequency(self):
@@ -314,7 +312,7 @@ class RSARadio(RadioInterface):
                     raise RuntimeError(err)
             else:
                 logger.debug("Successfully acquired {} samples.".format(num_samples))
-
+`
                 # Check IQ values versus ADC max for sigan compression
                 self._sigan_overload = False
                 i_samples = np.abs(np.real(data))
