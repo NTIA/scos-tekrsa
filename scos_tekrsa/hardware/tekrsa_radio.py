@@ -146,7 +146,8 @@ class RSARadio(RadioInterface):
         # set bandwidth according to SR setting
         bw = sr_bw_map.get(sample_rate)
         self.IQSTREAM_SetAcqBandwidth(bw)
-        logger.debug(f"Sample rate: {self.sample_rate}")
+        msg = "set Tektronix RSA sample rate: {:.1f} samples/sec"
+        logger.debug(msg.format(self.IQSTREAM_GetAcqParameters()[1]))
 
     @property
     def frequency(self):
@@ -159,11 +160,13 @@ class RSARadio(RadioInterface):
     @property
     def reference_level(self):
         return self.CONFIG_GetReferenceLevel()
+        msg = "Set Tektronix RSA center frequency: {:.1f} Hz"
+        logger.debug(msg.format(self.CONFIG_GetCenterFreq()))
 
     @reference_level.setter
     def reference_level(self, reference_level):
         self.CONFIG_SetReferenceLevel(reference_level)
-        msg = "set Tektronix RSA reference level: {:.1f} dB"
+        msg = "Set Tektronix RSA reference level: {:.1f} dB"
         logger.debug(msg.format(self.CONFIG_GetReferenceLevel()))
 
     # revist the following section once all setpoints implemented
@@ -179,7 +182,7 @@ class RSARadio(RadioInterface):
                 self.sensor_calibration.get_calibration_dict(
                     sample_rate=self.sample_rate,
                     lo_frequency=self.frequency,
-                    gain=self.gain,
+                    attenuation=self.attenuation,
                 )
             )
 
@@ -190,13 +193,13 @@ class RSARadio(RadioInterface):
                 self.sigan_calibration.get_calibration_dict(
                     sample_rate=self.sample_rate,
                     lo_frequency=self.frequency,
-                    gain=self.gain,
+                    attenuation=self.attenuation,
                 )
             )
 
         # Catch any defaulting calibration values for the sigan
         if self.sigan_calibration_data["gain_sigan"] is None:
-            self.sigan_calibration_data["gain_sigan"] = self.gain
+            self.sigan_calibration_data["gain_sigan"] = 0
         if self.sigan_calibration_data["enbw_sigan"] is None:
             self.sigan_calibration_data["enbw_sigan"] = self.sample_rate
 
@@ -246,84 +249,87 @@ class RSARadio(RadioInterface):
     def configure(self, action_name):
         pass
 
-    def check_sensor_overload(self, data):
+    def check_sensor_overload(self, data, sigan_overload):
         measured_data = data.astype(np.complex64)
         time_domain_avg_power = 10 * np.log10(np.mean(np.abs(measured_data) ** 2))
         time_domain_avg_power += (
             10 * np.log10(1 / (2 * 50)) + 30
         )  # Convert log(V^2) to dBm
-        self._sensor_overload = False
+        sensor_overload = False
         # explicitly check is not None since 1db compression could be 0
         if self.sensor_calibration_data["1db_compression_sensor"] is not None:
-            self._sensor_overload = (
+            sensor_overload = (
                 time_domain_avg_power
                 > self.sensor_calibration_data["1db_compression_sensor"]
             )
+        return sensor_overload or sigan_overload
 
-    def acquire_time_domain_samples(
-        self, num_samples, num_samples_skip=0, retries=5
-    ):  # -> np.ndarray:
-        """Aquire num_samples_skip+num_samples samples and return the last num_samples"""
-        self._sigan_overload = False
-        self._capture_time = None
-        # Get the calibration data for the acquisition
+    @property
+    def healthy(self):
+        time_info = None
+        try:
+            with Utils.sensor(ip_address=KEYSIGHT_IP) as sensor:
+                time_info = SystemInfo.get_sensor_time(sensor)
+        except SensorConnectionException:
+            logger.error("healthy: Unable to connect to Keysight sensor")
+            return False
+        return time_info.timestampSeconds != 0
+
+    # Handle taking IQ samples
+    def acquire_time_domain_samples(self, num_samples, num_samples_skip=0, retries=5):
+        logger.debug(
+            f"acquire_time_domain_samples starting num_samples = {num_samples}"
+        )
         self.recompute_calibration_data()
-
-        # Compute the linear gain
+        logger.debug(f"Number of retries = {retries}")
         db_gain = self.sensor_calibration_data["gain_sensor"]
+        # Compute the linear gain
         linear_gain = 10 ** (db_gain / 20.0)
-
-        # Try to acquire the samples
-        max_retries = retries
+        total_samples = num_samples + num_samples_skip
         while True:
-            # No need to skip initial samples when simulating the radio
-            if settings.RUNNING_TESTS or settings.MOCK_RADIO:
-                nsamps = num_samples
-            else:
-                nsamps = num_samples + num_samples_skip
+            with Utils.sensor(ip_address=self.KEYSIGHT_IP) as sensor:
+                try:
+                    result = Measurement.time_domain_iq_measurement(
+                        sensor, total_samples, self.frequency, self.sample_rate
+                    )
 
-            self._capture_time = utils.get_datetime_str_now()
-            samples = self.usrp.recv_num_samps(
-                nsamps,  # number of samples
-                self.frequency,  # center frequency in Hz
-                self.sample_rate,  # sample rate in samples per second
-                [0],  # channel list
-                self.gain,  # gain in dB
-            )
-            # usrp.recv_num_samps returns a numpy array of shape
-            # (n_channels, n_samples) and dtype complex64
-            assert samples.dtype == np.complex64
-            assert len(samples.shape) == 2 and samples.shape[0] == 1
-            data = samples[0]  # isolate data for channel 0
-            data_len = len(data)
+                    received_samples = len(result.data)
+                    if received_samples < total_samples:
+                        logger.warning(
+                            f"Only {received_samples} samples received. Expected {total_samples} samples."
+                        )
+                        if retries > 0:
+                            logger.info("Retrying time domain iq measurement.")
+                            retries = retries - 1
+                            continue
+                        else:
+                            error_message = "Max retries exceeded."
+                            logger.error(error_message)
+                            raise RuntimeError(error_message)
+                    data = result.data[
+                        num_samples_skip : received_samples + num_samples_skip
+                    ]
+                    data /= linear_gain
 
-            if not settings.RUNNING_TESTS:
-                data = data[num_samples_skip:]
-
-            if not len(data) == num_samples:
-                if retries > 0:
-                    msg = "USRP error: requested {} samples, but got {}."
-                    logger.warning(msg.format(num_samples + num_samples_skip, data_len))
-                    logger.warning("Retrying {} more times.".format(retries))
-                    retries = retries - 1
-                else:
-                    err = "Failed to acquire correct number of samples "
-                    err += "{} times in a row.".format(max_retries)
-                    raise RuntimeError(err)
-            else:
-                logger.debug("Successfully acquired {} samples.".format(num_samples))
-`
-                # Check IQ values versus ADC max for sigan compression
-                self._sigan_overload = False
-                i_samples = np.abs(np.real(data))
-                q_samples = np.abs(np.imag(data))
-                i_over_threshold = np.sum(i_samples > self.ADC_FULL_RANGE_THRESHOLD)
-                q_over_threshold = np.sum(q_samples > self.ADC_FULL_RANGE_THRESHOLD)
-                total_over_threshold = i_over_threshold + q_over_threshold
-                ratio_over_threshold = float(total_over_threshold) / num_samples
-                if ratio_over_threshold > self.ADC_OVERLOAD_THRESHOLD:
-                    self._sigan_overload = True
-
-                # Scale the data back to RF power and return it
-                data /= linear_gain
-                return data
+                    measurement_result = {
+                        "data": data,
+                        "overload": self.check_sensor_overload(
+                            data, result.sigan_overload
+                        ),
+                        "frequency": result.center_frequency,
+                        "attenuation": result.attenuation,
+                        "sample_rate": result.sample_rate,
+                        "capture_time": result.capture_time,
+                        "calibration_annotation": self.create_calibration_annotation(),
+                    }
+                    return measurement_result
+                except GetTimeDataException as gtde:
+                    logger.error(gtde)
+                    if retries > 0:
+                        logger.info("Retrying time domain iq measurement.")
+                        retries = retries - 1
+                        continue
+                    else:
+                        error_message = "Max retries exceeded."
+                        logger.error(error_message)
+                        raise RuntimeError(error_message)

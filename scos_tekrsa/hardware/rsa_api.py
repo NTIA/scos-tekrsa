@@ -1,6 +1,9 @@
 # THIS VERSION HAS BEEN MODIFIED FROM THE VERSION 
 # IN THE CTYPESAPI FOLDER 
 
+# This version can eventually be slimmed down to contain only things 
+# that are useful for scos
+
 """
 Notes:
 - Currently, ALL SDR_Error codes thrown are arbitrary placeholders
@@ -21,6 +24,12 @@ To Do's / Ideas:
     - could allow for selection by user input among multiple devices
 - Check usage of global constants
     - FreqRefUserSettingString method
+
+SCOS TO-DO
+    make iqstream_getdiskfileinfo work (including file names)
+    read the data back from the temp file
+    return the data + information
+    incorporate into scos (measurement result dict, etc)
 """
 from ctypes import *
 from enum import Enum
@@ -429,6 +438,63 @@ def iqblk_collect(recordLength=1024, timeoutMsec=100):
     DEVICE_Stop()
 
     return iData + 1j * qData
+
+def iqstream_tempfile(cf, refLevel, bw, durationMsec):
+    # Modules used ONLY by this helper method
+    from time import sleep
+    import tempfile
+
+    # Configuration parameters
+    dest=IQSOUTDEST[3] # split SIQ
+    dType=IQSOUTDTYPE[0] # 32-bit single precision floating point
+    fileLength = 0 # unlimited
+    suffixCtl=-2 # none
+    filename = 'tempIQ'
+
+    # Ensure device is stopped before proceeding
+    DEVICE_Stop()
+
+    # Create temp directory and configure/collect data
+    with tempfile.TemporaryDirectory() as tmpDir:
+        filenameBase = tmpDir + '/' + filename
+
+        # Configure device
+        CONFIG_SetCenterFreq(cf)
+        CONFIG_SetReferenceLevel(refLevel)
+        IQSTREAM_SetAcqBandwidth(bw)
+        IQSTREAM_SetOutputConfiguration(dest, dType)
+        IQSTREAM_SetDiskFilenameBase(filenameBase)
+        IQSTREAM_SetDiskFilenameSuffix(suffixCtl)
+        IQSTREAM_SetDiskFileLength(fileLength)
+        IQSTREAM_ClearAcqStatus()
+
+        # Collect data
+        DEVICE_Run()
+        IQSTREAM_Start()
+        sleep(durationMsec)
+        IQSTREAM_Stop()
+        DEVICE_Stop()
+
+        # Read data back in from file
+
+ def iqstream_status_parser(iqStreamInfo):
+    # This function parses the IQ streaming status variable
+    # The input is an IQSTREAM_File_Info() structure
+    status = iqStreamInfo.acqStatus
+    if status == 0:
+        print('\nNo error.\n')
+    if bool(status & 0x10000):  # mask bit 16
+        print('\nInput overrange.\n')
+    if bool(status & 0x40000):  # mask bit 18
+        print('\nInput buffer > 75{} full.\n'.format('%'))
+    if bool(status & 0x80000):  # mask bit 19
+        print('\nInput buffer overflow. IQStream processing too slow, ',
+              'data loss has occurred.\n')
+    if bool(status & 0x100000):  # mask bit 20
+        print('\nOutput buffer > 75{} full.\n'.format('%'))
+    if bool(status & 0x200000):  # mask bit 21
+        print('Output buffer overflow. File writing too slow, ',
+              'data loss has occurred.\n')       
 
 """ ALIGNMENT METHODS """
 
