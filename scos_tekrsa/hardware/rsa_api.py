@@ -2481,6 +2481,7 @@ def IQSTREAM_GetDiskFileInfo():
 
     Returns
     -------
+    An IQSTREAM_File_Info structure which contains:
     numberSamples : int
         Number of IQ sample pairs written to the file.
     sample0Timestamp : int
