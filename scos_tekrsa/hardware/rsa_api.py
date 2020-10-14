@@ -440,6 +440,9 @@ def iqblk_collect(recordLength=1024, timeoutMsec=100):
     return iData + 1j * qData
 
 def iqstream_tempfile(cf, refLevel, bw, durationMsec):
+    # Returns:
+    # (iData, qData, headerInfo)
+    # data as arrays of samples, headerinfo as dict
     # Modules used ONLY by this helper method
     from time import sleep
     import tempfile
@@ -471,24 +474,46 @@ def iqstream_tempfile(cf, refLevel, bw, durationMsec):
         # Collect data
         DEVICE_Run()
         IQSTREAM_Start()
-        sleep(durationMsec)
+        sleep(durationMsec/1000)
         IQSTREAM_Stop()
+
+        # Check acquisition status
+        fileInfo = IQSTREAM_GetDiskFileInfo()
+        iqstream_status_parser(fileInfo)
+
         DEVICE_Stop()
 
         # Read data back in from file
+        with open(filenameBase + '.siqd', 'rb') as f:
+            # if siq file, skip header
+            if f.name[-1] == 'q':
+                # this case currently is never used
+                # but would be needed if code is later modified
+                f.seek(1024)
+            # read in data as float32 ("SINGLE" SIQ)
+            d = np.frombuffer(f.read(), dtype=np.float32)
 
- def iqstream_status_parser(iqStreamInfo):
+    # Deinterleave I and Q
+    i = d[0:-1:2]
+    q = np.append(d[1:-1:2], d[-1])
+    # iqData = i + 1j*q (re-interleave as numpy complex64)
+    iqData = i + 1j*q
+
+    return iqData
+
+
+def iqstream_status_parser(iqStreamInfo):
     # This function parses the IQ streaming status variable
     # The input is an IQSTREAM_File_Info() structure
     status = iqStreamInfo.acqStatus
     if status == 0:
-        print('\nNo error.\n')
+        pass
     if bool(status & 0x10000):  # mask bit 16
         print('\nInput overrange.\n')
     if bool(status & 0x40000):  # mask bit 18
         print('\nInput buffer > 75{} full.\n'.format('%'))
     if bool(status & 0x80000):  # mask bit 19
-        print('\nInput buffer overflow. IQStream processing too slow, ',
+     print('\nInput buffer overflow. IQStream processing too slow, ',
               'data loss has occurred.\n')
     if bool(status & 0x100000):  # mask bit 20
         print('\nOutput buffer > 75{} full.\n'.format('%'))
@@ -2506,9 +2531,7 @@ def IQSTREAM_GetDiskFileInfo():
     """
     fileinfo = IQSTREAM_File_Info()
     err_check(rsa.IQSTREAM_GetDiskFileInfo(byref(fileinfo)))
-    return (fileinfo.numberSamples, fileinfo.sample0Timestamp,
-        fileinfo.triggerSampleIndex, fileinfo.triggerTimestamp,
-        fileinfo.filenames, fileinfo.acqStatus)
+    return fileinfo
         
 def IQSTREAM_GetDiskFileWriteStatus():
     """
