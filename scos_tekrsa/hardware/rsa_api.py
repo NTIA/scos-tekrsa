@@ -450,9 +450,9 @@ def iqstream_tempfile(cf, refLevel, bw, durationMsec):
     # Configuration parameters
     dest=IQSOUTDEST[3] # split SIQ
     dType=IQSOUTDTYPE[0] # 32-bit single precision floating point
-    fileLength = 0 # unlimited
     suffixCtl=-2 # none
     filename = 'tempIQ'
+    sleepTimeSec = 0.1 # loop sleep time checking if acquisition complete
 
     # Ensure device is stopped before proceeding
     DEVICE_Stop()
@@ -468,13 +468,18 @@ def iqstream_tempfile(cf, refLevel, bw, durationMsec):
         IQSTREAM_SetOutputConfiguration(dest, dType)
         IQSTREAM_SetDiskFilenameBase(filenameBase)
         IQSTREAM_SetDiskFilenameSuffix(suffixCtl)
-        IQSTREAM_SetDiskFileLength(fileLength)
+        IQSTREAM_SetDiskFileLength(durationMsec)
         IQSTREAM_ClearAcqStatus()
 
         # Collect data
+        complete = False
+        writing = False
+
         DEVICE_Run()
         IQSTREAM_Start()
-        sleep(durationMsec/1000)
+        while not complete:
+            sleep(sleepTimeSec)
+            (complete, writing) = IQSTREAM_GetDiskFileWriteStatus()
         IQSTREAM_Stop()
 
         # Check acquisition status
