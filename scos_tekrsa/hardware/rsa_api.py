@@ -24,12 +24,6 @@ To Do's / Ideas:
     - could allow for selection by user input among multiple devices
 - Check usage of global constants
     - FreqRefUserSettingString method
-
-SCOS TO-DO
-    make iqstream_getdiskfileinfo work (including file names)
-    read the data back from the temp file
-    return the data + information
-    incorporate into scos (measurement result dict, etc)
 """
 from ctypes import *
 from enum import Enum

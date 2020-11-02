@@ -249,21 +249,6 @@ class RSARadio(RadioInterface):
     def configure(self, action_name):
         pass
 
-    def check_sensor_overload(self, data, sigan_overload):
-        measured_data = data.astype(np.complex64)
-        time_domain_avg_power = 10 * np.log10(np.mean(np.abs(measured_data) ** 2))
-        time_domain_avg_power += (
-            10 * np.log10(1 / (2 * 50)) + 30
-        )  # Convert log(V^2) to dBm
-        sensor_overload = False
-        # explicitly check is not None since 1db compression could be 0
-        if self.sensor_calibration_data["1db_compression_sensor"] is not None:
-            sensor_overload = (
-                time_domain_avg_power
-                > self.sensor_calibration_data["1db_compression_sensor"]
-            )
-        return sensor_overload or sigan_overload
-
     @property
     def healthy(self):
         time_info = None
@@ -280,56 +265,51 @@ class RSARadio(RadioInterface):
         logger.debug(
             f"acquire_time_domain_samples starting num_samples = {num_samples}"
         )
+        # Determine correct time length for num_samples based on current SR
+        durationMsec = (num_samples/self.sample_rate)*1000
         self.recompute_calibration_data()
         logger.debug(f"Number of retries = {retries}")
         db_gain = self.sensor_calibration_data["gain_sensor"]
         # Compute the linear gain
         linear_gain = 10 ** (db_gain / 20.0)
         total_samples = num_samples + num_samples_skip
-        while True:
-            with Utils.sensor(ip_address=self.KEYSIGHT_IP) as sensor:
-                try:
-                    result = Measurement.time_domain_iq_measurement(
-                        sensor, total_samples, self.frequency, self.sample_rate
-                    )
+        try:
+            result_data = iqstream_tempfile(self.frequency, self.reference_level,
+                sw_br_map[self.sample_rate], durationMsec
+            )
+            received_samples = len(result_data)
+            if received_samples < total_samples:
+                logger.warning(
+                    f"Only {received_samples} samples received. Expected {total_samples} samples."
+                )
+                if retries > 0:
+                    logger.info("Retrying time domain iq measurement.")
+                    retries = retries - 1
+                    continue
+                else:
+                    error_message = "Max retries exceeded."
+                    logger.error(error_message)
+                    raise RuntimeError(error_message)
+            data = result_data[num_samples_skip : received_samples + num_samples_skip]
+            data /= linear_gain
 
-                    received_samples = len(result.data)
-                    if received_samples < total_samples:
-                        logger.warning(
-                            f"Only {received_samples} samples received. Expected {total_samples} samples."
-                        )
-                        if retries > 0:
-                            logger.info("Retrying time domain iq measurement.")
-                            retries = retries - 1
-                            continue
-                        else:
-                            error_message = "Max retries exceeded."
-                            logger.error(error_message)
-                            raise RuntimeError(error_message)
-                    data = result.data[
-                        num_samples_skip : received_samples + num_samples_skip
-                    ]
-                    data /= linear_gain
-
-                    measurement_result = {
-                        "data": data,
-                        "overload": self.check_sensor_overload(
-                            data, result.sigan_overload
-                        ),
-                        "frequency": result.center_frequency,
-                        "attenuation": result.attenuation,
-                        "sample_rate": result.sample_rate,
-                        "capture_time": result.capture_time,
-                        "calibration_annotation": self.create_calibration_annotation(),
-                    }
-                    return measurement_result
-                except GetTimeDataException as gtde:
-                    logger.error(gtde)
-                    if retries > 0:
-                        logger.info("Retrying time domain iq measurement.")
-                        retries = retries - 1
-                        continue
-                    else:
-                        error_message = "Max retries exceeded."
-                        logger.error(error_message)
-                        raise RuntimeError(error_message)
+            measurement_result = {
+                "data": data,
+                "overload": False, # overload check occurs automatically after measurement
+                "frequency": self.frequency,
+                "reference_level": self.reference_level,
+                "sample_rate": IQSTREAM_GetAcqParameters()[1],
+                "capture_time": durationMsec, # capture duration in milliseconds
+                "calibration_annotation": self.create_calibration_annotation(),
+            }
+            return measurement_result
+        except GetTimeDataException as gtde:
+            logger.error(gtde)
+            if retries > 0:
+                logger.info("Retrying time domain iq measurement.")
+                retries = retries - 1
+                continue
+            else:
+                error_message = "Max retries exceeded."
+                logger.error(error_message)
+                raise RuntimeError(error_message)
