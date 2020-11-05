@@ -1,2 +1,4 @@
+environs~=7.3.1
 scos_actions @ git+${DOCKER_GIT_CREDENTIALS}/NTIA/scos_actions@master#egg=scos_actions
 numpy~=1.18.1
+Django~=3.0.7
