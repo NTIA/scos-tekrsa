@@ -271,15 +271,39 @@ class RSARadio(RadioInterface):
         # Compute the linear gain
         linear_gain = 10 ** (db_gain / 20.0)
         total_samples = num_samples + num_samples_skip
-        try:
-            result_data = iqstream_tempfile(self.frequency, self.reference_level,
-                sw_br_map[self.sample_rate], durationMsec
-            )
-            received_samples = len(result_data)
-            if received_samples < total_samples:
-                logger.warning(
-                    f"Only {received_samples} samples received. Expected {total_samples} samples."
+        while True:
+            try:
+                result_data = iqstream_tempfile(self.frequency, self.reference_level,
+                    sw_br_map[self.sample_rate], durationMsec
                 )
+                received_samples = len(result_data)
+                if received_samples < total_samples:
+                    logger.warning(
+                        f"Only {received_samples} samples received. Expected {total_samples} samples."
+                    )
+                    if retries > 0:
+                        logger.info("Retrying time domain iq measurement.")
+                        retries = retries - 1
+                        continue
+                    else:
+                        error_message = "Max retries exceeded."
+                        logger.error(error_message)
+                        raise RuntimeError(error_message)
+                data = result_data[num_samples_skip : received_samples + num_samples_skip]
+                data /= linear_gain
+
+                measurement_result = {
+                    "data": data,
+                    "overload": False, # overload check occurs automatically after measurement
+                    "frequency": self.frequency,
+                    "reference_level": self.reference_level,
+                    "sample_rate": IQSTREAM_GetAcqParameters()[1],
+                    "capture_time": durationMsec, # capture duration in milliseconds
+                    "calibration_annotation": self.create_calibration_annotation(),
+                }
+                return measurement_result
+            except GetTimeDataException as gtde:
+                logger.error(gtde)
                 if retries > 0:
                     logger.info("Retrying time domain iq measurement.")
                     retries = retries - 1
@@ -288,26 +312,3 @@ class RSARadio(RadioInterface):
                     error_message = "Max retries exceeded."
                     logger.error(error_message)
                     raise RuntimeError(error_message)
-            data = result_data[num_samples_skip : received_samples + num_samples_skip]
-            data /= linear_gain
-
-            measurement_result = {
-                "data": data,
-                "overload": False, # overload check occurs automatically after measurement
-                "frequency": self.frequency,
-                "reference_level": self.reference_level,
-                "sample_rate": IQSTREAM_GetAcqParameters()[1],
-                "capture_time": durationMsec, # capture duration in milliseconds
-                "calibration_annotation": self.create_calibration_annotation(),
-            }
-            return measurement_result
-        except GetTimeDataException as gtde:
-            logger.error(gtde)
-            if retries > 0:
-                logger.info("Retrying time domain iq measurement.")
-                retries = retries - 1
-                continue
-            else:
-                error_message = "Max retries exceeded."
-                logger.error(error_message)
-                raise RuntimeError(error_message)
