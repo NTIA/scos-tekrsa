@@ -2,7 +2,7 @@ import sys
 from os import path
 
 from django.conf import settings
-from environs import env
+from environs import Env
 
 env = Env()
 
