@@ -7,6 +7,7 @@ from scos_actions import utils
 from scos_actions.hardware.radio_iface import RadioInterface
 
 from scos_tekrsa import settings
+from rsa_api import *
 
 # Calibration not yet performed but these should be the right imports
 # or at least a decent starting point based on the keysight/usrp versions
@@ -17,8 +18,6 @@ from scos_tekrsa.hardware.calibration import (
     DEFAULT_SENSOR_CALIBRATION,
     DEFAULT_SIGAN_CALIBRATION
 )
-
-# RSA API import happens in connect method
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +75,6 @@ class RSARadio(RadioInterface):
             return True
 
         try:
-            from rsa_api import *
             self.get_constraints()
         except ImportError:
             logger.warning("Tektronix RSA API not available - disabling radio")
