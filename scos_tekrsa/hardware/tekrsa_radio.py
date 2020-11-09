@@ -31,25 +31,25 @@ class RSARadio(RadioInterface):
         self._is_available = False
 
         # Allowed SR's: 56e6, 28e6, 14e6, ...
-        self.ALLOWED_SAMPLE_RATES = []
+        self.ALLOWED_SR = []
         # Allowed BW's : 40e6, 20e6, 10e6, ...
-        self.ALLOWED_ACQ_BW = []
+        self.ALLOWED_BW = []
         
-        allowed_sr = 56.0e6 # maximum cardinal SR
+        allowed_sample_rate = 56.0e6 # maximum cardinal SR
         allowed_acq_bw = 40.0e6 # maximum corresponding BW
 
         while allowed_sr > 13670.0:
             # Note: IQ Block acquisition allows for lower SR's. This
             # loop adds only the SR's available for BOTH IQ block and
             # IQ streaming acquisitions.
-            self.ALLOWED_SAMPLE_RATES.append(allowed_sr)
-            self.ALLOWED_ACQ_BW.append(allowed_acq_bw)
+            self.ALLOWED_SR.append(allowed_sr)
+            self.ALLOWED_BW.append(allowed_acq_bw)
             allowed_acq_bw /= 2
             allowed_sr /= 2
 
         # Create SR/BW mapping dictionary
         # With SR as keys, BW as values
-        sr_bw_map = {ALLOWED_SAMPLE_RATES[i] : ALLOWED_ACQ_BW[i] for i in range(len(ALLOWED_SAMPLE_RATES))}
+        self.sr_bw_map = {self.ALLOWED_SR[i] : self.ALLOWED_BW[i] for i in range(len(self.ALLOWED_SR))}
 
         self.max_sample_rate = allowed_sr
         self.max_reference_level = 30 # dBm, constant
