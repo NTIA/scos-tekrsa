@@ -45,7 +45,7 @@ class SDR_Error(Exception):
         super(SDR_Error, self).__init__(err)
 
 """ LOAD RSA DRIVER """
-soDir = '/usr/local/lib/python3.6/dist-packages/scos_tekrsa/hardware'
+soDir = os.path.dirname(os.path.realpath(__file__))
 RTLD_LAZY = 0x0001
 LAZYLOAD = RTLD_LAZY | RTLD_GLOBAL
 rsa = CDLL(soDir+'/drivers/libRSA_API.so', LAZYLOAD)
