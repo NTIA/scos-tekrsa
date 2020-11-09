@@ -50,7 +50,7 @@ class RSARadio(RadioInterface):
 
         # Create SR/BW mapping dictionary
         # With SR as keys, BW as values
-        sr_bw_map = {allowed_sr[i] : allowed_acq_bw for i in range(len(allowed_sr))}
+        sr_bw_map = {ALLOWED_SAMPLE_RATES[i] : ALLOWED_ACQ_BW[i] for i in range(len(ALLOWED_SAMPLE_RATES))}
 
         self.max_sample_rate = allowed_sr
         self.max_reference_level = 30 # dBm, constant
