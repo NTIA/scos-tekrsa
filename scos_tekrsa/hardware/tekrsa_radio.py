@@ -171,6 +171,14 @@ class RSARadio(RadioInterface):
     # revist the following section once all setpoints implemented
     # and calibration stuff is figured out
 
+    @property
+    def last_calibration_time(self):
+        if self.sensor_calibration:
+            return utils.convert_string_to_millisecond_iso_format(
+                self.sensor_calibration.calibration_datetime
+            )
+        return None
+
     def recompute_calibration_data(self):
         """Set the calibration data based on the currently tuning"""
 
