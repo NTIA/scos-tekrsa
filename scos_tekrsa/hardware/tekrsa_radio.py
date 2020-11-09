@@ -31,9 +31,9 @@ class RSARadio(RadioInterface):
         self._is_available = False
 
         # Allowed SR's: 56e6, 28e6, 14e6, ...
-        ALLOWED_SAMPLE_RATES = []
+        self.ALLOWED_SAMPLE_RATES = []
         # Allowed BW's : 40e6, 20e6, 10e6, ...
-        ALLOWED_ACQ_BW = []
+        self.ALLOWED_ACQ_BW = []
         
         allowed_sr = 56.0e6 # maximum cardinal SR
         allowed_acq_bw = 40.0e6 # maximum corresponding BW
