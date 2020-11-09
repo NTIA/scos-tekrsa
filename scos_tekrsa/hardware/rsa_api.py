@@ -45,10 +45,11 @@ class SDR_Error(Exception):
         super(SDR_Error, self).__init__(err)
 
 """ LOAD RSA DRIVER """
+soDir = '/usr/local/lib/python3.6/dist-packages/scos_tekrsa/hardware'
 RTLD_LAZY = 0x0001
 LAZYLOAD = RTLD_LAZY | RTLD_GLOBAL
-rsa = CDLL('./drivers/libRSA_API.so', LAZYLOAD)
-usbapi = CDLL('./drivers/libcyusb_shared.so', LAZYLOAD)
+rsa = CDLL(soDir+'/drivers/libRSA_API.so', LAZYLOAD)
+usbapi = CDLL(soDir+'/drivers/libcyusb_shared.so', LAZYLOAD)
 
 """ GLOBAL CONSTANTS """
 MAX_NUM_DEVICES = 10 # Max num. of devices that could be found
