@@ -66,8 +66,8 @@ class RSARadio(RadioInterface):
         # self.get_calibration(sensor_cal_file, sigan_cal_file)
 
     def get_constraints(self):
-        self.min_frequency = self.CONFIG_GetMinCenterFreq()
-        self.max_frequency = self.CONFIG_GetMaxCenterFreq()
+        self.min_frequency = CONFIG_GetMinCenterFreq()
+        self.max_frequency = CONFIG_GetMaxCenterFreq()
 
     def connect(self):
         if self._is_available:
@@ -82,7 +82,7 @@ class RSARadio(RadioInterface):
         self.search_connect()
 
         logger.debug("Using the following Tektronix RSA device:")
-        logger.debug(self.DEVICE_GetNomenclature())
+        logger.debug(DEVICE_GetNomenclature())
 
         try:
             self._is_available = True
@@ -127,7 +127,7 @@ class RSARadio(RadioInterface):
 
     @property
     def sample_rate(self):
-        return self.IQSTREAM_GetAcqParameters()[1]
+        return IQSTREAM_GetAcqParameters()[1]
 
     @sample_rate.setter
     def sample_rate(self, sample_rate):
@@ -135,37 +135,37 @@ class RSARadio(RadioInterface):
             err_msg = f"Sample rate {sample_rate} too high. Max sample rate is {self.max_sample_rate}."
             logger.error(err_msg)
             raise Exception(err_msg)
-        if sample_rate not in self.ALLOWED_SAMPLE_RATES:
-            allowed_sample_rates_str = ", ".join(self.ALLOWED_SAMPLE_RATES)
+        if sample_rate not in self.ALLOWED_SR:
+            allowed_sample_rates_str = ", ".join(self.ALLOWED_SR)
             err_msg = (f"Requested sample rate {sample_rate} not in allowed sample rates."
                 + " Allowed sample rates are {allowed_sample_rates_str}")
             logger.error(err_msg)
             raise Exception(err_msg)
         # set bandwidth according to SR setting
         bw = sr_bw_map.get(sample_rate)
-        self.IQSTREAM_SetAcqBandwidth(bw)
+        IQSTREAM_SetAcqBandwidth(bw)
         msg = "set Tektronix RSA sample rate: {:.1f} samples/sec"
-        logger.debug(msg.format(self.IQSTREAM_GetAcqParameters()[1]))
+        logger.debug(msg.format(IQSTREAM_GetAcqParameters()[1]))
 
     @property
     def frequency(self):
-        return self.CONFIG_GetCenterFreq()
+        return CONFIG_GetCenterFreq()
 
     @frequency.setter
     def frequency(self, freq):
-        self.CONFIG_SetCenterFreq()
+        CONFIG_SetCenterFreq()
 
     @property
     def reference_level(self):
         return self.CONFIG_GetReferenceLevel()
         msg = "Set Tektronix RSA center frequency: {:.1f} Hz"
-        logger.debug(msg.format(self.CONFIG_GetCenterFreq()))
+        logger.debug(msg.format(CONFIG_GetCenterFreq()))
 
     @reference_level.setter
     def reference_level(self, reference_level):
-        self.CONFIG_SetReferenceLevel(reference_level)
+        CONFIG_SetReferenceLevel(reference_level)
         msg = "Set Tektronix RSA reference level: {:.1f} dB"
-        logger.debug(msg.format(self.CONFIG_GetReferenceLevel()))
+        logger.debug(msg.format(CONFIG_GetReferenceLevel()))
 
     # revist the following section once all setpoints implemented
     # and calibration stuff is figured out
