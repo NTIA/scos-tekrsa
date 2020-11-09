@@ -23,18 +23,17 @@ logger = logging.getLogger(__name__)
 
 class RSARadio(RadioInterface):
 
-    # Allowed SR's: 56e6, 28e6, 14e6, ...
-    ALLOWED_SAMPLE_RATES = []
-
-    # Allowed BW's : 40e6, 20e6, 10e6, ...
-    ALLOWED_ACQ_BW = []
-
     def __init__(
         self,
         # sensor_cal_file=settings.SENSOR_CALIBRATION_FILE,
         # sigan_cal_file=settings.SIGAN_CALIBRATION_FILE,
     ):
         self._is_available = False
+
+        # Allowed SR's: 56e6, 28e6, 14e6, ...
+        ALLOWED_SAMPLE_RATES = []
+        # Allowed BW's : 40e6, 20e6, 10e6, ...
+        ALLOWED_ACQ_BW = []
         
         allowed_sr = 56.0e6 # maximum cardinal SR
         allowed_acq_bw = 40.0e6 # maximum corresponding BW
