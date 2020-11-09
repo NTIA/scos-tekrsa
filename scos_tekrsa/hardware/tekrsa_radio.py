@@ -7,7 +7,7 @@ from scos_actions import utils
 from scos_actions.hardware.radio_iface import RadioInterface
 
 from scos_tekrsa import settings
-from rsa_api import *
+from scos_tekrsa.hardware.rsa_api import *
 
 # Calibration not yet performed but these should be the right imports
 # or at least a decent starting point based on the keysight/usrp versions
@@ -290,7 +290,7 @@ class RSARadio(RadioInterface):
                         logger.error(error_message)
                         raise RuntimeError(error_message)
                 data = result_data[num_samples_skip : received_samples + num_samples_skip]
-                data /= linear_gain
+                data/ = linear_gain
 
                 measurement_result = {
                     "data": data,
