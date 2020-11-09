@@ -42,7 +42,7 @@ class RSARadio(RadioInterface):
             # Note: IQ Block acquisition allows for lower SR's. This
             # loop adds only the SR's available for BOTH IQ block and
             # IQ streaming acquisitions.
-            self.ALLOWED_SR.append(allowed_sr)
+            self.ALLOWED_SR.append(allowed_sample_rate)
             self.ALLOWED_BW.append(allowed_acq_bw)
             allowed_acq_bw /= 2
             allowed_sr /= 2
