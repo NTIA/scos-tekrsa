@@ -73,16 +73,16 @@ class RSARadio(RadioInterface):
         if self._is_available:
             return True
 
+        search_connect()
+
+        logger.debug("Using the following Tektronix RSA device:")
+        logger.debug(DEVICE_GetNomenclature())
+
         try:
             self.get_constraints()
         except ImportError:
             logger.warning("Tektronix RSA API not available - disabling radio")
             return False
-
-        self.search_connect()
-
-        logger.debug("Using the following Tektronix RSA device:")
-        logger.debug(DEVICE_GetNomenclature())
 
         try:
             self._is_available = True
