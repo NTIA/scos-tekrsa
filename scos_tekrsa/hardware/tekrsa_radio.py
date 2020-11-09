@@ -34,8 +34,14 @@ class RSARadio(RadioInterface):
         self.ALLOWED_SR = []
         # Allowed BW's : 40e6, 20e6, 10e6, ...
         self.ALLOWED_BW = []
+
+        self.max_sample_rate = 56.0e6
+        self.max_reference_level = 30 # dBm, constant
+        self.min_reference_level = -130 # dBm, constant
+        self.max_frequency = None
+        self.min_frequency = None
         
-        allowed_sample_rate = 56.0e6 # maximum cardinal SR
+        allowed_sample_rate = self.max_sample_rate # maximum cardinal SR
         allowed_acq_bw = 40.0e6 # maximum corresponding BW
 
         while allowed_sample_rate > 13670.0:
@@ -50,12 +56,6 @@ class RSARadio(RadioInterface):
         # Create SR/BW mapping dictionary
         # With SR as keys, BW as values
         self.sr_bw_map = {self.ALLOWED_SR[i] : self.ALLOWED_BW[i] for i in range(len(self.ALLOWED_SR))}
-
-        self.max_sample_rate = allowed_sr
-        self.max_reference_level = 30 # dBm, constant
-        self.min_reference_level = -130 # dBm, constant
-        self.max_frequency = None
-        self.min_frequency = None
         
         self.sensor_calibration_data = None
         self.sigan_calibration_data = None
