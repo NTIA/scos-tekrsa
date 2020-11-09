@@ -31,5 +31,5 @@ setuptools.setup(
     ],
     python_requires=">=3.6",
     install_requires=install_requires,
-    package_data={"scos-tekrsa": ["configs/*.example", "configs/actions/*.yml", "hardware/drivers/*"]},
+    package_data={"scos-tekrsa": ["configs/*.example", "configs/actions/*.yml", "hardware/drivers/*", "hardware/rsa_api.py"]},
 )
