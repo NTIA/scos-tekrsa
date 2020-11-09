@@ -290,7 +290,7 @@ class RSARadio(RadioInterface):
                         logger.error(error_message)
                         raise RuntimeError(error_message)
                 data = result_data[num_samples_skip : received_samples + num_samples_skip]
-                data/ = linear_gain
+                data /= linear_gain
 
                 measurement_result = {
                     "data": data,
