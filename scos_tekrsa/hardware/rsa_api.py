@@ -28,6 +28,7 @@ To Do's / Ideas:
 from ctypes import *
 from enum import Enum
 import numpy as np
+import os
 
 # Copied in SDR_Error to make this file self-contained:
 """ ERROR HANDLING """
@@ -44,10 +45,12 @@ class SDR_Error(Exception):
         super(SDR_Error, self).__init__(err)
 
 """ LOAD RSA DRIVER """
+libString = '/drivers/libRSA_API.so'
+usbString = '/drivers/libcyusb_shared.so'
 RTLD_LAZY = 0x0001
 LAZYLOAD = RTLD_LAZY | RTLD_GLOBAL
-rsa = CDLL('./drivers/libRSA_API.so', LAZYLOAD)
-usbapi = CDLL('./drivers/libcyusb_shared.so', LAZYLOAD)
+rsa = CDLL(os.getcwd()+libString, LAZYLOAD)
+usbapi = CDLL(os.getcwd()+usbString, LAZYLOAD)
 
 """ GLOBAL CONSTANTS """
 MAX_NUM_DEVICES = 10 # Max num. of devices that could be found
