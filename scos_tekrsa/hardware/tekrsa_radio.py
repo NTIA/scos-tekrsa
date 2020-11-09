@@ -9,15 +9,15 @@ from scos_actions.hardware.radio_iface import RadioInterface
 from scos_tekrsa import settings
 from scos_tekrsa.hardware.rsa_api import *
 
-# Calibration not yet performed but these should be the right imports
-# or at least a decent starting point based on the keysight/usrp versions
+# Calibration not yet performed but these should be the right imports,
+# or at least a decent starting point based on the keysight/usrp versions.
+# For now, everything calibration-related is commented out.
 
-# Nothing that references calibration works yet
-from scos_tekrsa.hardware import calibration
-from scos_tekrsa.hardware.calibration import (
-    DEFAULT_SENSOR_CALIBRATION,
-    DEFAULT_SIGAN_CALIBRATION
-)
+# from scos_tekrsa.hardware import calibration
+# from scos_tekrsa.hardware.calibration import (
+#     DEFAULT_SENSOR_CALIBRATION,
+#     DEFAULT_SIGAN_CALIBRATION
+# )
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +31,8 @@ class RSARadio(RadioInterface):
 
     def __init__(
         self,
-        sensor_cal_file=settings.SENSOR_CALIBRATION_FILE,
-        sigan_cal_file=settings.SIGAN_CALIBRATION_FILE,
+        # sensor_cal_file=settings.SENSOR_CALIBRATION_FILE,
+        # sigan_cal_file=settings.SIGAN_CALIBRATION_FILE,
     ):
         self._is_available = False
         
@@ -97,6 +97,7 @@ class RSARadio(RadioInterface):
         return self._is_available
 
     # get_calibration left untouched from USRP implementation so far
+    # Not commented since it isn't called in current implementation.
     def get_calibration(self, sensor_cal_file, sigan_cal_file):
         # Set the default calibration values
         self.sensor_calibration_data = DEFAULT_SENSOR_CALIBRATION.copy()
