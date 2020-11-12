@@ -4,7 +4,7 @@ from scos_actions.actions.monitor_radio import RadioMonitor
 from scos_actions.actions.sync_gps import SyncGps
 from scos_actions.discover import init
 
-from scos_tekrsa.hardware import tekrsa_radio
+from scos_tekrsa.hardware import radio
 from scos_tekrsa.settings import ACTION_DEFINITIONS_DIR
 
 logger = logging.getLogger(__name__)
