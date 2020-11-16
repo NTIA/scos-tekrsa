@@ -286,7 +286,7 @@ class RSARadio(RadioInterface):
         while True:
             try:
                 result_data = iqstream_tempfile(self.frequency, self.reference_level,
-                    sw_br_map[self.sample_rate], durationMsec
+                    self.sr_bw_map[self.sample_rate], durationMsec
                 )
                 received_samples = len(result_data)
                 if received_samples < total_samples:
