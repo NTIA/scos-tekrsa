@@ -142,7 +142,7 @@ class RSARadio(RadioInterface):
             logger.error(err_msg)
             raise Exception(err_msg)
         # set bandwidth according to SR setting
-        bw = sr_bw_map.get(sample_rate)
+        bw = self.sr_bw_map.get(sample_rate)
         IQSTREAM_SetAcqBandwidth(bw)
         msg = "set Tektronix RSA sample rate: {:.1f} samples/sec"
         logger.debug(msg.format(IQSTREAM_GetAcqParameters()[1]))
