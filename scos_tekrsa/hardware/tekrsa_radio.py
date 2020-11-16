@@ -314,13 +314,3 @@ class RSARadio(RadioInterface):
                     "calibration_annotation": self.create_calibration_annotation(),
                 }
                 return measurement_result
-            except GetTimeDataException as gtde:
-                logger.error(gtde)
-                if retries > 0:
-                    logger.info("Retrying time domain iq measurement.")
-                    retries = retries - 1
-                    continue
-                else:
-                    error_message = "Max retries exceeded."
-                    logger.error(error_message)
-                    raise RuntimeError(error_message)
