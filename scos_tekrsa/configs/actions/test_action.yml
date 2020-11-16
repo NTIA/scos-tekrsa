@@ -1,5 +1,0 @@
-# This is nothing at the moment
-something:
-  name: test_action
-  param:
-    - 100
