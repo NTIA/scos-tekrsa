@@ -273,7 +273,8 @@ class RSARadio(RadioInterface):
         )
         # Determine correct time length for num_samples based on current SR
         durationMsec = (num_samples/self.sample_rate)*1000
-        self.recompute_calibration_data()
+        # Calibration data not currently recomputed since calibration not done
+        #self.recompute_calibration_data()
         logger.debug(f"Number of retries = {retries}")
         db_gain = self.sensor_calibration_data["gain_sensor"]
         # Compute the linear gain
