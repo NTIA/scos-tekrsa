@@ -310,8 +310,8 @@ class RSARadio(RadioInterface):
                     "frequency": self.frequency,
                     "reference_level": self.reference_level,
                     "sample_rate": IQSTREAM_GetAcqParameters()[1],
-                    "capture_time": durationMsec, # capture duration in milliseconds
-                    "calibration_annotation": self.create_calibration_annotation(),
+                    "capture_time": durationMsec # capture duration in milliseconds
+          #          "calibration_annotation": self.create_calibration_annotation(),
                 }
                 return measurement_result
             except Exception as e:
