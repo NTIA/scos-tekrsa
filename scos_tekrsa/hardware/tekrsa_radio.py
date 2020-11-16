@@ -157,7 +157,7 @@ class RSARadio(RadioInterface):
 
     @property
     def reference_level(self):
-        return self.CONFIG_GetReferenceLevel()
+        return CONFIG_GetReferenceLevel()
         msg = "Set Tektronix RSA center frequency: {:.1f} Hz"
         logger.debug(msg.format(CONFIG_GetCenterFreq()))
 
