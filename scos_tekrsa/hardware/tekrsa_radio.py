@@ -153,7 +153,7 @@ class RSARadio(RadioInterface):
 
     @frequency.setter
     def frequency(self, freq):
-        CONFIG_SetCenterFreq()
+        CONFIG_SetCenterFreq(freq)
 
     @property
     def reference_level(self):
