@@ -275,8 +275,11 @@ class RSARadio(RadioInterface):
         durationMsec = (num_samples/self.sample_rate)*1000
         # Calibration data not currently recomputed since calibration not done
         #self.recompute_calibration_data()
+        #db_gain = self.sensor_calibration_data["gain_sensor"]
+        # Placeholder db_gain:
+        db_gain = 1
         logger.debug(f"Number of retries = {retries}")
-        db_gain = self.sensor_calibration_data["gain_sensor"]
+        
         # Compute the linear gain
         linear_gain = 10 ** (db_gain / 20.0)
         total_samples = num_samples + num_samples_skip
