@@ -272,7 +272,7 @@ class RSARadio(RadioInterface):
             f"acquire_time_domain_samples starting num_samples = {num_samples}"
         )
         # Determine correct time length for num_samples based on current SR
-        durationMsec = (num_samples/self.sample_rate)*1000
+        durationMsec = int((num_samples/self.sample_rate)*1000)
         # Calibration data not currently recomputed since calibration not done
         #self.recompute_calibration_data()
         #db_gain = self.sensor_calibration_data["gain_sensor"]
@@ -310,8 +310,9 @@ class RSARadio(RadioInterface):
                     "frequency": self.frequency,
                     "reference_level": self.reference_level,
                     "sample_rate": IQSTREAM_GetAcqParameters()[1],
-                    "capture_time": durationMsec # capture duration in milliseconds
-          #          "calibration_annotation": self.create_calibration_annotation(),
+                    "capture_time": durationMsec, # capture duration in milliseconds
+                    "calibration_annotation": "Calibration not yet performed"
+          #         "calibration_annotation": self.create_calibration_annotation(),
                 }
                 return measurement_result
             except Exception as e:
