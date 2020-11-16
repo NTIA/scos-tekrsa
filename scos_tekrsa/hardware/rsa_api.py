@@ -2679,8 +2679,9 @@ def IQSTREAM_SetDiskFileLength(msec):
     SDR_Error
         If input is a negative value.
     """
-    if msec >= 0:
-        err_check(rsa.IQSTREAM_SetDiskFileLength(c_int(msec)))
+    msecInt = int(msec)
+    if msecInt >= 0:
+        err_check(rsa.IQSTREAM_SetDiskFileLength(c_int(msecInt)))
     else:
         raise SDR_Error(0,
             "Cannot set file length to a negative time value.",
