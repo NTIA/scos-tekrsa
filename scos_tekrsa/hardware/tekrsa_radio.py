@@ -234,18 +234,6 @@ class RSARadio(RadioInterface):
         if calDone:
             annotation_md = {
                 "ntia-core:annotation_type": "CalibrationAnnotation",
-                "ntia-sensor:gain_sigan": 1,
-                "ntia-sensor:noise_figure_sigan": 1,
-                "ntia-sensor:1db_compression_point_sigan": 1,
-                "ntia-sensor:enbw_sigan": 1,
-                "ntia-sensor:gain_preselector": 1,
-                "ntia-sensor:noise_figure_sensor": 1,
-                "ntia-sensor:1db_compression_point_sensor": 1,
-                "ntia-sensor:enbw_sensor": 1,
-            }
-        else:
-            annotation_md = {
-                "ntia-core:annotation_type": "CalibrationAnnotation",
                 "ntia-sensor:gain_sigan": self.sigan_calibration_data["gain_sigan"],
                 "ntia-sensor:noise_figure_sigan": self.sigan_calibration_data[
                     "noise_figure_sigan"
@@ -264,6 +252,18 @@ class RSARadio(RadioInterface):
                     "1db_compression_sensor"
                 ],
                 "ntia-sensor:enbw_sensor": self.sensor_calibration_data["enbw_sensor"],
+            }
+        else:
+            annotation_md = {
+                "ntia-core:annotation_type": "CalibrationAnnotation",
+                "ntia-sensor:gain_sigan": 1,
+                "ntia-sensor:noise_figure_sigan": 1,
+                "ntia-sensor:1db_compression_point_sigan": 1,
+                "ntia-sensor:enbw_sigan": 1,
+                "ntia-sensor:gain_preselector": 1,
+                "ntia-sensor:noise_figure_sensor": 1,
+                "ntia-sensor:1db_compression_point_sensor": 1,
+                "ntia-sensor:enbw_sensor": 1,
             }
         return annotation_md
 
