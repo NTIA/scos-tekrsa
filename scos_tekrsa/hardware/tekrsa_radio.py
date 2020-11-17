@@ -11,7 +11,8 @@ from scos_tekrsa.hardware.rsa_api import *
 
 # Calibration not yet performed but these should be the right imports,
 # or at least a decent starting point based on the keysight/usrp versions.
-# For now, everything calibration-related is commented out.
+# For now, everything calibration-related is commented out where possible,
+# or replaced by placeholder code where needed.
 
 # from scos_tekrsa.hardware import calibration
 # from scos_tekrsa.hardware.calibration import (
@@ -230,6 +231,7 @@ class RSARadio(RadioInterface):
 
     def create_calibration_annotation(self):
         # While calibration isn't yet done, return placeholder info
+        # This was needed for testing, pre-calibration.
         calDone = False
         if calDone:
             annotation_md = {
