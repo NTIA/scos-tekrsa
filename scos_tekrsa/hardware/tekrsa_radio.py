@@ -243,7 +243,7 @@ class RSARadio(RadioInterface):
                 "ntia-sensor:1db_compression_point_sensor": 1,
                 "ntia-sensor:enbw_sensor": 1,
             }
-        else
+        else:
             annotation_md = {
                 "ntia-core:annotation_type": "CalibrationAnnotation",
                 "ntia-sensor:gain_sigan": self.sigan_calibration_data["gain_sigan"],
