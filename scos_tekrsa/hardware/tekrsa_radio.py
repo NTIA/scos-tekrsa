@@ -229,27 +229,42 @@ class RSARadio(RadioInterface):
             )
 
     def create_calibration_annotation(self):
-        annotation_md = {
-            "ntia-core:annotation_type": "CalibrationAnnotation",
-            "ntia-sensor:gain_sigan": self.sigan_calibration_data["gain_sigan"],
-            "ntia-sensor:noise_figure_sigan": self.sigan_calibration_data[
-                "noise_figure_sigan"
-            ],
-            "ntia-sensor:1db_compression_point_sigan": self.sigan_calibration_data[
-                "1db_compression_sigan"
-            ],
-            "ntia-sensor:enbw_sigan": self.sigan_calibration_data["enbw_sigan"],
-            "ntia-sensor:gain_preselector": self.sensor_calibration_data[
-                "gain_preselector"
-            ],
-            "ntia-sensor:noise_figure_sensor": self.sensor_calibration_data[
-                "noise_figure_sensor"
-            ],
-            "ntia-sensor:1db_compression_point_sensor": self.sensor_calibration_data[
-                "1db_compression_sensor"
-            ],
-            "ntia-sensor:enbw_sensor": self.sensor_calibration_data["enbw_sensor"],
-        }
+        # While calibration isn't yet done, return placeholder info
+        calDone = False
+        if calDone:
+            annotation_md = {
+                "ntia-core:annotation_type": "CalibrationAnnotation",
+                "ntia-sensor:gain_sigan": 1,
+                "ntia-sensor:noise_figure_sigan": 1,
+                "ntia-sensor:1db_compression_point_sigan": 1,
+                "ntia-sensor:enbw_sigan": 1,
+                "ntia-sensor:gain_preselector": 1,
+                "ntia-sensor:noise_figure_sensor": 1,
+                "ntia-sensor:1db_compression_point_sensor": 1,
+                "ntia-sensor:enbw_sensor": 1,
+            }
+        else
+            annotation_md = {
+                "ntia-core:annotation_type": "CalibrationAnnotation",
+                "ntia-sensor:gain_sigan": self.sigan_calibration_data["gain_sigan"],
+                "ntia-sensor:noise_figure_sigan": self.sigan_calibration_data[
+                    "noise_figure_sigan"
+                ],
+                "ntia-sensor:1db_compression_point_sigan": self.sigan_calibration_data[
+                    "1db_compression_sigan"
+                ],
+                "ntia-sensor:enbw_sigan": self.sigan_calibration_data["enbw_sigan"],
+                "ntia-sensor:gain_preselector": self.sensor_calibration_data[
+                    "gain_preselector"
+                ],
+                "ntia-sensor:noise_figure_sensor": self.sensor_calibration_data[
+                    "noise_figure_sensor"
+                ],
+                "ntia-sensor:1db_compression_point_sensor": self.sensor_calibration_data[
+                    "1db_compression_sensor"
+                ],
+                "ntia-sensor:enbw_sensor": self.sensor_calibration_data["enbw_sensor"],
+            }
         return annotation_md
 
     def configure(self, action_name):
@@ -311,8 +326,7 @@ class RSARadio(RadioInterface):
                     "reference_level": self.reference_level,
                     "sample_rate": IQSTREAM_GetAcqParameters()[1],
                     "capture_time": durationMsec, # capture duration in milliseconds
-                    "calibration_annotation": "Calibration not yet performed"
-          #         "calibration_annotation": self.create_calibration_annotation(),
+                    "calibration_annotation": self.create_calibration_annotation()
                 }
                 return measurement_result
             except Exception as e:
