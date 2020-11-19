@@ -48,8 +48,8 @@ class SDR_Error(Exception):
 soDir = os.path.dirname(os.path.realpath(__file__))
 RTLD_LAZY = 0x0001
 LAZYLOAD = RTLD_LAZY | RTLD_GLOBAL
-rsa = CDLL(soDir+'/drivers/libRSA_API.so', LAZYLOAD)
-usbapi = CDLL(soDir+'/drivers/libcyusb_shared.so', LAZYLOAD)
+rsa = CDLL(soDir+'/libRSA_API.so', LAZYLOAD)
+usbapi = CDLL(soDir+'/libcyusb_shared.so', LAZYLOAD)
 
 """ GLOBAL CONSTANTS """
 MAX_NUM_DEVICES = 10 # Max num. of devices that could be found
