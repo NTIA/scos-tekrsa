@@ -7,7 +7,7 @@ from scos_actions import utils
 from scos_actions.hardware.radio_iface import RadioInterface
 
 from scos_tekrsa import settings
-from scos_tekrsa.driver.rsa_api import *
+from scos_tekrsa.hardware.driver.rsa_api import *
 
 # Calibration not yet performed but these should be the right imports,
 # or at least a decent starting point based on the keysight/usrp versions.
