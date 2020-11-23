@@ -48,7 +48,10 @@ class SDR_Error(Exception):
 soDir = os.path.dirname(os.path.realpath(__file__))
 RTLD_LAZY = 0x0001
 LAZYLOAD = RTLD_LAZY | RTLD_GLOBAL
+print("------------------")
+print("THIS IS THE DIRECTORY")
 print(soDir)
+print("------------------")
 rsa = CDLL(soDir+'/drivers/libRSA_API.so', LAZYLOAD)
 usbapi = CDLL(soDir+'/drivers/libcyusb_shared.so', LAZYLOAD)
 
