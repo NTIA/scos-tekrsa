@@ -34,15 +34,38 @@ Below are the steps to run scos-sensor with the scos-tekrsa plugin:
 
 3. If it does not exist, create env file while in the root scos-sensor directory `cp env.template ./env`
 
-4. Make sure the scos-tekrsa dependency is in requirements.txt in the scos-sensor/src folder. If you are using a different branch than master, change master in the following line to the branch you are using 
+4. Make sure the scos-tekrsa dependency is in requirements.txt in the scos-sensor/src folder. If you are using a different branch than master, change master in the following line to the branch you are using: `scos_tekrsa @ git+${DOCKER_GIT_CREDENTIALS}/NTIA/scos-tekrsa@master#egg=scos_tekrsa`
+
+	- Additionally, remove or comment any unnecessary dependencies, such as scos-usrp.
+
+5. Make sure `BASE_IMAGE` is set to `BASE_IMAGE=docker.pkg.github.com/ntia/scos-tekrsa/tekrsa_usb:0.1.0` in the env file
+
+	- While this repository is private, [authentication with GitHub packages](https://docs.github.com/en/free-pro-team@latest/packages/using-github-packages-with-your-projects-ecosystem/configuring-docker-for-use-with-github-packages#authenticating-to-github-packages) using a [GitHub personal access token](https://docs.github.com/en/free-pro-team@latest/packages/publishing-and-managing-packages/about-github-packages#about-tokens) is required. 
+
+6. Get environment variables: `source ./env`
+
+7. Build and start containers: `docker-compose up -d --build --force-recreate`
+
+8. Optionally, view logs: `docker-compose logs -f`
 
 ## 5. Development
 
+### Requirements and Configuration
 
+Requires pip>=18.1 (upgrade using `python3 -m pip install --upgrade pip`) and python>=3.6.
+
+It is highly recommended that you first initialize a virtual development environment using a tool such as conda or venv. The following commands create a virtual environment using venv and install the required dependencies for development and testing.
+
+```
+python3 -m venv ./venv
+source venv/bin/activate
+python3 -m pip install --upgrade pip # upgrade to pip>=18.1
+python3 -m pip install -r requirements.txt
+```
 
 ## 6. License
 
-See [LICENSE](LICENSE.md)
+Coming Soon
 
 ## 7. Contact
 
