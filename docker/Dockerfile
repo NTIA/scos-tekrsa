@@ -1,4 +1,6 @@
 FROM ubuntu
 
-# Copy Cypress USB configuration, needed to connect to Tektronix RSA
-COPY ./cyusb.conf /etc/cyusb.conf
+COPY cyusb.conf /etc/cyusb.conf
+
+# Line below is likely not needed
+# COPY Tektronix.rules /etc/udev/rules.d/Tektronix.rules
