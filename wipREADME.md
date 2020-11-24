@@ -1,12 +1,12 @@
 # 1. NTIA/ITS SCOS TekRSA Plugin
 
-This repository is a plugin to add support for the Tektronix RSA306B signal analyzer to scos-sensor. See the [scos-sensor documentation]() for more information about scos-sensor, especially the section about [Actions and Hardware Support]().
+This repository is a plugin to add support for the Tektronix RSA306B signal analyzer to scos-sensor. See the [scos-sensor documentation](https://github.com/NTIA/scos-sensor/blob/SMBWTB475_refactor_radio_interface/README.md) for more information about scos-sensor, especially the section about [Actions and Hardware Support](https://github.com/NTIA/scos-sensor/blob/SMBWTB475_refactor_radio_interface/DEVELOPING.md#actions-and-hardware-support).
 
 See scos_tekrsa/hardware/drivers/README.md 
 
 This repository includes many 700MHz band actions in scos_tekrsa/configs/actions. Action classes, RadioInterface, and signals are used from scos_actions.
 
-For information on adding actions, see the [scos_actions documentation]().
+For information on adding actions, see the [scos_actions documentation](https://github.com/NTIA/scos-actions/blob/PublicRelease/README.md#adding-actions).
 
 ## 2. Table of Contents
 
