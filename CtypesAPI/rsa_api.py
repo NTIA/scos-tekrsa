@@ -1,16 +1,14 @@
 """
 Notes:
-- Currently, ALL SDR_Error codes thrown are arbitrary placeholders
-- Method "Raises" are only documented if specifically implemented
+- Currently, ALL SDR_Error codes thrown are arbitrary
+    - Errors passed from API calls include ReturnStatus value
+      as defined in the RSA API documentation
+- Raised errors are only documented if specifically implemented
     - Catch-all err_check() feeds internal API errors into SDR_Error
         - These do not uniquely appear in the docstrings
+        - More information on these errors in RSA API documentation.
 - ANYTHING that can't run on a 306B is completely untested
-    - would need an RSA 500/600 series device to fully test this API wrapper
-- Some methods are given default parameter values which aren't
-    specified in the original API. This is done for convenience for
-    certain methods.
-- Some methods require string input. These are currently case sensitive
-    - Docstrings clarifies usage
+    - This includes a substantial number of RSA500/600-only API calls
 
 To Do's / Ideas:
 - Support multiple devices?
@@ -20,15 +18,29 @@ To Do's / Ideas:
     - FreqRefUserSettingString method
 """
 from ctypes import *
-from sdr_error import SDR_Error
 from enum import Enum
 import numpy as np
+import os
+
+""" ERROR HANDLING """
+class SDR_Error(Exception):
+    def __init__(self, err_code=99, err_head="", err_body=""):
+        self.err_code = err_code+200
+        self.err_head = err_head
+        self.err_body = err_body
+
+        # Call the super function
+        err = "SDR error code: {}\r\n".format(self.err_code)
+        err += "!!! {} !!!\r\n".format(self.err_head)
+        err += "{}".format(self.err_body)
+        super(SDR_Error, self).__init__(err)
 
 """ LOAD RSA DRIVER """
+soDir = os.path.dirname(os.path.realpath(__file__))
 RTLD_LAZY = 0x0001
 LAZYLOAD = RTLD_LAZY | RTLD_GLOBAL
-rsa = CDLL('./drivers/libRSA_API.so', LAZYLOAD)
-usbapi = CDLL('./drivers/libcyusb_shared.so', LAZYLOAD)
+rsa = CDLL(soDir+'/drivers/libRSA_API.so', LAZYLOAD)
+usbapi = CDLL(soDir+'/drivers/libcyusb_shared.so', LAZYLOAD)
 
 """ GLOBAL CONSTANTS """
 MAX_NUM_DEVICES = 10 # Max num. of devices that could be found
@@ -287,8 +299,7 @@ class IQSTREAM_File_Info(Structure):
 
 # This error checker throws any internal API errors to SDR_Error.
 # It passes through the error code ("return status") from the API.
-# - Could easily be made to give return status number as SDR error code
-# - For now, all will give SDR_Error code 200
+# All give SDR_Error code 200
 def err_check(rs):
     if ReturnStatus(rs) != ReturnStatus.noError:
         raise SDR_Error(0, "Error running API command.",
@@ -413,6 +424,92 @@ def iqblk_collect(recordLength=1024, timeoutMsec=100):
     DEVICE_Stop()
 
     return iData + 1j * qData
+
+def iqstream_tempfile(cf, refLevel, bw, durationMsec):
+    # Returns:
+    # (iData, qData, headerInfo)
+    # data as arrays of samples, headerinfo as dict
+    # Modules used ONLY by this helper method
+    from time import sleep
+    import tempfile
+
+    # Configuration parameters
+    dest=IQSOUTDEST[3] # split SIQ
+    dType=IQSOUTDTYPE[0] # 32-bit single precision floating point
+    suffixCtl=-2 # none
+    filename = 'tempIQ'
+    sleepTimeSec = 0.1 # loop sleep time checking if acquisition complete
+
+    # Ensure device is stopped before proceeding
+    DEVICE_Stop()
+
+    # Create temp directory and configure/collect data
+    with tempfile.TemporaryDirectory() as tmpDir:
+        filenameBase = tmpDir + '/' + filename
+
+        # Configure device
+        CONFIG_SetCenterFreq(cf)
+        CONFIG_SetReferenceLevel(refLevel)
+        IQSTREAM_SetAcqBandwidth(bw)
+        IQSTREAM_SetOutputConfiguration(dest, dType)
+        IQSTREAM_SetDiskFilenameBase(filenameBase)
+        IQSTREAM_SetDiskFilenameSuffix(suffixCtl)
+        IQSTREAM_SetDiskFileLength(durationMsec)
+        IQSTREAM_ClearAcqStatus()
+
+        # Collect data
+        complete = False
+        writing = False
+
+        DEVICE_Run()
+        IQSTREAM_Start()
+        while not complete:
+            sleep(sleepTimeSec)
+            (complete, writing) = IQSTREAM_GetDiskFileWriteStatus()
+        IQSTREAM_Stop()
+
+        # Check acquisition status
+        fileInfo = IQSTREAM_GetDiskFileInfo()
+        iqstream_status_parser(fileInfo)
+
+        DEVICE_Stop()
+
+        # Read data back in from file
+        with open(filenameBase + '.siqd', 'rb') as f:
+            # if siq file, skip header
+            if f.name[-1] == 'q':
+                # this case currently is never used
+                # but would be needed if code is later modified
+                f.seek(1024)
+            # read in data as float32 ("SINGLE" SIQ)
+            d = np.frombuffer(f.read(), dtype=np.float32)
+
+    # Deinterleave I and Q
+    i = d[0:-1:2]
+    q = np.append(d[1:-1:2], d[-1])
+    # iqData = i + 1j*q (re-interleave as numpy complex64)
+    iqData = i + 1j*q
+
+    return iqData
+
+def iqstream_status_parser(iqStreamInfo):
+    # This function parses the IQ streaming status variable
+    # The input is an IQSTREAM_File_Info() structure
+    status = iqStreamInfo.acqStatus
+    if status == 0:
+        pass
+    if bool(status & 0x10000):  # mask bit 16
+        print('\nInput overrange.\n')
+    if bool(status & 0x40000):  # mask bit 18
+        print('\nInput buffer > 75{} full.\n'.format('%'))
+    if bool(status & 0x80000):  # mask bit 19
+     print('\nInput buffer overflow. IQStream processing too slow, ',
+              'data loss has occurred.\n')
+    if bool(status & 0x100000):  # mask bit 20
+        print('\nOutput buffer > 75{} full.\n'.format('%'))
+    if bool(status & 0x200000):  # mask bit 21
+        print('Output buffer overflow. File writing too slow, ',
+              'data loss has occurred.\n')       
 
 """ ALIGNMENT METHODS """
 
@@ -2374,6 +2471,7 @@ def IQSTREAM_GetDiskFileInfo():
 
     Returns
     -------
+    An IQSTREAM_File_Info structure which contains:
     numberSamples : int
         Number of IQ sample pairs written to the file.
     sample0Timestamp : int
@@ -2424,9 +2522,7 @@ def IQSTREAM_GetDiskFileInfo():
     """
     fileinfo = IQSTREAM_File_Info()
     err_check(rsa.IQSTREAM_GetDiskFileInfo(byref(fileinfo)))
-    return (fileinfo.numberSamples, fileinfo.sample0Timestamp,
-        fileinfo.triggerSampleIndex, fileinfo.triggerTimestamp,
-        fileinfo.filenames, fileinfo.acqStatus)
+    return fileinfo
         
 def IQSTREAM_GetDiskFileWriteStatus():
     """
@@ -2572,8 +2668,9 @@ def IQSTREAM_SetDiskFileLength(msec):
     SDR_Error
         If input is a negative value.
     """
-    if msec >= 0:
-        err_check(rsa.IQSTREAM_SetDiskFileLength(c_int(msec)))
+    msecInt = int(msec)
+    if msecInt >= 0:
+        err_check(rsa.IQSTREAM_SetDiskFileLength(c_int(msecInt)))
     else:
         raise SDR_Error(0,
             "Cannot set file length to a negative time value.",

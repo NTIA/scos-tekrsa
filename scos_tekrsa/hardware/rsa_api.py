@@ -1,22 +1,18 @@
-# THIS VERSION HAS BEEN MODIFIED FROM THE VERSION 
-# IN THE CTYPESAPI FOLDER 
-
-# This version can eventually be slimmed down to contain only things 
-# that are useful for scos
+# This version is the one used by the scos-tekrsa plugin.
+# It can eventually be slimmed down to contain only the necessary functions
+# instead of all of the API calls.
 
 """
 Notes:
-- Currently, ALL SDR_Error codes thrown are arbitrary placeholders
-- Method "Raises" are only documented if specifically implemented
+- Currently, ALL SDR_Error codes thrown are arbitrary
+    - Errors passed from API calls include ReturnStatus value
+      as defined in the RSA API documentation
+- Raised errors are only documented if specifically implemented
     - Catch-all err_check() feeds internal API errors into SDR_Error
         - These do not uniquely appear in the docstrings
+        - More information on these errors in RSA API documentation.
 - ANYTHING that can't run on a 306B is completely untested
-    - would need an RSA 500/600 series device to fully test this API wrapper
-- Some methods are given default parameter values which aren't
-    specified in the original API. This is done for convenience for
-    certain methods.
-- Some methods require string input. These are currently case sensitive
-    - Docstrings clarifies usage
+    - This includes a substantial number of RSA500/600-only API calls
 
 To Do's / Ideas:
 - Support multiple devices?
@@ -30,7 +26,6 @@ from enum import Enum
 import numpy as np
 import os
 
-# Copied in SDR_Error to make this file self-contained:
 """ ERROR HANDLING """
 class SDR_Error(Exception):
     def __init__(self, err_code=99, err_head="", err_body=""):
@@ -308,8 +303,7 @@ class IQSTREAM_File_Info(Structure):
 
 # This error checker throws any internal API errors to SDR_Error.
 # It passes through the error code ("return status") from the API.
-# - Could easily be made to give return status number as SDR error code
-# - For now, all will give SDR_Error code 200
+# All give SDR_Error code 200
 def err_check(rs):
     if ReturnStatus(rs) != ReturnStatus.noError:
         raise SDR_Error(0, "Error running API command.",
@@ -501,7 +495,6 @@ def iqstream_tempfile(cf, refLevel, bw, durationMsec):
     iqData = i + 1j*q
 
     return iqData
-
 
 def iqstream_status_parser(iqStreamInfo):
     # This function parses the IQ streaming status variable
