@@ -1,43 +1,72 @@
-scos-tekrsa
-============
+# 1. NTIA/ITS SCOS TekRSA Plugin
 
-Tektronix RSA support for [`scos-sensor`](https://github.com/NTIA/scos-sensor). Currently WIP.
+This repository is a plugin to add support for the Tektronix RSA306B signal analyzer to scos-sensor. See the [scos-sensor documentation](https://github.com/NTIA/scos-sensor/blob/SMBWTB475_refactor_radio_interface/README.md) for more information about scos-sensor, especially the section about [Actions and Hardware Support](https://github.com/NTIA/scos-sensor/blob/SMBWTB475_refactor_radio_interface/DEVELOPING.md#actions-and-hardware-support).
 
-This will eventually become a plugin which adds support for the [Tektronix RSA306b](https://www.tek.com/spectrum-analyzer/rsa306) into [`scos-sensor`](https://github.com/NTIA/scos-sensor). It will also be possible to relatively easily extend this code to support a wider range of Tektronix RSA devices which use the same API: the RSA306, RSA500A series, and RSA600A series real time spectrum analyzers. 
+This plugin makes use of the [Python RSA API by Tektronix](https://github.com/tektronix/RSA_API/tree/master/Python). scos_tekrsa/hardware/drivers/README.md 
 
-Brief Overview of Repo Structure
---------------------------------
+This repository includes many 700MHz band actions in scos_tekrsa/configs/actions. Action classes, RadioInterface, and signals are used from scos_actions.
 
-- `scos-tekrsa` and the top level directory contain the main files which will incorporate the RSA into `scos-sensor`. Right now, there isn't much here, but this will be the main content of this repository when finished. Most of what is present is borrowed from [`scos-usrp`](https://github.com/NTIA/scos-usrp) and will be replaced or adapted soon.
+For information on adding actions, see the [scos_actions documentation](https://github.com/NTIA/scos-actions/blob/PublicRelease/README.md#adding-actions).
 
-- `Ctypes API` contains a custom-made Python wrapper for the RSA API.
-	- The `RSA_API.py` file contains Python methods which wrap API calls in order to make them more Pythonic and easier to use. This wrapper handles data type conversions under the hood, so you can interface with the RSA using standard Python data types, instead of worrying about converting to the proper C data types for every function call. API calls are documented using a standard docstring format to allow for quick reference of API functionality in a development environment.
+## 2. Table of Contents
 
-- `Cython API` contains another version of the API, which is currently not functional. This version is forked from the Tektronix [Cython RSA API](https://github.com/tektronix/RSA_API/tree/master/Python/Cython%20Version), with adaptations made to the `setup.py` file in order to run on Linux. There are some limitations to this version of the API, as documented in the [`README`](https://github.com/NTIA/scos-tekrsa/blob/master/Cython%20API/README.md). Also, it currently has errors which cause the module it compiles not to import into a Python script. This makes it currently unusable, although in the future this may be fixed and used instead of the Ctypes version. This version likely runs faster than the Ctypes implementation.
+- [Overview of Repo Structure](#3-overview-of-repo-structure)
+- [Running in scos-sensor](#4-running-in-scos-sensor)
+- [Development](#5-development)
+- [License](#6-license)
+- [Contact](#7-contact)
 
-Usage
------
-As of right now, only the custom Ctypes API is worth trying to use. If you do wish to try it out, here's the way to go about it.
+## 3. Overview of Repo Structure
 
-Clone this repository (or just the `Ctypes API` folder), and connect the RSA306b to your computer via a USB 3.0 port. Then, you can start by writing your own code to control the RSA 306b.
+- scos_tekrsa/configs: This folder contains the YAML files with the parameters used to initialize the Tektronix RSA 306B supported actions and sample calibration files.
+- scos_tekrsa/discover: This includes the code to read YAML files and make actions available to scos-sensor.
+- scos_tekrsa/hardware: This includes the Tektronix RSA 306B implementation of the radio interface. It also includes supporting calibration and test code.
 
-To start writing your own RSA script, create a new Python file in the cloned `Ctypes API` directory, and start out by importing the RSA API at the beginning of the file:
+## 4. Running in scos-sensor
 
-```python
-from RSA_API import *
+Requires pip>=18.1 (upgrade using `python3 -m pip install --upgrade pip`).
+
+Below are the steps to run scos-sensor with the scos-tekrsa plugin:
+
+1. Clone scos-sensor: `git clone https://github.com/NTIA/scos-sensor.git`
+
+2. Navigate to scos-sensor: `cd scos-sensor`
+
+3. If it does not exist, create env file while in the root scos-sensor directory `cp env.template ./env`
+
+4. Make sure the scos-tekrsa dependency is in requirements.txt in the scos-sensor/src folder. If you are using a different branch than master, change master in the following line to the branch you are using: `scos_tekrsa @ git+${DOCKER_GIT_CREDENTIALS}/NTIA/scos-tekrsa@master#egg=scos_tekrsa`
+
+	- Additionally, remove or comment any unnecessary dependencies, such as scos-usrp.
+
+5. Make sure `BASE_IMAGE` is set to `BASE_IMAGE=docker.pkg.github.com/ntia/scos-tekrsa/tekrsa_usb:0.1.0` in the env file
+
+	- While this repository is private, [authentication with GitHub packages](https://docs.github.com/en/free-pro-team@latest/packages/using-github-packages-with-your-projects-ecosystem/configuring-docker-for-use-with-github-packages#authenticating-to-github-packages) using a [GitHub personal access token](https://docs.github.com/en/free-pro-team@latest/packages/publishing-and-managing-packages/about-github-packages#about-tokens) is required. 
+
+6. Get environment variables: `source ./env`
+
+7. Build and start containers: `docker-compose up -d --build --force-recreate`
+
+8. Optionally, view logs: `docker-compose logs -f`
+
+## 5. Development
+
+### Requirements and Configuration
+
+Requires pip>=18.1 (upgrade using `python3 -m pip install --upgrade pip`) and python>=3.6.
+
+It is highly recommended that you first initialize a virtual development environment using a tool such as conda or venv. The following commands create a virtual environment using venv and install the required dependencies for development and testing.
+
+```
+python3 -m venv ./venv
+source venv/bin/activate
+python3 -m pip install --upgrade pip # upgrade to pip>=18.1
+python3 -m pip install -r requirements.txt
 ```
 
-Next you can get started by making API calls. The first thing you might want to do is simply connect to, then disconnect from, the device. If no errors are thrown, everything is working well!
+## 6. License
 
-To do this, simply add to your code:
+Coming Soon
 
-```python
-search_connect()
-DEVICE_Disconnect()
-```
+## 7. Contact
 
-Now you can get started using other API calls. The methods within `RSA_API.py` are documented using a standard docstring format, which should be enough information to get going. The Ctypes API [`README`](https://github.com/NTIA/scos-tekrsa/blob/master/Ctypes%20API/README.md) might also be helpful.
-
-Questions/Comments
-------------------
-Anthony Romaniello | NTIA/Institute for Telecommunication Sciences | aromaniello@ntia.gov
+For technical questions about scos-tekrsa, contact Anthony Romaniello, aromaniello@ntia.gov
