@@ -1,8 +1,8 @@
-# 1. NTIA/ITS SCOS TekRSA Plugin
+# 1. NTIA/ITS SCOS Tektronix RSA Plugin
 
 This repository is a plugin to add support for the Tektronix RSA306B signal analyzer to scos-sensor. See the [scos-sensor documentation](https://github.com/NTIA/scos-sensor/blob/SMBWTB475_refactor_radio_interface/README.md) for more information about scos-sensor, especially the section about [Actions and Hardware Support](https://github.com/NTIA/scos-sensor/blob/SMBWTB475_refactor_radio_interface/DEVELOPING.md#actions-and-hardware-support).
 
-This plugin makes use of the [Python RSA API by Tektronix](https://github.com/tektronix/RSA_API/tree/master/Python). scos_tekrsa/hardware/drivers/README.md 
+This plugin makes use of the [Python RSA API by Tektronix](https://github.com/tektronix/RSA_API/tree/master/Python). A wrapper for this API which masks the Ctypes dependency, handles error-checking, and implements a few helper methods, is found in scos_tekrsa/hardware/rsa_api.py.
 
 This repository includes many 700MHz band actions in scos_tekrsa/configs/actions. Action classes, RadioInterface, and signals are used from scos_actions.
 
