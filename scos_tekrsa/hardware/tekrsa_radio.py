@@ -289,7 +289,8 @@ class RSARadio(RadioInterface):
             f"acquire_time_domain_samples starting num_samples = {num_samples}"
         )
         # Determine correct time length for num_samples based on current SR
-        durationMsec = int((num_samples/self.sample_rate)*1000)
+        total_samples = num_samples + num_samples_skip
+        durationMsec = int((total_samples/self.sample_rate)*1000)
         # Calibration data not currently recomputed since calibration not done
         #self.recompute_calibration_data()
         #db_gain = self.sensor_calibration_data["gain_sensor"]
@@ -299,7 +300,7 @@ class RSARadio(RadioInterface):
         
         # Compute the linear gain
         linear_gain = 10 ** (db_gain / 20.0)
-        total_samples = num_samples + num_samples_skip
+        
         while True:
             try:
                 result_data = iqstream_tempfile(self.frequency, self.reference_level,
@@ -318,7 +319,7 @@ class RSARadio(RadioInterface):
                         error_message = "Max retries exceeded."
                         logger.error(error_message)
                         raise RuntimeError(error_message)
-                data = result_data[num_samples_skip : received_samples + num_samples_skip]
+                data = result_data[num_samples_skip : total_samples]
                 data /= linear_gain
 
                 measurement_result = {
