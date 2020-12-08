@@ -1,25 +1,30 @@
-# This version is the one used by the scos-tekrsa plugin.
-# It can eventually be slimmed down to contain only the necessary functions
-# instead of all of the API calls.
-
 """
-Notes:
-- Currently, ALL SDR_Error codes thrown are arbitrary
-    - Errors passed from API calls include ReturnStatus value
-      as defined in the RSA API documentation
-- Raised errors are only documented if specifically implemented
-    - Catch-all err_check() feeds internal API errors into SDR_Error
-        - These do not uniquely appear in the docstrings
-        - More information on these errors in RSA API documentation.
-- ANYTHING that can't run on a 306B is completely untested
-    - This includes a substantial number of RSA500/600-only API calls
+Tektronix RSA API Wrapper
 
-To Do's / Ideas:
-- Support multiple devices?
-    - currently the search method errors if more than one is found
-    - could allow for selection by user input among multiple devices
-- Check usage of global constants
-    - FreqRefUserSettingString method
+This file wraps the Python/Ctypes RSA API, with the goal of making
+further development in Python more streamlined and intuitive. It
+implements a majority of the RSA API functions along with documentation.
+
+Some notes that are important if you plan to use this:
+- Not all API functions are implemented. If you need one that isn't
+    already included, it should be pretty easy to add.
+- Only the functions which run on the RSA 306B have been tested. Many
+    functions are RSA 500/600 only, and all of these are untested.
+    There may be errors when these functions are called which have gone
+    unnoticed because of this.
+- Some 'helper' methods are included which make common aggregate calls
+    to API functions a bit easier.
+- Aside from err_check() passing internal API error codes through to
+    SDR_Error(), the SDR_Error() error codes themselves are arbitrary.
+    - More information on these error codes can be found in the RSA API
+    manual.
+
+Overall, the development of this wrapper was only completed to the degree
+required for scos-tekrsa, after being initially intended to include all
+API functionality. 
+
+Depending on your use case, it may be worth checking out the Tektronix
+Python/Cython RSA API.
 """
 from ctypes import *
 from enum import Enum
