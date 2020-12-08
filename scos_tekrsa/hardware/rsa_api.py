@@ -1,3 +1,4 @@
+
 """
 Tektronix RSA API Wrapper
 
@@ -28,8 +29,8 @@ Python/Cython RSA API.
 """
 from ctypes import *
 from enum import Enum
+from os.path import dirname, realpath
 import numpy as np
-import os
 
 """ ERROR HANDLING """
 class SDR_Error(Exception):
@@ -45,7 +46,7 @@ class SDR_Error(Exception):
         super(SDR_Error, self).__init__(err)
 
 """ LOAD RSA DRIVER """
-soDir = os.path.dirname(os.path.realpath(__file__))
+soDir = dirname(realpath(__file__))
 RTLD_LAZY = 0x0001
 LAZYLOAD = RTLD_LAZY | RTLD_GLOBAL
 rsa = CDLL(soDir+'/drivers/libRSA_API.so', LAZYLOAD)
