@@ -1,4 +1,3 @@
-
 """
 Tektronix RSA API Wrapper
 
@@ -24,8 +23,8 @@ Overall, the development of this wrapper was only completed to the degree
 required for scos-tekrsa, after being initially intended to include all
 API functionality. 
 
-Depending on your use case, it may be worth checking out the Tektronix
-Python/Cython RSA API.
+Depending on your use case (and ability to compile it without errors),
+it may be worth checking out the Tektronix Python/Cython RSA API.
 """
 from ctypes import *
 from enum import Enum
