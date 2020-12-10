@@ -1808,17 +1808,14 @@ def IQSTREAM_SetOutputConfiguration(dest, dtype):
     dtype = check_string(dtype)
     if dest in IQSOUTDEST and dtype in IQSOUTDTYPE:
         if dest == "FILE_TIQ" and "SINGLE" in dtype:
-            raise SDR_Error(0,
-                "Invalid selection of TIQ file and Single data type"
-                + "together",
-                "TIQ format files allow only INT32 or INT16 data types."
-            )
+            raise RSA_Error("Invalid selection of TIQ file with"
+                + " single precision data type.")
         else:
             val1 = c_int(IQSOUTDEST.index(dest))
             val2 = c_int(IQSOUTDTYPE.index(dtype))
             err_check(rsa.IQSTREAM_SetOutputConfiguration(val1, val2))
     else:
-        raise RSA_Error("Input data type  or destination string invalid.")
+        raise RSA_Error("Input data type or destination string invalid.")
 
 def IQSTREAM_Start():
     """
@@ -2526,7 +2523,7 @@ def TRIG_SetTriggerMode(mode):
 
     Raises
     ------
-    SDR_Error
+    RSA_Error
         If the input string is not one of the valid settings.
     """
     mode = check_string(mode)

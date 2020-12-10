@@ -414,7 +414,6 @@ class rsa_api_test(unittest.TestCase):
         self.assertRaises(TypeError, IQSTREAM_SetAcqBandwidth, [num])
         self.assertRaises(ValueError, IQSTREAM_SetAcqBandwidth, 41e6)
     
-    """
     # Causes segmentation fault. Fixing all other errors first.
     def test_IQSTREAM_SetOutputConfiguration(self):
         dest = ['CLIENT', 'FILE_TIQ', 'FILE_SIQ', 'FILE_SIQ_SPLIT']
@@ -423,7 +422,7 @@ class rsa_api_test(unittest.TestCase):
         for d in dest:
             for t in dtype:
                 if d is 'FILE_TIQ' and t in ['SINGLE', 'SINGLE_SCALE_INT32']:
-                    self.assertRaises(SDR_Error,
+                    self.assertRaises(RSA_Error,
                                       IQSTREAM_SetOutputConfiguration, d, t)
                 else:
                     self.assertIsNone(IQSTREAM_SetOutputConfiguration(d, t))
@@ -432,7 +431,6 @@ class rsa_api_test(unittest.TestCase):
                           0, dtype[0])
         self.assertRaises(TypeError, IQSTREAM_SetOutputConfiguration,
                           dest[0], 0)
-    """
 
     def test_IQSTREAM_SetDiskFilenameBase(self):
         path = '/tmp/rsa_api_unittest'
