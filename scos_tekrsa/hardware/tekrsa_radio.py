@@ -74,7 +74,7 @@ class RSARadio(RadioInterface):
         if self._is_available:
             return True
 
-        search_connect()
+        DEVICE_SearchAndConnect()
 
         logger.debug("Using the following Tektronix RSA device:")
         logger.debug(DEVICE_GetNomenclature())
@@ -303,7 +303,7 @@ class RSARadio(RadioInterface):
         
         while True:
             try:
-                result_data = iqstream_tempfile(self.frequency, self.reference_level,
+                result_data = IQSTREAM_Tempfile(self.frequency, self.reference_level,
                     self.sr_bw_map[self.sample_rate], durationMsec
                 )
                 received_samples = len(result_data)

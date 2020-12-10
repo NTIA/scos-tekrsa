@@ -1,50 +1,62 @@
 """
-Tektronix RSA API Wrapper
+Tektronix 306B RSA API Wrapper
 
 This file wraps the Python/Ctypes RSA API, with the goal of making
 further development in Python more streamlined and intuitive. It
-implements a majority of the RSA API functions along with documentation.
+implements a majority of the RSA API functions for the 306B. Some API
+documentation is included in docstrings, however this is mostly for
+quick reference during development, and is not a substitute for the
+full RSA API reference manual.
 
-Some notes that are important if you plan to use this:
-- Not all API functions are implemented. If you need one that isn't
-    already included, it should be pretty easy to add.
-- Only the functions which run on the RSA 306B have been tested. Many
-    functions are RSA 500/600 only, and all of these are untested.
-    There may be errors when these functions are called which have gone
-    unnoticed because of this.
-- Some 'helper' methods are included which make common aggregate calls
-    to API functions a bit easier.
-- Aside from err_check() passing internal API error codes through to
-    SDR_Error(), the SDR_Error() error codes themselves are arbitrary.
-    - More information on these error codes can be found in the RSA API
-    manual.
+Input type checking and error handling have been implemented.
+ValueError's and TypeError's are thrown where applicable, and
+RSA_Error's are thrown for errors which relate to the unique
+implementation of certain API calls. Additionally, errors which
+occur when running the function on the device are passed back through
+to RSA_Error.
 
-Overall, the development of this wrapper was only completed to the degree
-required for scos-tekrsa, after being initially intended to include all
-API functionality. 
+This file requires the libRSA_API.so and libcyusb_shared.so files from
+the Tektronix RSA API, and expects to find them in ./drivers/ relative
+to the location of this file.
+
+Note that the following API functions are not implemented:
+- Any functions which do not apply to the 306B
+- All DPX functions
+- All IFSTREAM functions
+- All PLAYBACK functions
+- DEVICE_GetErrorString()
+    - Alternate error handling is used.
+- DEVICE_GetNomenclatureW()
+    - DEVICE_GetNomenclature() is used instead.
+- IQBLK_GetIQDataCplx()
+    - IQBLK_GetIQData(), IQBLK_GetIQDataDeinterleaved are used instead.
+- IQSTREAM_GetIQData()
+    - IQSTREAM_Tempfile() likely does what you need.
+- IQSTREAM_SetDiskFilenameBaseW()
+    - IQSTREAM_SetDiskFilenameBase() is used instead.
+
+Some helper methods have been included as well, which help to make some
+common tasks a bit easier to perform. These are included at the very
+bottom of the file.
+
+If you need to extend this wrapper to support additional API functions,
+it should be relatively straightforward to do so.
 
 Depending on your use case (and ability to compile it without errors),
 it may be worth checking out the Tektronix Python/Cython RSA API.
+
+* Add notes on testing
+* Convert this huge comment to a readme?
 """
+import tempfile
+import numpy as np
 from ctypes import *
 from enum import Enum
 from os.path import dirname, realpath
-import numpy as np
-
-""" ERROR HANDLING """
-class SDR_Error(Exception):
-    def __init__(self, err_code=99, err_head="", err_body=""):
-        self.err_code = err_code+200
-        self.err_head = err_head
-        self.err_body = err_body
-
-        # Call the super function
-        err = "SDR error code: {}\r\n".format(self.err_code)
-        err += "!!! {} !!!\r\n".format(self.err_head)
-        err += "{}".format(self.err_body)
-        super(SDR_Error, self).__init__(err)
+from time import sleep
 
 """ LOAD RSA DRIVER """
+
 soDir = dirname(realpath(__file__))
 RTLD_LAZY = 0x0001
 LAZYLOAD = RTLD_LAZY | RTLD_GLOBAL
@@ -52,6 +64,7 @@ rsa = CDLL(soDir+'/drivers/libRSA_API.so', LAZYLOAD)
 usbapi = CDLL(soDir+'/drivers/libcyusb_shared.so', LAZYLOAD)
 
 """ GLOBAL CONSTANTS """
+
 MAX_NUM_DEVICES = 10 # Max num. of devices that could be found
 MAX_SERIAL_STRLEN = 8 # Bytes allocated for serial number string
 MAX_DEVTYPE_STRLEN = 8 # Bytes allocated for device type string
@@ -61,28 +74,31 @@ HW_VERSION_STRLEN = 4 # Bytes allocated for HW version number string
 NOMENCLATURE_STRLEN = 8 # Bytes allocated for device nomenclature string
 API_VERSION_STRLEN = 8 # Bytes allocated for API version number string
 DEVINFO_MAX_STRLEN = 100 # Bytes for date/time string
+MAX_IQBLK_RECLEN = 126000000 # Maximum IQBLK Record Length
 
-""" CUSTOM ENUMERATION TYPES """
-# These are defined as tuples, in which the index of each item corresponds
-# to the integer value for the item as defined in the API manual
-AUDIO_DEMOD_MODE = ('FM_8KHZ', 'FM_13KHZ', 'FM_75KHZ', 'FM_200KHZ',
-   'AM_8KHZ', 'NONE')
-FREQREF_SOURCE = ("INTERNAL", "EXTREF", "GNSS", "USER")
-GFR_MODE = ("OFF", "FREQTRACK", "PHASETRACK", "HOLD")
-GFR_STATE = ('OFF', 'ACQUIRING', 'FREQTRACKING', 'PHASETRACKING', 'HOLDING')
-GFR_QUALITY = ('INVALID', 'LOW', 'MEDIUM', 'HIGH')
-DEVEVENT = ("OVERRANGE", "TRIGGER", "1PPS")
-GNSS_SATSYS = ('GPS_GLONASS', 'GPS_BEIDOU', 'GPS', 'GLONASS', 'BEIDOU')
-SPECTRUM_WINDOWS = ('Kaiser', 'Mil6dB', 'BlackmanHarris', 'Rectangular',
-    'FlatTop', 'Hann')
-SPECTRUM_VERTICAL_UNITS = ('dBm', 'Watt', 'Volt', 'Amp', 'dBmV')
-SPECTRUM_DETECTORS = ('PosPeak', 'NegPeak', 'AverageVRMS', 'Sample')
-IQSOUTDEST = ("CLIENT", "FILE_TIQ", "FILE_SIQ", "FILE_SIQ_SPLIT")
-IQSOUTDTYPE = ("SINGLE", "INT32", "INT16", "SINGLE_SCALE_INT32")
+""" ENUMERATION TUPLES """
+
+DEVEVENT = ('OVERRANGE', 'TRIGGER', '1PPS')
+FREQREF_SOURCE = ('INTERNAL', 'EXTREF', 'GNSS', 'USER')
+IQSOUTDEST = ('CLIENT', 'FILE_TIQ', 'FILE_SIQ', 'FILE_SIQ_SPLIT')
+IQSOUTDTYPE = ('SINGLE', 'INT32', 'INT16', 'SINGLE_SCALE_INT32')
 REFTIME_SRC = ('NONE', 'SYSTEM', 'GNSS', 'USER')
-TRIGGER_MODE = ("freeRun", "Triggered")
-TRIGGER_SOURCE = ("External", "IFPowerLevel")
-TRIGGER_TRANSITION = ("LH", "HL", "Either")
+SPECTRUM_DETECTORS = ('PosPeak', 'NegPeak', 'AverageVRMS', 'Sample')
+SPECTRUM_TRACES = ('Trace1', 'Trace2', 'Trace3')
+SPECTRUM_VERTICAL_UNITS = ('dBm', 'Watt', 'Volt', 'Amp', 'dBmV')
+SPECTRUM_WINDOWS = ('Kaiser', 'Mil6dB', 'BlackmanHarris', 'Rectangular',
+                    'FlatTop', 'Hann')
+TRIGGER_MODE = ('freeRun', 'triggered')
+TRIGGER_SOURCE = ('External', 'IFPowerLevel')
+TRIGGER_TRANSITION = ('LH', 'HL', 'Either')
+
+""" ERROR HANDLING """
+
+class RSA_Error(Exception):
+    def __init__(self, err_txt=""):
+        self.err_txt = err_txt
+        err = "RSA Error:\r\n{}".format(self.err_txt)
+        super(RSA_Error, self).__init__(err)
 
 class ReturnStatus(Enum):
     noError = 0
@@ -230,7 +246,7 @@ class ReturnStatus(Enum):
     errorInvalidAlignmentCache = 3905
 
     # acq status
-    errorADCOverrange = 9000
+    errorADCOverrange = 9000  # must not change the location of these error codes without coordinating with MFG TEST
     errorOscUnlock = 9001
 
     errorNotSupported = 9901
@@ -238,28 +254,53 @@ class ReturnStatus(Enum):
     errorPlaceholder = 9999
     notImplemented = -1
 
+def err_check(rs):
+    if ReturnStatus(rs) != ReturnStatus.noError:
+        raise RSA_Error(ReturnStatus(rs).name)
+
+def check_range(input, min, max, incl=True):
+    """Check if input is in valid range, inclusive or exclusive"""
+    if incl:
+        if min <= input <= max:
+            return input
+        else:
+            raise ValueError("Input must be in range {} to {}".format(min, max)
+                + ", inclusive.")
+    else:
+        if min < input < max:
+            return input
+        else:
+            raise ValueError("Input must be in range {} to {}".format(min, max)
+                + ", exclusive.")
+
+def check_int(input):
+    if type(input) is int:
+        return input
+    elif type(input) is float and input.is_integer():
+        # Accept floats if they are whole numbers
+        return int(input)
+    else:
+        raise TypeError("Input must be an integer.")
+
+def check_string(input):
+    if type(input) is str:
+        return input
+    else:
+        raise TypeError("Input must be a string.")
+
+def check_num(input):
+    if type(input) is int or type(input) is float:
+        return input
+    else:
+        raise TypeError("Input must be a number (float or int).")
+
+def check_bool(input):
+    if type(input) is bool:
+        return input
+    else:
+        raise TypeError("Input must be a boolean.")
+
 """ CUSTOM DATA STRUCTURES """
-class FREQREF_USER_INFO(Structure):
-    _fields_ = [('isvalid', c_bool),
-                ('dacValue', c_int),
-                ('datetime', c_char * DEVINFO_MAX_STRLEN),
-                ('temperature', c_double)]
-
-class DEVICE_INFO(Structure):
-    _fields_ = [('nomenclature', c_char_p),
-                ('serialNum', c_char_p),
-                ('apiVersion', c_char_p),
-                ('fwVersion', c_char_p),
-                ('fpgaVersion', c_char_p),
-                ('hwVersion', c_char_p)]
-
-class POWER_INFO(Structure):
-    _fields_ = [('externalPowerPresent', c_bool),
-                ('batteryPresent', c_bool),
-                ('batteryChargeLevel', c_double),
-                ('batteryCharging', c_bool),
-                ('batteryOverTemperature', c_bool),
-                ('batteryHardwareError', c_bool)]
 
 class SPECTRUM_LIMITS(Structure):
     _fields_ = [('maxSpan', c_double),
@@ -284,7 +325,7 @@ class SPECTRUM_SETTINGS(Structure):
                 ('actualFreqStepSize', c_double),
                 ('actualRBW', c_double),
                 ('actualVBW', c_double),
-                ('actualNumIQSamples', c_double)]
+                ('actualNumIQSamples', c_int)]
 
 class SPECTRUM_TRACEINFO(Structure):
     _fields_ = [('timestamp', c_int64),
@@ -303,222 +344,6 @@ class IQSTREAM_File_Info(Structure):
                 ('triggerTimestamp', c_uint64),
                 ('acqStatus', c_uint32),
                 ('filenames', c_wchar_p)]
-
-""" HELPER METHODS """
-
-# This error checker throws any internal API errors to SDR_Error.
-# It passes through the error code ("return status") from the API.
-# All give SDR_Error code 200
-def err_check(rs):
-    if ReturnStatus(rs) != ReturnStatus.noError:
-        raise SDR_Error(0, "Error running API command.",
-            "RSA API ReturnStatus {}: ".format(str(rs))
-            + ReturnStatus(rs).name
-        )
-
-def search_connect(loadPreset=True, verbose=False):
-    """
-    Search for and connect to a Tektronix RSA device. 
-    
-    More than 10 devices cannot be found at once. Search criteria are
-    not implemented, and connection only occurs if exactly one device is
-    found. It may be more convenient to simply use DEVICE_Connect(),
-    however this helper method is useful if preset configuration is
-    desired or if problems are encountered when searching for or
-    connecting to a device. 
-
-    Preset configuration is optionally loaded upon connection. This
-    results in: trigger mode set to Free Run, center frequency to 1.5
-    GHz, span to 40 MHz, IQ record length to 1024 samples, and
-    reference level to 0 dBm. Preset functionality is enabled by
-    default.
-
-    Parameters
-    ----------
-    loadPreset : bool
-        Whether to load the preset configuration upon connection.
-    verbose : bool
-        Whether to print the steps of the process as they happen.
-
-    Raises
-    ------
-    SDR_Error
-        If no matching device is found, if more than one matching
-        device are found, or if a single device is found but connection
-        fails.
-    """
-    if verbose:
-        print("Searching for devices...")
-
-    foundDevices = DEVICE_Search()
-    numFound = len(foundDevices)
-
-    if numFound == 1:
-        foundDevString = "The following device was found:"
-    elif numFound > 1:
-        foundDevString = "The following devices were found:"
-    for (ID, key) in foundDevices.items():
-        foundDevString += '\r\n{}'.format(str(ID) + ': ' + str(key))
-
-    if verbose:
-        print("Device search completed.\n")
-        print(foundDevString + '\n')
-
-    # Zero devices found case handled within DEVICE_Search()
-    # Multiple devices found case:
-    if numFound > 1:
-        raise SDR_Error(0,
-            "Found {} devices, need exactly 1.".format(numFound),
-            foundDevString)
-    else:
-        if verbose:
-            print("Connecting to device...")
-        DEVICE_Connect()
-        if verbose:
-            print("Device connected.\n")
-
-    if loadPreset:
-        if verbose:
-            print("Loading device preset configuration...")
-        CONFIG_Preset()
-        if verbose:
-            print("Device preset configuration loaded.\n")
-
-def config_spectrum(cf, refLevel, span, rbw, verbose=False):
-    """
-    Performs spectrum configurations.
-    """
-    SPECTRUM_SetEnable(True)
-    CONFIG_SetCenterFreq(cf)
-    CONFIG_SetReferenceLevel(refLevel)
-    SPECTRUM_SetDefault()
-    (spnVal, rbwVal, enVBW, vbw, trcLn, win, vrtUnt) = SPECTRUM_GetSettings()
-    spnVal = span
-    win = 'Kaiser'
-    vrtUnt = 'dBm'
-    rbwVal = rbw
-    SPECTRUM_SetSettings(spnVal, rbwVal, enVBW, vbw, trcLn, win, vrtUnt)
-    if verbose:
-        (spnVal, rbwVal, enVBW, vbw, trcLn, win, vrtUnt) = SPECTRUM_GetSettings()
-        print(f"Span: {spnVal}\n RBW: {rbwVal}\nVBW Enable: {enVBW}\nVBW: {vbw}\n"
-        + f"Trace Length: {trcLn}\nWindow: {win}\nVertical Unit: {vrtUnt}")
-
-def config_iqblk(cf, refLevel, iqBw, recordLength):
-    """Configure device for IQ block collecion"""
-    CONFIG_SetCenterFreq(cf)
-    CONFIG_SetReferenceLevel(refLevel)
-    IQBLK_SetIQBandwidth(iqBw)
-    IQBLK_SetIQRecordLength(recordLength)
-
-def iqblk_collect(recordLength=1024, timeoutMsec=100):
-    # Acquire and return IQ Block data
-    # !! Configure device BEFORE calling this method
-    # Input: Record length [num. of samples]
-    # Returns single complex IQ numpy array
-
-    # Begin data acquisition
-    DEVICE_Run()
-    IQBLK_AcquireIQData()
-
-    # Wait for device to be ready to send data
-    ready = False
-    while not ready:
-        # Default 100ms timeout
-        ready = IQBLK_WaitForIQDataReady(timeoutMsec)
-
-    # Retrieve data
-    (iData, qData, outLen) = IQBLK_GetIQDataDeinterleaved(recordLength)
-
-    # Stop device before exiting
-    DEVICE_Stop()
-
-    return iData + 1j * qData
-
-def iqstream_tempfile(cf, refLevel, bw, durationMsec):
-    # Returns:
-    # (iData, qData, headerInfo)
-    # data as arrays of samples, headerinfo as dict
-    # Modules used ONLY by this helper method
-    from time import sleep
-    import tempfile
-
-    # Configuration parameters
-    dest=IQSOUTDEST[3] # split SIQ
-    dType=IQSOUTDTYPE[0] # 32-bit single precision floating point
-    suffixCtl=-2 # none
-    filename = 'tempIQ'
-    sleepTimeSec = 0.1 # loop sleep time checking if acquisition complete
-
-    # Ensure device is stopped before proceeding
-    DEVICE_Stop()
-
-    # Create temp directory and configure/collect data
-    with tempfile.TemporaryDirectory() as tmpDir:
-        filenameBase = tmpDir + '/' + filename
-
-        # Configure device
-        CONFIG_SetCenterFreq(cf)
-        CONFIG_SetReferenceLevel(refLevel)
-        IQSTREAM_SetAcqBandwidth(bw)
-        IQSTREAM_SetOutputConfiguration(dest, dType)
-        IQSTREAM_SetDiskFilenameBase(filenameBase)
-        IQSTREAM_SetDiskFilenameSuffix(suffixCtl)
-        IQSTREAM_SetDiskFileLength(durationMsec)
-        IQSTREAM_ClearAcqStatus()
-
-        # Collect data
-        complete = False
-        writing = False
-
-        DEVICE_Run()
-        IQSTREAM_Start()
-        while not complete:
-            sleep(sleepTimeSec)
-            (complete, writing) = IQSTREAM_GetDiskFileWriteStatus()
-        IQSTREAM_Stop()
-
-        # Check acquisition status
-        fileInfo = IQSTREAM_GetDiskFileInfo()
-        iqstream_status_parser(fileInfo)
-
-        DEVICE_Stop()
-
-        # Read data back in from file
-        with open(filenameBase + '.siqd', 'rb') as f:
-            # if siq file, skip header
-            if f.name[-1] == 'q':
-                # this case currently is never used
-                # but would be needed if code is later modified
-                f.seek(1024)
-            # read in data as float32 ("SINGLE" SIQ)
-            d = np.frombuffer(f.read(), dtype=np.float32)
-
-    # Deinterleave I and Q
-    i = d[0:-1:2]
-    q = np.append(d[1:-1:2], d[-1])
-    # iqData = i + 1j*q (re-interleave as numpy complex64)
-    iqData = i + 1j*q
-
-    return iqData
-
-def iqstream_status_parser(iqStreamInfo):
-    # This function parses the IQ streaming status variable
-    # The input is an IQSTREAM_File_Info() structure
-    status = iqStreamInfo.acqStatus
-    if status == 0:
-        pass
-    if bool(status & 0x10000):  # mask bit 16
-        print('\nInput overrange.\n')
-    if bool(status & 0x40000):  # mask bit 18
-        print('\nInput buffer > 75{} full.\n'.format('%'))
-    if bool(status & 0x80000):  # mask bit 19
-     print('\nInput buffer overflow. IQStream processing too slow, ',
-              'data loss has occurred.\n')
-    if bool(status & 0x100000):  # mask bit 20
-        print('\nOutput buffer > 75{} full.\n'.format('%'))
-    if bool(status & 0x200000):  # mask bit 21
-        print('Output buffer overflow. File writing too slow, ',
-              'data loss has occurred.\n')       
 
 """ ALIGNMENT METHODS """
 
@@ -579,6 +404,7 @@ def AUDIO_SetFrequencyOffset(freqOffsetHz):
         Amount of frequency offset from the center frequency, in Hz.
         Range: -20e6 <= freqOffsetHz <= 20e6
     """
+    freqOffsetHz = check_num(freqOffsetHz)
     err_check(rsa.AUDIO_SetFrequencyOffset(c_double(freqOffsetHz)))
 
 def AUDIO_GetFrequencyOffset():
@@ -624,10 +450,10 @@ def AUDIO_GetData(inSize):
     outSize : int
         Amount of audio data samples stored in the data array.
     """
+    inSize = check_int(inSize)
     data = (c_int16 * inSize)()
     outSize = c_uint16()
     err_check(rsa.AUDIO_GetData(byref(data), c_uint16(inSize), byref(outSize)))
-    # The line below requires numpy to be imported as np
     return np.ctypeslib.as_array(data), outSize.value
 
 def AUDIO_GetMode():
@@ -638,21 +464,21 @@ def AUDIO_GetMode():
 
     Returns
     -------
-    str
-        The audio demodulation mode. Valid results:
+    int
+        The audio demodulation mode. Valid results 0, 1, 2, 3, 4, or 5.
+            Corresponding, respectively, to:
             FM_8KHZ, FM_13KHZ, FM_75KHZ, FM_200KHZ, AM_8KHZ, or NONE.
 
     Raises
     ------
-    SDR_Error
+    RSA_Error
         If the audio demodulation mode has not yet been set.
     """
     mode = c_int()
     err_check(rsa.AUDIO_GetMode(byref(mode)))
     if mode.value > 5 or mode.value < 0:
-        raise SDR_Error(0, "Failed to get audio demodulation mode.",
-            "Set the demodulation mode with AUDIO_SetMode before querying.")
-    return AUDIO_DEMOD_MODE[mode.value]
+        raise RSA_Error("Audio demodulation mode has not yet been set.")
+    return mode.value
 
 def AUDIO_GetMute():
     """
@@ -683,24 +509,14 @@ def AUDIO_SetMode(mode):
 
     Parameters
     ----------
-    mode : str
+    mode : int
         Desired audio demodulation mode. Valid settings:
+            0, 1, 2, 3, 4, 5. Corresponding respectively to:
             FM_8KHZ, FM_13KHZ, FM_75KHZ, FM_200KHZ, AM_8KHZ, NONE
-
-    Raises
-    ------
-    SDR_Error
-        If the input string does not match one of the valid settings.
     """
-    if mode in AUDIO_DEMOD_MODE:
-        value = c_int(AUDIO_DEMOD_MODE.index(mode))
-        err_check(rsa.AUDIO_SetMode(value))
-    else:
-        raise SDR_Error(0,
-            "Input string does not match one of the valid settings.",
-            "Please input one of: FM_8KHZ, FM_13KHZ, FM_75KHZ, FM_200KHZ,"
-            + "AM_8KHZ, or NONE."
-        )
+    mode = check_int(mode)
+    mode = check_range(mode, 0, 5)
+    err_check(rsa.AUDIO_SetMode(c_int(mode)))
 
 def AUDIO_SetMute(mute):
     """
@@ -713,6 +529,7 @@ def AUDIO_SetMute(mute):
     mute : bool
         Mute status. True mutes the output, False restores the output.
     """
+    mute = check_bool(mute)
     err_check(rsa.AUDIO_SetMute(c_bool(mute)))
 
 def AUDIO_SetVolume(volume):
@@ -727,6 +544,8 @@ def AUDIO_SetVolume(volume):
     volume : float
         Volume value. Range: 0.0 to 1.0.
     """
+    volume = check_num(volume)
+    volume = check_range(volume, 0.0, 1.0)
     err_check(rsa.AUDIO_SetVolume(c_float(volume)))
 
 def AUDIO_Start():
@@ -777,15 +596,12 @@ def CONFIG_GetExternalRefFrequency():
 
     Raises
     ------
-    SDR_Error
+    RSA_Error
         If there is no external reference input in use.
     """
     src = CONFIG_GetFrequencyReferenceSource()
     if src == FREQREF_SOURCE[0]:
-        raise SDR_Error(0,
-            "External reference input is not in use.",
-            "The external reference input must be enabled for useful results."
-        )
+        raise RSA_Error("External frequency reference not in use.")
     else:
         extFreq = c_double()
         err_check(rsa.CONFIG_GetExternalRefFrequency(byref(extFreq)))
@@ -823,31 +639,6 @@ def CONFIG_GetMinCenterFreq():
     err_check(rsa.CONFIG_GetMinCenterFreq(byref(minCF)))
     return minCF.value
 
-def CONFIG_GetModeGnssFreqRefCorrection():
-    """
-    Return the operating mode of the GNSS freq. reference correction.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    Please refer to the CONFIG_SetModeGnssFreqRefCorrection()
-    documentation for an explanation for the various operating modes.
-
-    Returns
-    -------
-    string
-        The GNSS frequency reference operating mode. Valid results:
-            OFF : GNSS source is not selected. 
-            FREQTRACK : FREQTRACK mode enabled.
-            PHASETRACK : PHASETRACK mode enabled.
-            HOLD : HOLD mode enabled.
-    """
-    mode = c_int()
-    err_check(rsa.CONFIG_GetModeGnssFreqRefCorrection(byref(mode)))
-    if mode.value != 0:
-        return GFR_MODE[mode.value + 1]
-    else:
-        return GFR_MODE[mode.value]
-
 def CONFIG_GetReferenceLevel():
     """Return the current reference level, measured in dBm."""
     refLevel = c_double()
@@ -875,97 +666,9 @@ def CONFIG_SetCenterFreq(cf):
     ----------
     cf : float or int
         Value to set center frequency, in Hz.
-
-    Raises
-    ------
-    SDR_Error
-        If the desired center frequency is outside the allowed range.
     """
-    minCF = CONFIG_GetMinCenterFreq()
-    maxCF = CONFIG_GetMaxCenterFreq()
-    if minCF <= cf <= maxCF:
-        err_check(rsa.CONFIG_SetCenterFreq(c_double(cf)))
-    else:
-        raise SDR_Error(0,
-            "Desired center frequency not in range.",
-            "Please enter a value between {} and {} Hz.".format(minCF, maxCF)
-        )
-
-def CONFIG_DecodeFreqRefUserSettingString(i_usstr):
-    """
-    Decodes a formatted User setting string into component elements.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    Parameters
-    ----------
-    i_usstr : string
-        Formatted User setting string.
-
-    Returns
-    -------
-    isvalid : bool
-        True if User setting string has valid data, False if not.
-        If False, the remaining elements below are invalid.
-    dacValue : int
-        Control DAC value.
-    datetime : string
-        String of date+time the User setting was created. Format:
-        "YYYY-MM-DDThh:mm:ss".
-    temperature : float
-        Device temperature when the User setting data was created.
-    """
-    i_usstr = c_char_p(i_usstr)
-    o_fui = FREQREF_USER_INFO()
-    err_check(rsa.CONFIG_DecodeFreqRefUserSettingString(byref(i_usstr),
-        byref(o_fui)))
-    return (o_fui.isvalid.value, o_fui.dacValue.value, o_fui.datetime.value,
-        o_fui.temperature.value)
-
-def CONFIG_GetEnableGnssTimeRefAlign():
-    """
-    Return the setting of time ref. alignment from the GNSS receiver.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    The GNSS receiver must be enabled to use this method.
-
-    Returns
-    -------
-    bool
-        True means the time reference setting is enabled. False means
-        the time reference setting is disabled.
-    """
-    enable = c_bool()
-    err_check(rsa.CONFIG_GetEnableGnssTimeRefAlign(byref(enable)))
-    return enable.value
-
-def CONFIG_SetEnableGnssTimeRefAlign(enable=True):
-    """
-    Control the time ref. alignment from the internal GNSS receiver.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    The GNSS receiver must be enabled to use this method.
-
-    The default control setting of True enables the API time reference
-    system to be aligned precisely to UTC time from the GNSS navigation
-    message and 1PPS signal. The GNSS receiver must achieve navigation
-    lock for the time reference alignment to occur. While GNSS is
-    locked, the time reference is updated every 10 seconds to keep
-    close synchronization with GNSS time. Setting the control to False
-    disables the time reference updating from GNSS, but retains the
-    current time reference setting. This control allows the user
-    application to independently set the time reference, or simply
-    prevent time updates from the GNSS.
-
-    Parameters
-    ----------
-    enable : bool
-        True enables setting time reference. False disables setting
-        time reference. Defaults to True.
-    """
-    err_check(rsa.CONFIG_SetEnableGnssTimeRefAlign(c_bool(enable)))
+    cf = check_num(cf)
+    err_check(rsa.CONFIG_SetCenterFreq(c_double(cf)))
 
 def CONFIG_SetExternalRefEnable(exRefEn):
     """
@@ -984,6 +687,7 @@ def CONFIG_SetExternalRefEnable(exRefEn):
     exRefEn : bool
         True enables the external reference. False disables it.
     """
+    exRefEn = check_bool(exRefEn)
     err_check(rsa.CONFIG_SetExternalRefEnable(c_bool(exRefEn)))
 
 def CONFIG_SetFrequencyReferenceSource(src):
@@ -1026,265 +730,15 @@ def CONFIG_SetFrequencyReferenceSource(src):
 
     Raises
     ------
-    SDR_Error
+    RSA_Error
         If the input string does not match one of the valid settings.
     """
+    src = check_string(src)
     if src in FREQREF_SOURCE:
         value = c_int(FREQREF_SOURCE.index(src))
         err_check(rsa.CONFIG_SetFrequencyReferenceSource(value))
     else:
-        raise SDR_Error(
-            0,
-            "Input string does not match one of the valid settings.",
-            "Please input one of: INTERNAL, EXTREF, GNSS, or USER."
-        )
-
-def CONFIG_GetStatusGnssFreqRefCorrection():
-    """
-    Return the status of the GNSS frequency reference correction.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    The GNSS receiver must be enabled and selected as the frequency
-    reference source ("GNSS") to use this method.
-
-    The "state" value indicates the current internal state of the GNSS
-    frequency reference adjustment system. The states mostly correspond
-    to the possible control modes, but also indicate how initialization
-    and/or tracking is going.
-
-    When GNSS source is selected, the frequency reference adjustment
-    system enters the ACQUIRING state, until it achieves navigation
-    lock. Until the receiver locks, no frequency adjustments are done.
-    It continues in this state until oscillator adjustments bring the
-    internal oscillator frequency within +/- 1 ppm of the ideal GNSS
-    1PPS frequency.
-
-    In the FREQTRACKING state, only small adjustments are allowed. The
-    adjustments attempt to minimize the difference between the 1PPS
-    pulse frequency and the internal oscillator frequency.
-
-    In the PHASETRACKING state, only small adjustments are allowed. The
-    adjustments attempt to maintain the sample timing at a consistent
-    relationship to the 1PPS signal interval. If the timing cannot be
-    maintained within +/- 100 microsecond range, the state will
-    transition to FREQTRACKING.
-
-    The HOLDING state may be caused by intentionally setting the mode
-    to HOLD (see setModeGnssFreqRefCorrection()). It may also occur if
-    GNSS navigation lock is lost. During the unlock interval, the
-    HOLDING state is in effect and the most recent adjustment setting
-    is maintained.
-
-    The "quality" value indicates how well the frequency adjustment is
-    performing. It is valid only when "state" is FREQTRACKING or
-    PHASETRACKING. Otherwise, it returns INVALID. See below for more
-    specific information about each possible returned value.
-
-    Returns
-    -------
-    state : string
-        GNSS frequency reference correction state. Valid results:
-            OFF : GNSS not selected as frequency reference source.
-            ACQUIRING : Initial synchronization and alignment of the
-                oscillator is occurring.
-            FREQTRACKING : Fine adjustment of the reference oscillator
-                is occurring. See above for more info.
-            PHASETRACKING : Fine adjustment of the reference oscillator
-                is occurring. See above for more info.
-            HOLDING : Frequency adjustments are disabled.
-    quality : string
-        Quality of frequency adjustment performance. Valid results:
-            INVALID : 
-            LOW : Frequency error is > 0.2 ppm
-            MEDIUM : 0.2 ppm > Frequency error > 0.025 ppm
-            HIGH : Frequency error < 0.025 ppm
-
-    Raises
-    ------
-    SDR_Error
-        If the frequency source is not set to GNSS.
-    """
-    if CONFIG_GetFrequencyReferenceSource() == 'GNSS':
-        state = c_int()
-        quality = c_int()
-        err_check(rsa.CONFIG_GetStatusGnssFreqRefCorrection(byref(state),
-            byref(quality)))
-        return GFR_STATE[state.value], GFR_QUALITY[quality.value]
-    else:
-        raise SDR_Error(0, "Frequency reference source not set to GNSS.",
-            "Unable to get correction status for non-GNSS sources."
-        )
-
-def CONFIG_SetModeGnssFreqRefCorrection(mode):
-    """
-    Control the operating mode of GNSS frequency reference correction.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    The GNSS receiver must be enabled and selected as the frequency
-    reference source ("GNSS") to use this method.
-
-    When the GNSS source is selected, the mode is always initially set
-    to FREQTRACK. Other modes must be explicitly set after selecting
-    the GNSS source. If the GNSS source is deselected and later re-
-    selected, the mode is set to FREQTRACK. There is no memory of
-    previous mode settings. The mode setting may be changed at any time
-    while GNSS is selected. However, control changes may take up to 50
-    msec to be processed, so should not be posted at a high rate. If
-    multiple control changes are posted quickly, the method will
-    "stall" after the first one until each change is accepted and
-    processed, taking 50 msec per change.
-
-    FREQTRACK mode uses the GNSS internal 1PPS pulse as a high-accuracy
-    frequency source to correct the internal reference oscillator
-    frequency. It adjusts the oscillator to minimize the frequency
-    difference between it and the 1PPS signal. This is the normal
-    operating mode, and can usually be left in this mode unless special
-    conditions call for switching to the other modes. When need for the
-    other modes is over, FREQTRACK mode should be restored.
-
-    PHASETRACK mode is similar to FREQTRACK mode, as it adjusts the
-    reference oscillator based on the 1PPS signal. However, it attempts
-    to maintain, on average, a consistent number of oscillator cycles
-    within a 1PPS interval. This is useful when recording long IF or IQ
-    data records, as it keeps the data sample timing aligned over the
-    record, to within +/- 100 nsec of the 1PPS time location when the
-    mode is initiated. PHASETRACK mode does more oscillator adjustments
-    than FREQTRACK mode, so it should only be used when specifically
-    needed for long-term recording. When GNSS source is first selected,
-    FREQTRACK mode should be selected until the tracking quality has
-    reached MEDIUM, before using PHASETRACK mode.
-
-    HOLD mode pauses the oscillator adjustments without stopping the
-    GNSS monitoring. This can be used to prevent oscillator adjustments
-    during acquisitions. Remember that the mode change can take up to
-    50 msec to be accepted.
-
-    Parameters
-    ----------
-    mode : string
-        The GNSS frequency reference operating mode. Valid settings:
-            FREQTRACK : Set to FREQTRACK; more detail given above.
-            PHASETRACK : Set to PHASETRACK; more detail given above.
-            HOLD : Set to HOLD; more detail given above.
-
-    Raises
-    ------
-    SDR_Error
-        If the input string does not match one of the valid settings.
-    """
-    if mode in GFR_MODE and mode is not 'OFF':
-        value = GFR_MODE.index(mode) + 1
-        err_check(rsa.CONFIG_SetModeGnssFreqRefCorrection(c_int(value)))
-    else:
-        raise SDR_Error(0,
-            "Input string does not match one of the valid settings.",
-            "Please input one of: FREQTRACK, PHASETRACK, or HOLD.")
-
-def CONFIG_GetStatusGnssTimeRefAlign():
-    """
-    Get status of API time reference alignment from the GNSS receiver.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    The GNSS receiver must be enabled to use this method. If GNSS
-    time ref. setting is disabled (see getEnableGnssTimeRefAlign()),
-    this method returns False even if the time reference was previously
-    set from the GNSS receiver.
-
-    Returns
-    -------
-    bool
-        True if time ref. was set from GNSS receiver, False if not.
-    """
-    aligned = c_bool()
-    err_check(rsa.CONFIG_GetStatusGnssTimeRefAlign(byref(aligned)))
-
-def CONFIG_GetFreqRefUserSetting():
-    """
-    Get the frequency reference User-source setting value.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    This method is normally used when creating a User setting string
-    for external non-volatile storage. It can also be used to query the
-    current User setting data incase the ancillary information is
-    desired. The CONFIG_DecodeFreqRefUserSettingString() method can
-    then be used to extract the individual items.
-
-    The format of the returned string is: "$FRU,<devType>,<devSN>,
-    <dacVal>,<dateTime>,<devTemp>*<CS>", where:
-        <devType> : device type.
-        <devSN> : device serial number.
-        <dacVal> integer DAC value.
-        <dateTime> : date/time of creation (fmt: YYYY-MM-DDThh:mm:ss).
-        <devTemp> : device temperature (deg. C) at creation.
-        <CS> : integer checksum of chars before '*' char
-
-    Ex: "$FRU,RSA503A,Q000098,2062,2016-06-06T18:11:08,51.41*87"
-
-    If the User setting is not valid, the user string result returns
-    the string "Invalid User Setting".
-
-    Returns
-    -------
-    string
-        Formatted user setting string. See above for details.
-    """
-    # This data type handling is likely incorrect
-    # But I can't test it to find out for sure
-    o_usstr = c_char_p()
-    err_check(rsa.CONFIG_GetFreqRefUserSetting(byref(o_usstr)))
-    return o_usstr.value
-
-def CONFIG_SetFreqRefUserSetting(i_usstr):
-    """
-    Set the frequency reference User-source setting value.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    The user setting string input must be formatted correctly, as per
-    the CONFIG_GetFreqRefUserSetting() method. If it is valid (format
-    decodes correctly and matches the device), it is used to set the
-    User setting memory. If the string is invalid, the User setting is
-    not changed.
-
-    This method is provided to support store and recall of User
-    frequency reference setting. This method only sets the User
-    setting value used during the current device connected session. The
-    value is lost when disconnected.
-
-    With a NULL input, this method causes the current frequency
-    reference control setting to be copied to the internal User setting
-    memory. Then the User setting can be retrieved as a formatted
-    string by using the CONFIG_GetFreqRefUserSetting() method, for
-    storage by the user application. These operations are normally done
-    only after GNSS frequency reference correction has been used to
-    produce an improved frequency reference setting which the user
-    wishes to use in place of the default INTERNAL factory setting.
-    After using CONFIG_SetFreqRefUserSetting(),
-    CONFIG_SetFrequencyReferenceSource() can be used to select the new
-    User setting for use as the frequency reference.
-
-    This method can be used to set the internal User setting memory to
-    the values in a valid previously-generated formatted string
-    argument. This allows applications to recall previously stored User
-    frequency reference settings as desired. The USER source should
-    then  be selected with the CONFIG_SetFrequencyReferenceSource()
-    method.
-
-    The formatted user setting string is specific to the device it was
-    generated on and will not be accepted if input to this method on
-    another device.
-
-    Parameters
-    ----------
-    i_usstr : string
-        A string as formatted by the CONFIG_GetFreqRefUserSetting() method.
-    """
-    i_usstr = c_char(i_usstr)
-    err_check(rsa.CONFIG_SetFreqRefUserSetting(byref(i_usstr)))
+        raise RSA_Error("Input does not match a valid setting.")
 
 def CONFIG_SetReferenceLevel(refLevel):
     """
@@ -1300,180 +754,10 @@ def CONFIG_SetReferenceLevel(refLevel):
     ----------
     refLevel : float or int
         Reference level, in dBm. Valid range: -130 dBm to 30 dBm.
-
-    Raises
-    ------
-    SDR_Error
-        If the desired reference level is outside the allowed range.
     """
-    minRefLev = -130 # dBm
-    maxRefLev = 30 # dBm
-    if minRefLev <= refLevel <= maxRefLev:
-        err_check(rsa.CONFIG_SetReferenceLevel(c_double(refLevel)))
-    else:
-        raise SDR_Error(0,
-            "Desired reference level not in range.",
-            "Please choose a value between {} and {} dBm.".format(minRefLev,
-                maxRefLev)
-        )
-
-def CONFIG_GetAutoAttenuationEnable():
-    """
-    Return the signal path auto-attenuation enable state.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    This method returns the enable state value set by the last call to
-    CONFIG_SetAutoAttenuationEnable(), regarless of whether it has been
-    applied to the hardware yet.
-
-    Returns
-    -------
-    bool
-        True indicates auto-attenuation enabled, False for disabled.
-    """
-    enable = c_bool()
-    err_check(rsa.CONFIG_GetAutoAttenuationEnable(byref(enable)))
-    return enable.value
-
-def CONFIG_SetAutoAttenuationEnable(enable):
-    """
-    Set the signal path auto-attenuation enable state.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    When auto-attenuation operation is enabled, the RF input attenuator
-    is automatically configured to an optimal value which accomodates
-    input signal levels up to the reference level. Auto-attenuation
-    operation bases the attenuator setting on the current reference
-    level, center frequency, and RF preamplifier state. When the RF
-    preamplifier is enabled, the RF attenuator setting is adjusted to
-    account for the additional gain. Note that auto-attenuation state
-    does not affect the RF preamplifier state.
-
-    The device Run state must be re-applied to apply the new state
-    value to the hardware. At device connect time, the auto-attenuation
-    state is initialized to enabled (True).
-
-    Parameters
-    ----------
-    enable : bool
-        True enabled auto-attenuation operation. False disables it.
-    """
-    err_check(rsa.CONFIG_SetAutoAttenuationEnable(c_bool(enable)))
-
-def CONFIG_GetRFPreampEnable():
-    """
-    Return the state of the RF preamplifier.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    This method returns the RF preamplifier enable state value set by
-    the last call to CONFIG_SetRFPreampEnable(), regardless of whether
-    it has been applied to the hardware yet.
-
-    Returns
-    -------
-    bool
-        True indicates RF preamp is enabled, False indicates disabled.
-    """
-    enable = c_bool()
-    err_check(rsa.CONFIG_GetRFPreampEnable(byref(c_bool)))
-
-def CONFIG_SetRFPreampEnable(enable):
-    """
-    Set the RF preamplifier enable state.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    This method provides direct control of the RF preamplifier. The
-    preamplifier state is independent of the auto-attenuation state or
-    RF attenuator setting.
-
-    The preamplifier provides nominally 25 dB of gain when enabled,
-    with gain varying over the device RF frequency range (refer to the
-    device data sheet for detailed preamp response specifications).
-    When the preamplifier is enabled, the device reference level
-    setting should be –15 dBm or lower to avoid saturating internal
-    signal path components.
-
-    The device Run state must be re-applied to cause a new state value
-    to be applied to the hardware.
-
-    Parameters
-    ----------
-    enable : bool
-        True enables the RF preamplifier. False disables it.
-
-    Raises
-    ------
-    SDR_Error
-        If the reference level is set above -15 dBm, which could cause
-        saturation of internal signal path components.
-    """
-    if CONFIG_GetReferenceLevel() > -15:
-        raise SDR_Error(0,
-            "Reference level too high for preamp usage.",
-            "Set the reference level <= -15 dBm to avoid saturation."
-        )
-    else:
-        err_check(rsa.CONFIG_SetRFPreampEnable(c_bool(enable)))
-
-def CONFIG_GetRFAttenuator():
-    """
-    Return the setting of the RF input attenuator.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    If auto-attenuation is enabled, the returned value is the current
-    RF attenuator hardware configuration. If auto-attenuation is
-    disabled (manual attenuation mode), the returned value is the last
-    value set by CONFIG_SetRFAttenuator(), regardless of whether it has
-    been applied to the hardware.
-
-    Returns
-    -------
-    float
-        The RF input attenuator setting value in dB.
-    """
-    value = c_double()
-    err_check(rsa.CONFIG_GetRFAttenuator(byref(value)))
-    return value.value
-
-def CONFIG_SetRFAttenuator(value):
-    """
-    Set the RF input attenuator value manually.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    This method allows direct control of the RF input attenuator
-    setting. The attenuator can be set in 1 dB steps, over the range
-    -51 dB to 0 dB. Input values outside the range are converted to the
-    closest allowed value. Input values with fractional parts are
-    rounded to the nearest integer value, giving 1 dB steps.
-
-    The device auto-attenuation state must be disabled for this control
-    to have effect. Setting the attenuator value with this method does
-    not change the auto-attenuation state. To change the auto-
-    attenuation state, use the CONFIG_SetAutoAttenuationEnable() method.
-
-    The device Run state must be re-applied to cause a new setting
-    value to be applied to the hardware.
-
-    Improper manual attenuator setting may cause signal path saturation
-    resulting in degraded performance. This is particularly true if the
-    RF preamplifier state is changed. When making significant changes
-    to the attenuator or preamp settings, it is recommended to use
-    auto-attenuation mode to set the initial RF attenuator level for a
-    desired reference level, then query the attenuator setting to
-    determine reasonable values for further manual control.
-
-    Parameters
-    ----------
-    value : float or int
-        Setting to configure the RF input attenuator, in dB units.
-    """
-    err_check(rsa.CONFIG_SetRFAttenuator(c_double(value)))
+    refLevel = check_num(refLevel)
+    refLevel = check_range(refLevel, -130, 30)
+    err_check(rsa.CONFIG_SetReferenceLevel(c_double(refLevel)))
 
 """ DEVICE METHODS """
 
@@ -1492,6 +776,7 @@ def DEVICE_Connect(deviceID=0):
     deviceID : int
         The deviceID of the target device.
     """
+    deviceID = check_int(deviceID)
     err_check(rsa.DEVICE_Connect(c_int(deviceID)))
 
 def DEVICE_Disconnect():
@@ -1514,8 +799,6 @@ def DEVICE_GetEnable():
     enable = c_bool()
     err_check(rsa.DEVICE_GetEnable(byref(enable)))
     return enable.value
-
-# def DEVICE_GetErrorString():
 
 def DEVICE_GetFPGAVersion():
     """
@@ -1583,8 +866,6 @@ def DEVICE_GetNomenclature():
     err_check(rsa.DEVICE_GetNomenclature(byref(nomenclature)))
     return nomenclature.value.decode('utf-8')
 
-# def DEVICE_GetNomenclatureW():
-
 def DEVICE_GetSerialNumber():
     """
     Retrieve the serial number of the device.
@@ -1641,7 +922,9 @@ def DEVICE_GetInfo():
     Returns
     -------
     dict
-        All of the above listed information, labeled.
+        All of the above listed information as strings.
+        Keys: nomenclature, serialNum, fwVersion, fpgaVersion,
+              hwVersion, apiVersion
     """
     nomenclature = DEVICE_GetNomenclature()
     serialNum = DEVICE_GetSerialNumber()
@@ -1650,12 +933,12 @@ def DEVICE_GetInfo():
     hwVersion = DEVICE_GetHWVersion()
     apiVersion = DEVICE_GetAPIVersion()
     info = {
-        "Nomenclature" : nomenclature,
-        "Serial Number" : serialNum,
-        "FW Version" : fwVersion,
-        "FPGA Version" : fpgaVersion,
-        "HW Version" : hwVersion,
-        "API Version" : apiVersion
+        "nomenclature" : nomenclature,
+        "serialNum" : serialNum,
+        "fwVersion" : fwVersion,
+        "fpgaVersion" : fpgaVersion,
+        "hwVersion" : hwVersion,
+        "apiVersion" : apiVersion
     }
     return info
 
@@ -1695,7 +978,7 @@ def DEVICE_Reset(deviceID=-1):
 
     Raises
     ------
-    SDR_Error
+    RSA_Error
         If multiple devices are found but no deviceID is specified.
     """
     DEVICE_Disconnect()
@@ -1704,10 +987,8 @@ def DEVICE_Reset(deviceID=-1):
     if numFound == 1:
         deviceID = 0
     elif numFound > 1 and deviceID == -1:
-        raise SDR_Error(0,
-            "Multiple devices found, but no ID specified.",
-            "Please give a deviceID to specify which device to reboot."
-        )
+        raise RSA_Error("Multiple devices found, but no ID specified.")
+    deviceID = check_int(deviceID)
     err_check(rsa.DEVICE_Reset(c_int(deviceID)))   
 
 def DEVICE_Run():
@@ -1736,7 +1017,7 @@ def DEVICE_Search():
 
     Raises
     ------
-    SDR_Error
+    RSA_Error
         If no devices are found.
     """
     numFound = c_int()
@@ -1755,10 +1036,7 @@ def DEVICE_Search():
     # If there are no devices, there is still a dict returned
     # with a device ID, but the other elements are empty.
     if foundDevices[0] == ('',''):
-        raise SDR_Error(0,
-            "Could not find a matching Tektronix RSA device.",
-            "Please check the connection and try again."
-        )
+        raise RSA_Error("Could not find a matching Tektronix RSA device.")
     else:
         return foundDevices
 
@@ -1833,115 +1111,21 @@ def DEVICE_GetEventStatus(eventID):
 
     Raises
     ------
-    SDR_Error
+    RSA_Error
         If the input string does not match one of the valid settings.
     """
     occurred  = c_bool()
     timestamp = c_uint64()
+    eventID = check_string(eventID)
     if eventID in DEVEVENT:
         value = c_int(DEVEVENT.index(eventID))
     else:
-        raise SDR_Error(0,
-            "Input string does not match one of the valid settings.",
-            "Please input one of: OVERRANGE, TRIGGER, or 1PPS."
-        )
+        raise RSA_Error("Input string does not match one of the valid settings.")
     err_check(rsa.DEVICE_GetEventStatus(value, byref(occurred),
         byref(timestamp)))
     return occurred.value, timestamp.value
 
-""" DPX METHODS """
-
-# Not yet implemented
-
 """ GNSS METHODS """
-
-def GNSS_ClearNavMessageData():
-    """
-    Clear the navigation message data queue.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    The data queue which holds GNSS navigation message character
-    strings is emptied by this method.
-    """
-    err_check(rsa.GNSS_ClearNavMessageData())
-
-def GNSS_Get1PPSTimestamp():
-    """
-    Return the timestamp of the most recent internal 1PPS timing pulse.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    The internal GNSS receiver must be enabled and have navigation lock
-    for this method to return the internal timestamp of the 1PPS pulse.
-    1PPS pulses occur each second, so the user application should call
-    this method at least once per second to retrieve the 1PPS
-    information correctly.
-
-    The 1PPS timestamp along with the decoded UTC time from the
-    navigation messages can be used to set the API system time to GNSS-
-    accurate time reference. See REFTIME_SetReferenceTime() for more
-    information on setting reference time based on these values.
-
-    Returns
-    -------
-    int
-        Timestamp of the most recent 1PPS pulse.
-
-    Raises
-    ------
-    SDR_Error
-        If GNSS receiver is disabled, doesn't have navigation lock, or
-        no internal 1PPS pulse is detected.
-    """
-    if GNSS_GetEnable() and GNSS_GetStatusRxLock:
-        isValid = c_bool()
-        timestamp1PPS = c_uint64()
-        err_check(rsa.GNSS_Get1PPSTimestamp(byref(isValid),
-            byref(timestamp1PPS)))
-        if isValid.value:
-            return timestamp1PPS.value
-        else:
-            raise SDR_Error(0, "Failed to get 1PPS timestamp.",
-                "No internal 1PPS pulse detected. ")
-    else:
-        raise SDR_Error(0, "Failed to query 1PPS timestamp.",
-            "Internal GNSS receiver must be enabled and have navigation lock.")
-
-def GNSS_GetAntennaPower():
-    """
-    Return the GNSS antenna power output state.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    Returned value indicates the state set by GNSS_SetAntennaPower(),
-    although the actual output state may be different. See the entry
-    for GNSS_SetAntennaPower() for more information on GNSS antenna
-    power control.
-
-    Returns
-    -------
-    bool
-        True for GNSS antenna power output enabled, False for disabled.
-    """
-    powered = c_bool()
-    err_check(rsa.GNSS_GetAntennaPower(byref(powered)))
-    return powered.value
-
-def GNSS_GetEnable():
-    """
-    Return the internal GNSS receiver enable state.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    Returns
-    -------
-    bool
-        True indicates GNSS receiver is enabled, False for disabled.
-    """
-    enable = c_bool()
-    err_check(rsa.GNSS_GetEnable(byref(enable)))
-    return enable.value
 
 def GNSS_GetHwInstalled():
     """
@@ -1958,175 +1142,6 @@ def GNSS_GetHwInstalled():
     installed = c_bool()
     err_check(rsa.GNSS_GetHwInstalled(byref(installed)))
     return installed.value
-
-def GNSS_GetNavMessageData():
-    """
-    Return navigation message data.
-
-    Note: This method is for RSA500A/600A Series instruments only.
-
-    The internal GNSS receiver must be enabled for this method to
-    return useful data, otherwise it will always return msgLen = 0,
-    indicating no data. The message output consists of contiguous
-    segments of the ASCII character serial stream from the GNSS
-    receiver, following the NMEA 0183 Version 3.0 standard. The
-    character output rate is approximately 1000 character per second,
-    originating from an internal 9600 baud serial interface.
-
-    The GNSS navigation message output includes RMC, GGA, GSA, GSV, and
-    other NMEA sentence types. The two character Talker Identifier
-    following the starting "$" character may be "GP", "GL", "BD", or
-    "GN" depending on the configuration of the receiver. The method
-    does not decode the NMEA sentences. It passes them through in raw
-    form, including all characters in the original serial stream.
-
-    The message queue holding the message chars may overflow if this
-    method is not called often enough to keep up with the data
-    generation by the GNSS receiver. It is recommended to retrieve
-    message data at least 4 times per second to avoid this overflow.
-
-    Returns
-    -------
-    msgLen : int
-        Number of characters in the message buffer. Can be zero.
-    message : string
-        Navigation message.
-    """
-    msgLen = c_int()
-    message = c_char_p()
-    err_check(rsa.GNSS_GetNavMessageData(byref(msgLen), byref(message)))
-    return msgLen.value, message.value
-
-def GNSS_GetSatSystem():
-    """
-    Return the GNSS satellite system selection.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    This method should only be called when the GNSS receiver is
-    enabled.
-
-    Returns
-    -------
-    string
-        The GNSS satellite system selection. Valid results:
-            GPS_GLONASS : GPS + Glonass systems used.
-            GPS_BEIDOU : GPS + Beidou systems used.
-            GPS : Only GPS system used.
-            GLONASS : Only Glonass system used.
-            BEIDOU : Only Beidou system used.
-    """
-    satSystem = c_int()
-    err_check(rsa.GNSS_GetSatSystem(byref(satSystem)))
-    return GNSS_SATSYS[satSystem.value - 1]
-
-def GNSS_GetStatusRxLock():
-    """
-    Return the GNSS receiver navigation lock status.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    The lock status changes only once per second at most. GNSS-derived
-    time reference and frequency reference alignments are only applied
-    with the GNSS receiver is locked.
-
-    Returns
-    -------
-    bool
-        True for enabled and locked, False for disabled or not locked.
-    """
-    locked = c_bool()
-    err_check(rsa.GNSS_GetStatusRxLock(byref(locked)))
-    return locked.value
-
-def GNSS_SetAntennaPower(powered):
-    """
-    Set the GNSS antenna power output state.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    The GNSS receiver must be enabled for antenna power to be output.
-    If the receiver is disabled, the antenna power output is also
-    disabled, even when set to the enabled state by this method. When
-    antenna power is enabled, 3.0 V DC is switched to the antenna
-    center conductor  line for powering  an external antenna. When
-    disabled, the voltage source is disconnected from the antenna.
-
-    Parameters:
-    -----------
-    powered : bool
-        True to enable antenna power output, False to disable it.
-    """
-    err_check(rsa.GNSS_SetAntennaPower(c_bool(powered)))
-
-def GNSS_SetEnable(enable):
-    """
-    Enable or disable the internal GNSS receiver operation.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    If the GNSS receiver functions are not needed, it should be
-    disabled to conserve battery power.
-
-    Parameters
-    ----------
-    enable : bool
-        True enabled the GNSS receiver. False disables it.
-    """
-    err_check(rsa.GNSS_SetEnable(c_bool(enable)))
-
-def GNSS_SetSatSystem(satSystem):
-    """
-    Set the GNSS satellite system selection.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    The satellite system selection limits the GNSS receiver to using
-    only signals from the specified system(s). Only the choices listed
-    below are valid; entering multiple strings to get combinations not
-    listed will not work.
-
-    Each time the GNSS receiver is enabled, the satellite system
-    selection is set to the default value of GPS_GLONASS. Satellite
-    system selections are not persistent or recallable, even within the
-    same connection session. Any non-default setting must be explicitly
-    applied after each receiver enable operation.
-
-    The setting can only be changed when the GNSS receiver is enabled.
-    If the method is called when the receiver is disabled, the
-    selection is ignored and an error is returned.
-
-    If the selected system(s) do not provide sufficient signal coverage
-    at the antenna location, the GNSS receiver will not be able to
-    acquire navigation lock. In most cases, the default selection
-    provides the best coverage.
-
-    Parameters
-    ----------
-    satSystem : string
-        The GNSS satellite system selection. Valid settings:
-            GPS_GLONASS : GPS + Glonass systems used.
-            GPS_BEIDOU : GPS + Beidou systems used.
-            GPS : Only GPS system used.
-            GLONASS : Only Glonass system used.
-            BEIDOU : Only Beidou system used.
-
-    Raises
-    ------
-    SDR_Error
-        If the input string does not match one of the valid settings.
-    """
-    if satSystem in GNSS_SATSYS:
-        value = GNSS_SATSYS.index(satSystem) + 1
-        err_check(rsa.GNSS_SetSatSystem(c_int(value)))
-    else:
-        raise SDR_Error(0,
-            "Input string does not match one of the valid settings.",
-            "Select from: GPS_GLONASS, GPS_BEIDOU, GPS, GLONASS, or BEIDOU.")
-
-""" IF STREAMING METHODS """
-
-# Not yet implemented
 
 """ IQ BLOCK METHODS """
 
@@ -2166,8 +1181,9 @@ def IQBLK_GetIQAcqInfo():
     """
     acqInfo = IQBLK_ACQINFO()
     err_check(rsa.IQBLK_GetIQAcqInfo(byref(acqInfo)))
-    return (acqInfo.sample0Timestamp.value, acqInfo.triggerSampleIndex.value,
+    info = (acqInfo.sample0Timestamp.value, acqInfo.triggerSampleIndex.value,
         acqInfo.triggerTimestamp.value, acqInfo.acqStatus.value)
+    return info
 
 def IQBLK_AcquireIQData():
     """
@@ -2197,9 +1213,31 @@ def IQBLK_GetIQBandwidth():
     err_check(rsa.IQBLK_GetIQBandwidth(byref(iqBandwidth)))
     return iqBandwidth.value
 
-# def IQBLK_GetIQData():
+def IQBLK_GetIQData(reqLength):
+    """
+    Retrieve an IQ block data record in a single interleaved array.
 
-# def IQBLK_GetIQDataCplx():
+    Parameters
+    ----------
+    reqLength : int
+        Number of IQ sample pairs requested to be returned.
+        The maximum value of reqLength is equal to the recordLength
+        value set in IQBLK_SetIQRecordLength(). Smaller values allow
+        retrieving partial IQ records.
+
+    Returns
+    -------
+    Numpy array
+        I-data and Q-data stored in a single array.
+        I-data is stored at even indexes of the returned array,
+        and Q-data is stored at the odd indexes.
+    """
+    reqLength = check_int(reqLength)
+    reqLength = check_range(reqLength, 2, IQBLK_GetMaxIQRecordLength())
+    outLength = c_int()
+    iqData = (c_float * (reqLength*2))()
+    err_check(rsa.IQBLK_GetIQData(byref(iqData), byref(outLength), c_int(reqLength)))
+    return np.ctypeslib.as_array(iqData)
 
 def IQBLK_GetIQDataDeinterleaved(reqLength):
     """
@@ -2227,15 +1265,15 @@ def IQBLK_GetIQDataDeinterleaved(reqLength):
         Array of I-data.
     qData : Numpy array
         Array of Q-data.
-    outLength : int
-        Actual number of I and Q sample values returned in data arrays.
     """
+    reqLength = check_int(reqLength)
+    reqLength = check_range(reqLength, 2, IQBLK_GetMaxIQRecordLength())
     iData = (c_float * reqLength)()
     qData = (c_float * reqLength)()
     outLength = c_int()
     err_check(rsa.IQBLK_GetIQDataDeinterleaved(byref(iData), byref(qData), 
         byref(outLength), c_int(reqLength)))
-    return np.array(iData), np.array(qData), outLength.value
+    return np.ctypeslib.as_array(iData), np.ctypeslib.as_array(qData)
 
 def IQBLK_GetIQRecordLength():
     """
@@ -2248,7 +1286,6 @@ def IQBLK_GetIQRecordLength():
     -------
     int
         Number of IQ data samples to be generated with each acquisition.
-        Range: 2 to 104.8576 M samples.
     """
     recordLength = c_int()
     err_check(rsa.IQBLK_GetIQRecordLength(byref(recordLength)))
@@ -2330,20 +1367,11 @@ def IQBLK_SetIQBandwidth(iqBandwidth):
     ----------
     iqBandwidth : float or int
         IQ bandwidth value measured in Hz
-
-    Raises
-    ------
-    SDR_Error
-        If the desired IQ bandwidth is not in the allowed range.
     """
-    if IQBLK_GetMinIQBandwidth() <= iqBandwidth <= IQBLK_GetMaxIQBandwidth():
-        err_check(rsa.IQBLK_SetIQBandwidth(c_double(iqBandwidth)))
-    else:
-        raise SDR_Error(0,
-            "Desired bandwidth not in allowed range.",
-            "Please choose a value between {} and {} Hz.".format(
-                minBandwidth, maxBandwidth)
-        )
+    iqBandwidth = check_num(iqBandwidth)
+    iqBandwidth = check_range(iqBandwidth, IQBLK_GetMinIQBandwidth(),
+        IQBLK_GetMaxIQBandwidth())
+    err_check(rsa.IQBLK_SetIQBandwidth(c_double(iqBandwidth)))
 
 def IQBLK_SetIQRecordLength(recordLength):
     """
@@ -2358,20 +1386,10 @@ def IQBLK_SetIQRecordLength(recordLength):
     ----------
     recordLength : int
         IQ record length, measured in samples. Minimum value of 2.
-
-    Raises
-    ------
-    SDR_Error
-        If the desired IQ record length is not in the allowed range.
     """
-    if 2 <= recordLength <= IQBLK_GetMaxIQRecordLength():
-        err_check(rsa.IQBLK_SetIQRecordLength(c_int(recordLength)))
-    else:
-        raise SDR_Error(0,
-            "Desired record length not in allowed range.",
-            "Please choose a value between {} and {} samples.".format(
-                minIqRecLen, maxIqRecLen)
-        )
+    recordLength = check_int(recordLength)
+    recordLength = check_range(recordLength, 2, IQBLK_GetMaxIQRecordLength())
+    err_check(rsa.IQBLK_SetIQRecordLength(c_int(recordLength)))
 
 def IQBLK_WaitForIQDataReady(timeoutMsec):
     """
@@ -2388,6 +1406,7 @@ def IQBLK_WaitForIQDataReady(timeoutMsec):
         True indicates data is ready for acquisition. False indicates
         the data is not ready and the timeout value is exceeded.
     """
+    timeoutMsec = check_int(timeoutMsec)
     ready = c_bool()
     err_check(rsa.IQBLK_WaitForIQDataReady(c_int(timeoutMsec), byref(ready)))
     return ready.value
@@ -2594,9 +1613,21 @@ def IQSTREAM_GetEnable():
     err_check(rsa.IQSTREAM_GetEnable(byref(enabled)))
     return enabled.value
 
-# def IQSTREAM_GetIQData():
+def IQSTREAM_GetIQDataBufferSize():
+    """
+    Get the maximum number of IQ sample pairs to be returned by IQSTREAM_GetData().
 
-# def IQSTREAM_GetIQDataBufferSize():
+    Refer to the RSA API Reference Manual for additional details.
+
+    Returns
+    -------
+    int
+        Maximum size IQ output data buffer required when using client
+        IQ access. Size value is in IQ sample pairs.
+    """
+    maxSize = c_int()
+    err_check(rsa.IQSTREAM_GetIQDataBufferSize(byref(maxSize)))
+    return maxSize.value
 
 def IQSTREAM_SetAcqBandwidth(bwHz_req):
     """
@@ -2631,26 +1662,13 @@ def IQSTREAM_SetAcqBandwidth(bwHz_req):
 
     Parameters
     ----------
-    bwHz_req : float
+    bwHz_req : float or int
         Requested acquisition bandwidth of IQ streaming data, in Hz.
-
-    Raises
-    ------
-    SDR_Error
-        If the requested acq. bandwidth is not in the allowed range.
     """
-    minAcBW = IQSTREAM_GetMinAcqBandwidth()
-    maxAcBW = IQSTREAM_GetMaxAcqBandwidth()
-    if minAcBW <= bwHz_req <= maxAcBW:
-        err_check(rsa.IQSTREAM_SetAcqBandwidth(c_double(bwHz_req)))
-        newCF = CONFIG_GetCenterFreq()
-        return newCF
-    else:
-        raise SDR_Error(0,
-            "Requested bandwidth not in range.",
-            "Please choose a value between {} and {} Hz.".format(minAcBW,
-                maxAcBW)
-        )
+    bwHz_req = check_num(bwHz_req)
+    bwHz_req = check_range(bwHz_req, IQSTREAM_GetMinAcqBandwidth(),
+        IQSTREAM_GetMaxAcqBandwidth())
+    err_check(rsa.IQSTREAM_SetAcqBandwidth(c_double(bwHz_req)))
 
 def IQSTREAM_SetDiskFileLength(msec):
     """
@@ -2671,20 +1689,10 @@ def IQSTREAM_SetDiskFileLength(msec):
     ----------
     msec : int
         Length of time in milliseconds to record IQ samples to file.
-
-    Raises
-    ------
-    SDR_Error
-        If input is a negative value.
     """
-    msecInt = int(msec)
-    if msecInt >= 0:
-        err_check(rsa.IQSTREAM_SetDiskFileLength(c_int(msecInt)))
-    else:
-        raise SDR_Error(0,
-            "Cannot set file length to a negative time value.",
-            "Please input an integer greater than or equal to zero."
-        )
+    msec = check_int(msec)
+    msec = check_range(msec, 0, float('inf'))
+    err_check(rsa.IQSTREAM_SetDiskFileLength(c_int(msec)))
 
 def IQSTREAM_SetDiskFilenameBase(filenameBase):
     """
@@ -2707,9 +1715,8 @@ def IQSTREAM_SetDiskFilenameBase(filenameBase):
     filenameBase : string
         Base filename for file output.
     """
+    filenameBase = check_string(filenameBase)
     err_check(rsa.IQSTREAM_SetDiskFilenameBaseW(c_wchar_p(filenameBase)))
-
-# def IQSTREAM_SetDiskFilenameBaseW(filenameBaseW):
 
 def IQSTREAM_SetDiskFilenameSuffix(suffixCtl):
     """
@@ -2737,22 +1744,25 @@ def IQSTREAM_SetDiskFilenameSuffix(suffixCtl):
     ----------
     suffixCtl : int
         The filename suffix control value.
-
-    Raises
-    ------
-    SDR_Error
-        If the input value is less than -2.
     """
-    if suffixCtl >= -2:
-        err_check(rsa.IQSTREAM_SetDiskFilenameSuffix(c_int(suffixCtl)))
-    else:
-        raise SDR_Error(0,
-            "Desired suffix control value is invalid.",
-            "Please input an integer >= -2. Refer to documentation"
-            + " for more information."
-        )
+    suffixCtl = check_int(suffixCtl)
+    suffixCtl = check_range(suffixCtl, -2, float('inf'))
+    err_check(rsa.IQSTREAM_SetDiskFilenameSuffix(c_int(suffixCtl)))
 
-# def IQSTREAM_SetIQDataBufferSize(reqSize):
+def IQSTREAM_SetIQDataBufferSize(reqSize):
+    """
+    Set the requested size, in sample pairs, of the returned IQ record.
+
+    Refer to the RSA API Reference Manual for additional details.
+
+    Parameters
+    ----------
+    reqSize : int
+        Requested size of IQ output data buffer in IQ sample pairs.
+        0 resets to default.
+    """
+    reqSize = check_int(reqSize)
+    err_check(rsa.IQSTREAM_SetIQDataBufferSize(c_int(reqSize)))
 
 def IQSTREAM_SetOutputConfiguration(dest, dtype):
     """
@@ -2790,34 +1800,25 @@ def IQSTREAM_SetOutputConfiguration(dest, dtype):
 
     Raises
     ------
-    SDR_Error
+    RSA_Error
         If inputs are not valid settings, or if single data type is 
         selected along with TIQ file format.
     """
-    if dest in IQSOUTDEST:
-        if dtype in IQSOUTDTYPE:
-            if dest == "FILE_TIQ" and "SINGLE" in dtype:
-                raise SDR_Error(0,
-                    "Invalid selection of TIQ file and Single data type"
-                    + "together",
-                    "TIQ format files allow only INT32 or INT16 data types."
-                )
-            else:
-                val1 = c_int(IQSOUTDEST.index(dest))
-                val2 = c_int(IQSOUTDTYPE.index(dtype))
-                err_check(rsa.IQSTREAM_SetOutputConfiguration(val1, val2))
-        else:
+    dest = check_string(dest)
+    dtype = check_string(dtype)
+    if dest in IQSOUTDEST and dtype in IQSOUTDTYPE:
+        if dest == "FILE_TIQ" and "SINGLE" in dtype:
             raise SDR_Error(0,
-                "Input data type string does not match a valid setting.",
-                "Please input one of: SINGLE, INT32, INT16, or " 
-                + "SINGLE_SCALE_INT32."
+                "Invalid selection of TIQ file and Single data type"
+                + "together",
+                "TIQ format files allow only INT32 or INT16 data types."
             )
+        else:
+            val1 = c_int(IQSOUTDEST.index(dest))
+            val2 = c_int(IQSOUTDTYPE.index(dtype))
+            err_check(rsa.IQSTREAM_SetOutputConfiguration(val1, val2))
     else:
-        raise SDR_Error(0,
-            "Input destination string does not match a valid setting.",
-            "Please input one of: CLIENT, FILE_TIQ, FILE_SIQ, or "
-            + "FILE_SIQ_SPLIT."
-        )
+        raise RSA_Error("Input data type  or destination string invalid.")
 
 def IQSTREAM_Start():
     """
@@ -2868,81 +1869,12 @@ def IQSTREAM_WaitForIQDataReady(timeoutMsec):
     bool
         Ready status. True if data is ready, False if data not ready.
     """
+    timeoutMsec = check_int(timeoutMsec)
+    timeoutMsec = check_range(timeoutMsec, 0, float('inf'))
     ready = c_bool()
     err_check(rsa.IQSTREAM_WaitForIQDataReady(c_int(timeoutMsec),
         byref(ready)))
     return ready.value
-
-""" PLAYBACK FUNCTIONS """
-
-# def PLAYBACK_OpenDiskFile(filename, startPercentage, stopPercentage,
-#                           skipTimeBetweenFullAcquisitions, loopAtEndOfFile,
-#                           emulateRealTime):
-
-def PLAYBACK_GetReplayComplete():
-    """
-    Determine if a replaying file has reached the end of file contents.
-
-    Note that in loop back mode, a file will never report True from a
-    call to PLAYBACK_GetReplayComplete().
-
-    Returns
-    -------
-    bool
-        True indicates playback completed. False indicates incomplete.
-    """
-    complete = c_bool()
-    err_check(rsa.PLAYBACK_GetReplayComplete(byref(complete)))
-    return complete.value
-
-""" POWER FUNCTIONS """
-
-def POWER_GetStatus():
-    """
-    Return the device power and battery status information.
-
-    Note: This method is for the RSA500A series instruments only.
-
-    If the returned value batteryPresent is False, the following
-    battery-related status indicators which are returned are invalid
-    and should be ignored.
-
-    During charge, the over temp alarm can be set if the pack exceeds
-    45 deg C. The charger should stop charging when the alarm is set.
-    If charging doesn't stop, the pack will open a resettable
-    protection FET.
-
-    During discharge, the over temp alarm will set if the pack exceeds
-    60 deg C. The pack will set the alarm bit, but if the temperature
-    doesn't decrease, the pack will open a resettable protection FET
-    and shut down the device.
-
-    RSA600A series devices can also return a result from this method.
-    However, since they do not have an internal battery, they will
-    always report a status of externalPowerPresent = True, and
-    batteryPresent = False, and the following returned values being
-    invalid.
-
-    Returns
-    -------
-    externalPowerPresent : bool
-        True for external power connected, False for no external power.
-    batteryPresent : bool
-        True for batter installed, False for no battery installed.
-    batteryChargeLevel : float
-        Battery charge level in percent (100.0 indicating full charge).
-    batteryOverTemperature : bool
-        True if battery pack over temperature. More details above.
-    bateryHardwareError : bool
-        True when battery controller has detected a battery HW error.
-        False when the battery HW is operating normally.
-    """
-    pwrInfo = POWER_INFO()
-    err_check(rsa.POWER_GetStatus(byref(pwrInfo)))
-    return (pwrInfo.externalPowerPresent.value,
-        pwrInfo.batteryPresent.value, pwrInfo.batteryChargeLevel.value,
-        pwrInfo.batteryOverTemperature.value,
-        pwrInfo.batteryHardwareError.value)
 
 """ SPECTRUM METHODS """
 
@@ -2976,6 +1908,7 @@ def SPECTRUM_GetLimits():
 
     Returns
     -------
+    Dict including the following:
     maxSpan : float
         Maximum span (device dependent).
     minSpan : float
@@ -2995,10 +1928,13 @@ def SPECTRUM_GetLimits():
     """
     limits = SPECTRUM_LIMITS()
     err_check(rsa.SPECTRUM_GetLimits(byref(limits)))
-    return (limits.maxSpan.value, limits.minSpan.value,
-            limits.maxRBW.value, limits.minRBW.value,
-            limits.maxVBW.value, limits.maxTraceLength.value,
-            limits.minTraceLength.value)
+    limits_dict = {'maxSpan' : limits.maxSpan,
+        'minSpan' : limits.minSpan, 'maxRBW' : limits.maxRBW,
+        'minRBW' : limits.minRBW, 'maxVBW' : limits.maxVBW,
+        'minVBW' : limits.minVBW, 'maxTraceLength' : limits.maxTraceLength,
+        'minTraceLength' : limits.minTraceLength
+    }
+    return limits_dict
 
 def SPECTRUM_GetSettings():
     """
@@ -3009,6 +1945,7 @@ def SPECTRUM_GetSettings():
 
     Returns
     -------
+    All of the following as a dict, in this order:
     span : float
         Span measured in Hz.
     rbw : float
@@ -3036,13 +1973,22 @@ def SPECTRUM_GetSettings():
     actualNumIQSamples : int
         Actual number of IQ samples used for transform.
     """
-    settings = SPECTRUM_SETTINGS()
+    sets = SPECTRUM_SETTINGS()
     err_check(rsa.SPECTRUM_GetSettings(byref(sets)))
-    return (sets.span, sets.rbw, sets.enableVBW, sets.vbw, sets.traceLength,
-            SPECTRUM_WINDOWS[sets.window],
-            SPECTRUM_VERTICAL_UNITS[sets.verticalUnit], sets.actualStartFreq,
-            sets.actualStopFreq, sets.actualFreqStepSize, sets.actualRBW,
-            sets.actualVBW, sets.actualNumIQSamples)
+    settings_dict = {'span' : sets.span,
+        'rbw' : sets.rbw,
+        'enableVBW' : sets.enableVBW,
+        'vbw' : sets.vbw,
+        'traceLength' : sets.traceLength,
+        'window' : SPECTRUM_WINDOWS[sets.window],
+        'verticalUnit' : SPECTRUM_VERTICAL_UNITS[sets.verticalUnit],
+        'actualStartFreq' : sets.actualStartFreq,
+        'actualStopFreq' : sets.actualStopFreq,
+        'actualFreqStepSize' : sets.actualFreqStepSize,
+        'actualRBW' : sets.actualRBW,
+        'actualVBW' : sets.actualVBW,
+        'actualNumIQSamples' : sets.actualNumIQSamples}
+    return settings_dict
 
 def SPECTRUM_GetTrace(trace, maxTracePoints):
     """
@@ -3050,8 +1996,8 @@ def SPECTRUM_GetTrace(trace, maxTracePoints):
 
     Parameters
     ----------
-    trace : int
-        Either 1, 2, or 3, corresponding to the desired spectrum trace.
+    trace : str
+        Selected trace. Must be 'Trace1', 'Trace2', or 'Trace3'.
     maxTracePoints : int
         Maximum number of trace points to retrieve. The traceData array
         should be at least this size.
@@ -3063,13 +2009,23 @@ def SPECTRUM_GetTrace(trace, maxTracePoints):
         the spectrum settings.
     outTracePoints : int
         Actual number of valid trace points in traceData array.
+
+    Raises
+    ------
+    RSA_Error
+        If the trace input does not match one of the valid strings.
     """
-    trace -= 1
+    trace = check_string(trace)
+    maxTracePoints = check_int(maxTracePoints)
+    if trace in SPECTRUM_TRACES:
+        traceVal = c_int(SPECTRUM_TRACES.index(trace))
+    else:
+        raise RSA_Error("Invalid trace input.")
     traceData = (c_float * maxTracePoints)()
     outTracePoints = c_int()
-    err_check(rsa.SPECTRUM_GetTrace(c_int(trace), c_int(maxTracePoints),
+    err_check(rsa.SPECTRUM_GetTrace(traceVal, c_int(maxTracePoints),
                                     byref(traceData), byref(outTracePoints)))
-    return traceData, outTracePoints.value
+    return np.ctypeslib.as_array(traceData), outTracePoints.value
 
 def SPECTRUM_GetTraceInfo():
     """
@@ -3077,6 +2033,7 @@ def SPECTRUM_GetTraceInfo():
 
     Returns
     -------
+    Dict including:
     timestamp : int
         Timestamp. See REFTIME_GetTimeFromTimestamp() for converting
         from timestamp to time.
@@ -3085,7 +2042,9 @@ def SPECTRUM_GetTraceInfo():
     """
     traceInfo = SPECTRUM_TRACEINFO()
     err_check(rsa.SPECTRUM_GetTraceInfo(byref(traceInfo)))
-    return traceInfo.timestamp.value, traceInfo.acqDataStatus.value
+    info_dict = { 'timestamp' : traceInfo.timestamp,
+            'acqDataStatus' : traceInfo.acqDataStatus}
+    return info_dict
 
 def SPECTRUM_GetTraceType(trace):
     """
@@ -3093,8 +2052,8 @@ def SPECTRUM_GetTraceType(trace):
 
     Parameters
     ----------
-    trace : int
-        Either 1, 2, or 3 corresponding to the desired spectrum trace.
+    trace : str
+        Desired trace. Must be 'Trace1', 'Trace2', or 'Trace3'.
 
     Returns
     -------
@@ -3103,12 +2062,20 @@ def SPECTRUM_GetTraceType(trace):
     detector : string
         Detector type. Valid results are:
             PosPeak, NegPeak, AverageVRMS, or Sample.
+
+    Raises
+    ------
+    RSA_Error
+        If the trace input does not match a valid setting.
     """
-    trace -= 1
+    trace = check_string(trace)
+    if trace in SPECTRUM_TRACES:
+        traceVal = c_int(SPECTRUM_TRACES.index(trace))
+    else:
+        raise RSA_Error("Invalid trace input.")
     enable = c_bool()
     detector = c_int()
-    err_check(rsa.SPECTRUM_GetTraceType(c_int(trace), byref(enable),
-                                        byref(detector)))
+    err_check(rsa.SPECTRUM_GetTraceType(traceVal, byref(enable), byref(detector)))
     return enable.value, SPECTRUM_DETECTORS[detector.value]
 
 def SPECTRUM_SetDefault():
@@ -3142,9 +2109,10 @@ def SPECTRUM_SetEnable(enable):
     enable : bool
         True enables the spectrum measurement. False disables it.
     """
+    enable = check_bool(enable)
     err_check(rsa.SPECTRUM_SetEnable(c_bool(enable)))
 
-def SPECTRUM_SetSettings(span, rbw, enableVBW, vbw, traceLength, window, verticalUnit):
+def SPECTRUM_SetSettings(span, rbw, enableVBW, vbw, traceLen, win, vertUnit):
     """
     Set the spectrum settings.
 
@@ -3158,71 +2126,63 @@ def SPECTRUM_SetSettings(span, rbw, enableVBW, vbw, traceLength, window, vertica
         True for video bandwidth enabled, False for disabled.
     vbw : float
         Video bandwidth measured in Hz.
-    traceLength : int
+    traceLen : int
         Number of trace points.
-    window : string
-        Windowing method used for the transform.
-    verticalUnit : string
-        Vertical units.
-    
-    Valid settings for window:
+    win : string
+        Windowing method used for the transform. Valid settings:
         Kaiser, Mil6dB, BlackmanHarris, Rectangular, FlatTop, or Hann.
-
-    Valid settings for verticalUnit:
-        dBm, Watt, Volt, Amp, or dBmV.
+    vertUnit : string
+        Vertical units. Valid settings: dBm, Watt, Volt, Amp, or dBmV.
 
     Raises
     ------
-    SDR_Error
+    RSA_Error
         If window or verticalUnit string inputs are not one of the
         allowed settings.
     """
-    if window in SPECTRUM_WINDOWS:
-        if verticalUnit in SPECTRUM_VERTICAL_UNITS:
-            settings = SPECTRUM_SETTINGS()
-            settings.span = span
-            settings.rbw = rbw
-            settings.enableVBW = enableVBW
-            settings.vbw = vbw
-            settings.traceLength = traceLength
-            settings.window = SPECTRUM_WINDOWS.index(window)
-            settings.verticalUnit = SPECTRUM_VERTICAL_UNITS.index(verticalUnit)
-            err_check(rsa.SPECTRUM_SetSettings(settings))
-        else:
-            raise SDR_Error(0, "Vertical Unit Input Invalid.",
-                "Please enter one of: dBm, Watt, Volt, Amp, or dBmV.")
+    win = check_string(win)
+    vertUnit = check_string(vertUnit)
+    if win in SPECTRUM_WINDOWS and vertUnit in SPECTRUM_VERTICAL_UNITS:
+        settings = SPECTRUM_SETTINGS()
+        settings.span = check_num(span)
+        settings.rbw = check_num(rbw)
+        settings.enableVBW = check_bool(enableVBW)
+        settings.vbw = check_num(vbw)
+        settings.traceLength = check_int(traceLen)
+        settings.window = SPECTRUM_WINDOWS.index(win)
+        settings.verticalUnit = SPECTRUM_VERTICAL_UNITS.index(vertUnit)
+        err_check(rsa.SPECTRUM_SetSettings(settings))
     else:
-        raise SDR_Error(0, "Windowing Method Input Invalid.",
-            "Please enter one of: Kaiser, Mil6dB, BlackmanHarris, Rectangular"
-            + " FlatTop, or Hann.")
+        raise RSA_Error("Window or vertical unit input invalid.")
 
-def SPECTRUM_SetTraceType(trace, enable, detector):
+def SPECTRUM_SetTraceType(trace="Trace1", enable=True, detector='AverageVRMS'):
     """
     Set the trace settings.
 
     Parameters
     ----------
-    trace : int
-        One of the spectrum traces. Can be 1, 2, or 3.
+    trace : str
+        One of the spectrum traces. Can be 'Trace1', 'Trace2', or 'Trace3'.
+        Set to Trace1 by default.
     enable : bool
-        True enables trace output. False disables it.
+        True enables trace output. False disables it. True by default.
     detector : string
-        Detector type. Valid settings:
+        Detector type. Default to AverageVRMS. Valid settings:
             PosPeak, NegPeak, AverageVRMS, or Sample.
 
     Raises
     ------
-    SDR_Error
-        If the detector type input is not one of the valid settings.
+    RSA_Error
+        If the trace or detector type input is not one of the valid settings.
     """
-    trace -= 1
-    if detector in SPECTRUM_DETECTORS:
-        detVal = SPECTRUM_DETECTORS.index(detector)
-        err_check(rsa.SPECTRUM_SetTraceType(c_int(trace), c_bool(enable),
-                                            c_int(detVal)))
+    trace = check_string(trace)
+    detector = check_string(detector)
+    if trace in SPECTRUM_TRACES and detector in SPECTRUM_DETECTORS:
+        traceVal = c_int(SPECTRUM_TRACES.index(trace))
+        detVal = c_int(SPECTRUM_DETECTORS.index(detector))
+        err_check(rsa.SPECTRUM_SetTraceType(traceVal, c_bool(enable), detVal))
     else:
-        raise SDR_Error(0, "Detector Type Input Invalid.",
-            "Please enter one of: PosPeak, NegPeak, AverageVRMS, or Sample.")
+        raise RSA_Error("Trace or detectory type input invalid.")
 
 def SPECTRUM_WaitForTraceReady(timeoutMsec):
     """
@@ -3239,6 +2199,7 @@ def SPECTRUM_WaitForTraceReady(timeoutMsec):
         True indicates spectrum trace data is ready for acquisition.
         False indicates it is not ready, and timeout value is exceeded.
     """
+    timeoutMsec = check_int(timeoutMsec)
     ready = c_bool()
     err_check(rsa.SPECTRUM_WaitForTraceReady(c_int(timeoutMsec),
                                              byref(ready)))
@@ -3291,9 +2252,12 @@ def REFTIME_SetReferenceTime(refTimeSec, refTimeNsec, refTimestamp):
         Format is the integer timestamp count corresponding to the time
         specified by refTimeSec + refTimeNsec.
     """
-    err_check(rsa.REFTIME_SetReferenceTime(c_int(refTimeSec),
-                                           c_int(refTimeNsec),
-                                           c_int(refTimestamp)))
+    refTimeSec = check_int(refTimeSec)
+    refTimeNsec = check_int(refTimeNsec)
+    refTimestamp = check_int(refTimestamp)
+    err_check(rsa.REFTIME_SetReferenceTime(c_uint64(refTimeSec),
+                                           c_uint64(refTimeNsec),
+                                           c_uint64(refTimestamp)))
 
 def REFTIME_GetReferenceTime():
     """
@@ -3317,9 +2281,9 @@ def REFTIME_GetReferenceTime():
     refTimestamp : int
         Counter timestamp of reference time association.
     """
-    refTimeSec = c_int()
-    refTimeNsec = c_int()
-    refTimestamp = c_int()
+    refTimeSec = c_uint64()
+    refTimeNsec = c_uint64()
+    refTimestamp = c_uint64()
     err_check(rsa.REFTIME_GetReferenceTime(byref(refTimeSec),
                                            byref(refTimeNsec),
                                            byref(refTimestamp)))
@@ -3347,9 +2311,9 @@ def REFTIME_GetCurrentTime():
     o_timestamp : int
         Timestamp of current time.
     """
-    o_timeSec = c_int()
-    o_timeNsec = c_int()
-    o_timestamp = c_int()
+    o_timeSec = c_uint64()
+    o_timeNsec = c_uint64()
+    o_timestamp = c_uint64()
     err_check(rsa.REFTIME_GetCurrentTime(byref(o_timeSec), byref(o_timeNsec),
                                          byref(o_timestamp)))
     return o_timeSec.value, o_timeNsec.value, o_timestamp.value
@@ -3372,17 +2336,6 @@ def REFTIME_GetReferenceTimeSource():
     """
     Query the API time reference alignment source.
 
-    The most recent source used to set the time reference is reported.
-    During the API connect operation, the time reference source is set
-    to SYSTEM, indicating the computer system time was used to
-    initialize the time reference. Following connection, if the user
-    application sets the time reference using REFTIME_SetReferenceTime(),
-    the source value is set to USER.
-
-    For RSA500/600A Series: If the GNSS receiver is enabled, achieves
-    navigation lock and is enabled to align the reference time, the
-    source value is set to GNSS after the first alignment occurs.
-
     Returns
     -------
     string
@@ -3397,10 +2350,6 @@ def REFTIME_GetTimeFromTimestamp(i_timestamp):
     """
     Convert timestamp into equivalent time using current reference.
 
-    The timeSec value is the number of seconds elapsed since midnight
-    (00:00:00), Jan 1, 1970, UTC. The timeNsec value is the number of
-    nanoseconds into the specified second.
-
     Parameters
     ----------
     i_timestamp : int
@@ -3413,9 +2362,10 @@ def REFTIME_GetTimeFromTimestamp(i_timestamp):
     o_timeNsec : int
         Time value nanoseconds component.
     """
-    o_timeSec = c_int()
-    o_timeNsec = c_int()
-    err_check(rsa.REFTIME_GetTimeFromTimestamp(c_int(i_timestamp),
+    i_timestamp = check_int(i_timestamp)
+    o_timeSec = c_uint64()
+    o_timeNsec = c_uint64()
+    err_check(rsa.REFTIME_GetTimeFromTimestamp(c_uint64(i_timestamp),
                                                byref(o_timeSec),
                                                byref(o_timeNsec)))
     return o_timeSec.value, o_timeNsec.value
@@ -3436,9 +2386,11 @@ def REFTIME_GetTimestampFromTime(i_timeSec, i_timeNsec):
     int
         Equivalent timestamp value.
     """
-    o_timestamp = c_int()    
-    err_check(rsa.REFTIME_GetTimestampFromTime(c_int(i_timeSec),
-                                               c_int(i_timeNsec),
+    i_timeSec = check_int(i_timeSec)
+    i_timeNsec = check_int(i_timeNsec)
+    o_timestamp = c_uint64()    
+    err_check(rsa.REFTIME_GetTimestampFromTime(c_uint64(i_timeSec),
+                                               c_uint64(i_timeNsec),
                                                byref(o_timestamp)))
     return o_timestamp.value
 
@@ -3453,97 +2405,9 @@ def REFTIME_GetTimestampRate():
     int
         Timestamp counter clock rate.
     """
-    refTimestampRate = c_int()
+    refTimestampRate = c_uint64()
     err_check(rsa.REFTIME_GetTimestampRate(byref(refTimestampRate)))
     return refTimestampRate.value
-
-""" TRACKING GENERATOR METHODS """
-
-def TRKGEN_GetEnable():
-    """
-    Return the tracking generator enabled status.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    Returns
-    -------
-    bool
-        True for enabled and powered on. False for disabled and off.
-    """
-    enable = c_bool()
-    err_check(rsa.TRKGEN_GetEnable(byref(enable)))
-    return enable.value
-
-def TRKGEN_GetHwInstalled():
-    """
-    Return the tracking generator hardware present status.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    Returns
-    -------
-    bool
-        True for trk. gen. HW is installed in the unit. False if not.
-    """
-    installed = c_bool()
-    err_check(rsa.TRKGEN_GetHwInstalled(byref(installed)))
-    return installed.value
-
-def TRKGEN_GetOutputLevel():
-    """
-    Return the output level of the tracking generator.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    Returns
-    -------
-    float
-        Value of the tracking generator output level in dBm.
-        Range: -43 dBm to -3 dBm
-    """
-    level = c_double()
-    err_check(rsa.TRKGEN_GetOutputLevel(byref(level)))
-    return level.value
-
-def TRKGEN_SetEnable(enable):
-    """
-    Set the tracking generator enable status.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    Parameters
-    ----------
-    enable : bool
-        True to enable, False to disable
-    """
-    err_check(rsa.TRKGEN_SetEnable(c_bool(enable)))
-
-def TRKGEN_SetOutputLevel(level):
-    """
-    Set the output power of the tracking generator in dBm.
-
-    Note: This method is for RSA500A/600A series instruments only.
-
-    The tracking generator output should be set prior to setting the
-    center frequency. See the CONFIG_SetCenterFreq() and
-    CONFIG_Preset() methods to set the center frequency.
-
-    Parameters
-    ----------
-    level : float
-        Requested output level of tracking generator in dBm.
-        Range: -43 to -3 dBm.
-
-    Raises
-    ------
-    SDR_Error
-        If the desired output level is not in the allowed range.
-    """
-    if -43 <= level <= -3:
-        err_check(rsa.TRKGEN_SetOutputLevel(c_double(level)))
-    else:
-        raise SDR_Error(0, "Input value is not within the valid range.",
-            "Please enter a value between -43 and -3 dBm.")
 
 """ TRIGGER METHODS """
 
@@ -3645,6 +2509,8 @@ def TRIG_SetIFPowerTriggerLevel(level):
         The detection power level setting for the IF power trigger
         source.
     """
+    level = check_num(level)
+    level = check_range(level, -130, 30)
     err_check(rsa.TRIG_SetIFPowerTriggerLevel(c_double(level)))
 
 def TRIG_SetTriggerMode(mode):
@@ -3663,15 +2529,12 @@ def TRIG_SetTriggerMode(mode):
     SDR_Error
         If the input string is not one of the valid settings.
     """
+    mode = check_string(mode)
     if mode in TRIGGER_MODE:
         modeValue = TRIGGER_MODE.index(mode)
         err_check(rsa.TRIG_SetTriggerMode(c_int(modeValue)))
     else:
-        raise SDR_Error(0,
-            "Invalid trigger mode input string.",
-            "Input is case sensitive. Please input one of: freeRun, "
-            + "Triggered."
-        )
+        raise RSA_Error("Invalid trigger mode input string.")
 
 def TRIG_SetTriggerPositionPercent(trigPosPercent):
     """
@@ -3688,19 +2551,10 @@ def TRIG_SetTriggerPositionPercent(trigPosPercent):
     ----------
     trigPosPercent : float
         The trigger position percentage, from 1% to 99%.
-
-    Raises
-    ------
-    SDR_Error
-        If the input is not in the valid range from 1 to 99 percent.
     """
-    if 1 <= trigPosPercent <= 99:
-        err_check(rsa.TRIG_SetTriggerPositionPercent(c_double(trigPosPercent)))
-    else:
-        raise SDR_Error(0,
-            "Input percentage invalid.",
-            "Please enter a value in the range: 1 to 99 percent."
-        )
+    trigPosPercent = check_num(trigPosPercent)
+    trigPosPercent = check_range(trigPosPercent, 1, 99)
+    err_check(rsa.TRIG_SetTriggerPositionPercent(c_double(trigPosPercent)))
 
 def TRIG_SetTriggerSource(source):
     """
@@ -3715,17 +2569,15 @@ def TRIG_SetTriggerSource(source):
 
     Raises
     ------
-    SDR_Error
+    RSA_Error
         If the input string does not match one of the valid settings.
     """
+    source = check_string(source)
     if source in TRIGGER_SOURCE:
         sourceValue = TRIGGER_SOURCE.index(source)
         err_check(rsa.TRIG_SetTriggerSource(c_int(sourceValue)))
     else:
-        raise SDR_Error(0,
-            "Invalid trigger source input string.",
-            "Please input either 'External' or 'IFPowerLevel'"
-        )
+        raise RSA_Error("Invalid trigger source input string.")
 
 def TRIG_SetTriggerTransition(transition):
     """
@@ -3741,14 +2593,244 @@ def TRIG_SetTriggerTransition(transition):
 
     Raises
     ------
-    SDR_Error
+    RSA_Error
         If the input string does not match one of the valid settings.
     """
+    transition = check_string(transition)
     if transition in TRIGGER_TRANSITION:
         transValue = TRIGGER_TRANSITION.index(transition)
         err_check(rsa.TRIG_SetTriggerTransition(c_int(transValue)))
     else:
-        raise SDR_Error(0,
-            "Invalid trigger transition mode input string.",
-            "Please input either: 'LH', 'HL', or 'Either'"
-        )
+        raise RSA_Error("Invalid trigger transition mode input string.")
+
+""" HELPER METHODS """
+
+def DEVICE_SearchAndConnect(verbose=False):
+    """
+    Search for and connect to a Tektronix RSA device. 
+    
+    More than 10 devices cannot be found at once. Connection only
+    occurs if exactly one device is found. It may be more convenient to
+    simply use DEVICE_Connect(), however this helper method is useful
+    if problems occur when searching for or connecting to a device. 
+
+    Parameters
+    ----------
+    verbose : bool
+        Whether to print the steps of the process as they happen.
+
+    Raises
+    ------
+    RSA_Error
+        If no matching device is found, if more than one matching
+        device are found, or if connection fails.
+    """
+    if verbose:
+        print("Searching for devices...")
+
+    foundDevices = DEVICE_Search()
+    numFound = len(foundDevices)
+
+    if numFound == 1:
+        foundDevString = "The following device was found:"
+    elif numFound > 1:
+        foundDevString = "The following devices were found:"
+    for (ID, key) in foundDevices.items():
+        foundDevString += '\r\n{}'.format(str(ID) + ': ' + str(key))
+
+    if verbose:
+        print("Device search completed.\n")
+        print(foundDevString + '\n')
+
+    # Zero devices found case handled within DEVICE_Search()
+    # Multiple devices found case:
+    if numFound > 1:
+        raise RSA_Error("Found {} devices, need exactly 1.".format(numFound))
+    else:
+        if verbose:
+            print("Connecting to device...")
+        DEVICE_Connect()
+        if verbose:
+            print("Device connected.\n")
+
+def IQSTREAM_Tempfile(cf, refLevel, bw, durationMsec):
+    """
+    Retrieve IQ data from device by first writing to a tempfile.
+
+    Parameters
+    ----------
+    cf : float or int
+        Center frequency value in Hz.
+    refLevel : float or int
+        Reference level value in dBm.
+    bw : float or int
+        Requested IQ streaming bandwidth in Hz.
+    durationMsec : int
+        Duration of time to record IQ data, in milliseconds.
+
+    Returns
+    -------
+    Numpy array of np.complex64 values
+        IQ data, with each element in the form (I + j*Q)
+    """
+    # Configuration parameters
+    dest=IQSOUTDEST[3] # Split SIQ format
+    dType=IQSOUTDTYPE[0] # 32-bit single precision floating point
+    suffixCtl=-2 # No file suffix
+    filename = 'tempIQ'
+    sleepTimeSec = 0.1 # Loop sleep time checking if acquisition complete
+
+    # Ensure device is stopped before proceeding
+    DEVICE_Stop()
+
+    # Create temp directory and configure/collect data
+    with tempfile.TemporaryDirectory() as tmpDir:
+        filenameBase = tmpDir + '/' + filename
+
+        # Configure device
+        CONFIG_SetCenterFreq(cf)
+        CONFIG_SetReferenceLevel(refLevel)
+        IQSTREAM_SetAcqBandwidth(bw)
+        IQSTREAM_SetOutputConfiguration(dest, dType)
+        IQSTREAM_SetDiskFilenameBase(filenameBase)
+        IQSTREAM_SetDiskFilenameSuffix(suffixCtl)
+        IQSTREAM_SetDiskFileLength(durationMsec)
+        IQSTREAM_ClearAcqStatus()
+
+        # Collect data
+        complete = False
+        writing = False
+
+        DEVICE_Run()
+        IQSTREAM_Start()
+        while not complete:
+            sleep(sleepTimeSec)
+            (complete, writing) = IQSTREAM_GetDiskFileWriteStatus()
+        IQSTREAM_Stop()
+
+        # Check acquisition status
+        fileInfo = IQSTREAM_GetDiskFileInfo()
+        IQSTREAM_StatusParser(fileInfo)
+
+        DEVICE_Stop()
+
+        # Read data back in from file
+        with open(filenameBase + '.siqd', 'rb') as f:
+            # if siq file, skip header
+            if f.name[-1] == 'q':
+                # this case currently is never used
+                # but would be needed if code is later modified
+                f.seek(1024)
+            # read in data as float32 ("SINGLE" SIQ)
+            d = np.frombuffer(f.read(), dtype=np.float32)
+
+    # Deinterleave I and Q
+    i = d[0:-1:2]
+    q = np.append(d[1:-1:2], d[-1])
+    # Re-interleave as numpy complex64)
+    iqData = i + 1j*q
+
+    return iqData
+
+def IQSTREAM_StatusParser(iqStreamInfo):
+    """
+    Parse IQSTREAM_File_Info structure.
+
+    Parameters
+    ----------
+    iqStreamInfo : IQSTREAM_File_Info
+        The IQ streaming status information structure.
+
+    Raises
+    ------
+    RSA_Error
+        If errors have occurred during IQ streaming.
+    """
+    status = iqStreamInfo.acqStatus
+    if status == 0:
+        pass
+    elif bool(status & 0x10000):  # mask bit 16
+        raise RSA_Error('Input overrange.')
+    elif bool(status & 0x40000):  # mask bit 18
+        raise RSA_Error('Input buffer > 75{} full.'.format('%'))
+    elif bool(status & 0x80000):  # mask bit 19
+        raise RSA_Error('Input buffer overflow. IQStream processing too'
+              + ' slow, data loss has occurred.')
+    elif bool(status & 0x100000):  # mask bit 20
+        raise RSA_Error('Output buffer > 75{} full.'.format('%'))
+    elif bool(status & 0x200000):  # mask bit 21
+        raise RSA_Error('Output buffer overflow. File writing too slow, '
+            + 'data loss has occurred.')       
+
+def SPECTRUM_Acquire(trace='Trace1', tracePoints=801, timeoutMsec=10):
+    """
+    Acquire spectrum trace.
+
+    Parameters
+    ----------
+    trace : str
+        Desired spectrum trace. Valid settings:
+        'Trace1', 'Trace2', or 'Trace3'
+    tracePoints : int
+        Maximum number of trace points to receive.
+    timeoutMsec : int
+        How long to wait for trace data to be ready, in milliseconds.
+
+    Returns
+    -------
+    traceData : float array
+        Spectrum trace data, in the unit of verticalunit specified in
+        the spectrum settings.
+    outTracePoints : int
+        Actual number of valid trace points in traceData array.
+    """
+    DEVICE_Run()
+    SPECTRUM_AcquireTrace()
+    while not SPECTRUM_WaitForTraceReady(timeoutMsec):
+        pass
+    return SPECTRUM_GetTrace(trace, tracePoints)
+
+def IQBLK_Configure(cf=1e9, refLevel=0, iqBw=40e6, recordLength=1024):
+    """
+    Configure device for IQ block collection.
+
+    Parameters
+    ----------
+    cf : float or int
+        Desired center frequency in Hz.
+    refLevel : float or int
+        Desired reference level in dBm.
+    iqBw : float or int
+        Desired IQ bandwidth in Hz.
+    recordLength : int
+        Desired IQBLK record length, a number of samples.
+    """
+    CONFIG_SetCenterFreq(cf)
+    CONFIG_SetReferenceLevel(refLevel)
+    IQBLK_SetIQBandwidth(iqBw)
+    IQBLK_SetIQRecordLength(recordLength)
+
+def IQBLK_Acquire(func=IQBLK_GetIQDataDeinterleaved, recLen=1024, tOutMs=10):
+    """
+    Acquire IQBLK data using selected method.
+
+    Parameters
+    ----------
+    func : method
+        Desired IQBLK acquisition method. Can be either IQBLK_GetIQData
+        or IQBLK_GetIQDataDeinterleaved, depending on desired format.
+    recLen : int
+        IQBLK record length, a number of samples.
+    tOutMs : int
+        How long to wait for IQBLK data to be ready, in milliseconds.
+
+    Returns
+    -------
+    iqData : 1 or 2 numpy arrays
+        Returned IQ samples, formatted as determined by func selection.
+    """
+    DEVICE_Run()
+    IQBLK_AcquireIQData()
+    while not IQBLK_WaitForIQDataReady(tOutMs):
+        pass
+    return func(recLen)
