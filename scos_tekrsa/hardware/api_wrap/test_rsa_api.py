@@ -1,15 +1,3 @@
-"""
-Tektronix 306B RSA API Wrapper Test
-
-This testing code has been adapted from the Tektronix Cython RSA API
-testing code found at https://github.com/Tektronix/RSA_API, written by
-Morgan Allison. Alhough much of the code and structure is reused, many
-changes have been made to account for the differences present in my API
-wrapper compared to the Tektronix versions.
-
-If segmentation faults occur when testing, try:
-python3 -q -X faulthandler test_rsa_api
-"""
 import numpy as np
 import unittest
 from os.path import isdir
