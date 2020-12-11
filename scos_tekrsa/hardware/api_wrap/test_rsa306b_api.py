@@ -2,7 +2,7 @@ import numpy as np
 import unittest
 from os.path import isdir
 from os import mkdir
-from rsa_api import *
+from rsa306b_api import *
 from time import sleep
 
 class rsa_api_test(unittest.TestCase):

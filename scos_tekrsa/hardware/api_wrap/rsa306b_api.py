@@ -7,11 +7,11 @@ from time import sleep
 
 """ LOAD RSA DRIVER """
 
-soDir = dirname(realpath(__file__))
+SO_DIR = dirname(realpath(__file__))
 RTLD_LAZY = 0x0001
 LAZYLOAD = RTLD_LAZY | RTLD_GLOBAL
-rsa = CDLL(soDir+'/drivers/libRSA_API.so', LAZYLOAD)
-usbapi = CDLL(soDir+'/drivers/libcyusb_shared.so', LAZYLOAD)
+rsa = CDLL(SO_DIR + '/drivers/libRSA_API.so', LAZYLOAD)
+usbapi = CDLL(SO_DIR + '/drivers/libcyusb_shared.so', LAZYLOAD)
 
 """ GLOBAL CONSTANTS """
 
