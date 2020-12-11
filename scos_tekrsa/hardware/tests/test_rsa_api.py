@@ -1,45 +1,194 @@
 """
-Tektronix RSA_API Unit Test for RSA306B
+Tektronix 306B RSA API Wrapper Test
 
-This version has been adapted slightly to fit differences between
-the Cython API and the Ctypes wrapper I made. Also, no additional
-unit tests have been added for methods (including helper methods)
-which do not appear in the Cython version. It has also been edited
-for use on Linux (and the Linux version of the API) instead of Windows.
+This testing code has been adapted from the Tektronix Cython RSA API
+testing code found at https://github.com/Tektronix/RSA_API, written by
+Morgan Allison. Alhough much of the code and structure is reused, many
+changes have been made to account for the differences present in my API
+wrapper compared to the Tektronix versions.
 
-Based on RSA_API Cython Unit test from:
-https://github.com/Tektronix/RSA_API
-
-Original version credits:
-
-Author: Morgan Allison
-Date edited: 11/17
-Windows 7 64-bit
-RSA API version 3.11.0047
-Python 3.6.1 64-bit (Anaconda 4.4.0)
-NumPy 1.13.1, MatPlotLib 2.0.0
-Download Anaconda: http://continuum.io/downloads
-Anaconda includes NumPy and MatPlotLib
-Download the RSA_API: http://www.tek.com/model/rsa306-software
-Download the RSA_API Documentation:
-http://www.tek.com/spectrum-analyzer/rsa306-manual-6
+If segmentation faults occur when testing, try:
+python3 -q -X faulthandler test_rsa_api
 """
-
+import numpy as np
 import unittest
-from time import sleep
-from rsa_api import *
 from os.path import isdir
 from os import mkdir
-
+from rsa_api import *
+from time import sleep
 
 class rsa_api_test(unittest.TestCase):
-    """Test for rsa_api.pyd"""
+    """Test for rsa_api.py"""
+
+    """ALIGN Command Testing"""
+
+    def test_ALIGN_GetAlignmentNeeded(self):
+        self.assertIsInstance(ALIGN_GetAlignmentNeeded(), bool)
     
+    def test_ALIGN_GetWarmupStatus(self):
+        self.assertIsInstance(ALIGN_GetWarmupStatus(), bool)
+    
+    def test_ALIGN_RunAlignment(self):
+        self.assertIsNone(ALIGN_RunAlignment())
+
+    """AUDIO Command Testing"""
+
+    def test_AUDIO_FrequencyOffset(self):
+        freq = 437e3
+        self.assertIsNone(AUDIO_SetFrequencyOffset(freq))
+        self.assertEqual(AUDIO_GetFrequencyOffset(), freq)
+        
+        self.assertRaises(ValueError, AUDIO_SetFrequencyOffset, 21e6)
+        self.assertRaises(ValueError, AUDIO_SetFrequencyOffset, -21e6)
+        self.assertRaises(TypeError, AUDIO_SetFrequencyOffset, 'abc')
+        self.assertRaises(TypeError, AUDIO_SetFrequencyOffset, [num])
+    
+    def test_AUDIO_GetEnable(self):
+        self.assertIsInstance(AUDIO_GetEnable(), bool)
+
+    def test_AUDIO_Mode(self):
+        for mode in range(6):
+            self.assertIsNone(AUDIO_SetMode(mode))
+            self.assertEqual(AUDIO_GetMode(), mode)
+        
+        self.assertRaises(TypeError, AUDIO_SetMode, 'abc')
+        self.assertRaises(ValueError, AUDIO_SetMode, num)
+        self.assertRaises(ValueError, AUDIO_SetMode, neg)
+    
+    def test_AUDIO_Volume(self):
+        vol = 0.75
+        self.assertIsNone(AUDIO_SetVolume(vol))
+        self.assertEqual(AUDIO_GetVolume(), vol)
+        self.assertIsInstance(AUDIO_GetVolume(), float)
+        self.assertRaises(TypeError, AUDIO_SetVolume, 'abc')
+        self.assertRaises(ValueError, AUDIO_SetVolume, num)
+        self.assertRaises(ValueError, AUDIO_SetVolume, neg)
+    
+    def test_AUDIO_Mute(self):
+        mute = [False, True]
+        for m in mute:
+            self.assertIsNone(AUDIO_SetMute(m))
+            self.assertEqual(AUDIO_GetMute(), m)
+            self.assertIsInstance(AUDIO_GetMute(), bool)
+        
+        self.assertRaises(TypeError, AUDIO_SetMute, 'abc')
+        self.assertRaises(TypeError, AUDIO_SetMute, neg)
+        self.assertRaises(TypeError, AUDIO_SetMute, num)
+    
+    def test_AUDIO_StartStop(self):
+        self.assertIsNone(AUDIO_Start())
+        self.assertIsNone(AUDIO_Stop())
+
+    def test_AUDIO_Acquire(self):
+        inSize = 500
+        mode = 3
+        self.assertIsInstance(AUDIO_Acquire(inSize, mode), np.ndarray)
+        self.assertRaises(TypeError, AUDIO_Acquire, inSize, 'abc')
+        self.assertRaises(TypeError, AUDIO_Acquire, 'abc', mode)
+        self.assertRaises(ValueError, AUDIO_Acquire, inSize, neg)
+        self.assertRaises(ValueError, AUDIO_Acquire, neg, mode)
+
+    """CONFIG Command Testing"""
+    
+    def test_CONFIG_CenterFreq(self):
+        cf = 2.4453e9
+        self.assertIsNone(CONFIG_SetCenterFreq(cf))
+        self.assertEqual(CONFIG_GetCenterFreq(), cf)
+        
+        self.assertRaises(TypeError, CONFIG_SetCenterFreq, 'abc')
+        self.assertRaises(TypeError, CONFIG_SetCenterFreq, False)
+        self.assertRaises(ValueError, CONFIG_SetCenterFreq, 400e9)
+        self.assertRaises(ValueError, CONFIG_SetCenterFreq, -40e6)
+
+    """
+    # The following test requires an external reference to be in use.
+    def test_CONFIG_ExternalRef(self):
+        self.assertIsNone(CONFIG_SetExternalRefEnable(exRefEn=True))
+        self.assertTrue(CONFIG_GetExternalRefEnable())
+        extRefFreq = 10e6
+        self.assertEqual(CONFIG_GetExternalRefFrequency(), extRefFreq)
+        CONFIG_SetExternalRefEnable(exRefEn=False)
+        self.assertRaises(RSA_Error, CONFIG_GetExternalRefFrequency)
+    """
+
+    def test_CONFIG_FrequencyReferenceSource(self):
+        self.assertRaises(RSA_Error, CONFIG_SetFrequencyReferenceSource, 'GNSS')
+        self.assertRaises(RSA_Error, CONFIG_SetFrequencyReferenceSource, 'abc')
+        self.assertRaises(TypeError, CONFIG_SetFrequencyReferenceSource, 0)
+        self.assertIsNone(CONFIG_SetFrequencyReferenceSource('INTERNAL'))
+        self.assertIsInstance(CONFIG_GetFrequencyReferenceSource(), str)
+
+
+    def test_CONFIG_Preset(self):
+        self.assertIsNone(CONFIG_Preset())
+        self.assertEqual(CONFIG_GetCenterFreq(), 1.5e9)
+        self.assertEqual(CONFIG_GetReferenceLevel(), 0)
+        self.assertEqual(IQBLK_GetIQBandwidth(), 40e6)
+        self.assertEqual(IQBLK_GetIQRecordLength(), 1024)
+    
+    def test_CONFIG_ReferenceLevel(self):
+        refLevel = 17
+        self.assertIsNone(CONFIG_SetReferenceLevel(refLevel))
+        self.assertEqual(CONFIG_GetReferenceLevel(), refLevel)
+        self.assertRaises(TypeError, CONFIG_SetReferenceLevel, 'abc')
+        self.assertRaises(ValueError, CONFIG_SetReferenceLevel, 31)
+        self.assertRaises(ValueError, CONFIG_SetReferenceLevel, -131)
+    
+    def test_CONFIG_GetMaxCenterFreq(self):
+        maxCf = 6.2e9
+        self.assertEqual(CONFIG_GetMaxCenterFreq(), maxCf)
+    
+    def test_CONFIG_GetMinCenterFreq(self):
+        minCf = 9e3
+        self.assertEqual(CONFIG_GetMinCenterFreq(), minCf)
+
     """DEVICE Command Testing"""
+
+    def test_DEVICE_Connect(self):
+        # Stop and disconnect device first
+        DEVICE_Stop()
+        self.assertIsNone(DEVICE_Disconnect())
+        self.assertRaises(TypeError, DEVICE_Connect, 'abc')
+        self.assertRaises(ValueError, DEVICE_Connect, neg)
+        self.assertIsNone(DEVICE_Connect(0))
+
+    def test_DEVICE_PrepareForRun(self):
+        self.assertIsNone(DEVICE_PrepareForRun())
+    
+    def test_DEVICE_Run(self):
+        self.assertIsNone(DEVICE_Run())
+        self.assertTrue(DEVICE_GetEnable())
+    
+    def test_DEVICE_Stop(self):
+        self.assertIsNone(DEVICE_Stop())
+        self.assertFalse(DEVICE_GetEnable())
+    
+    def test_DEVICE_GetEventStatus_no_signal(self):
+        eventType = ['OVERRANGE', 'TRIGGER', '1PPS']
+        for e in eventType:
+            event, timestamp = DEVICE_GetEventStatus(e)
+            self.assertFalse(event)
+            self.assertEqual(timestamp, 0)
+        self.assertRaises(TypeError, DEVICE_GetEventStatus, 0)
+        self.assertRaises(RSA_Error, DEVICE_GetEventStatus, 'abc')
+    
+    def test_DEVICE_GetEventStatus_trig_event(self):
+        DEVICE_Run()
+        TRIG_ForceTrigger()
+        sleep(0.05)
+        trig, trigTs = DEVICE_GetEventStatus('TRIGGER')
+        self.assertTrue(trig)
+        self.assertGreater(trigTs, 0)
+    
+    """
+    # The following test woudl require an actual overrange event.
+    def test_DEVICE_GetEventStatus_overrange(self):
+        pass
+    """
 
     def test_DEVICE_GetOverTemperatureStatus(self):
         self.assertIsInstance(DEVICE_GetOverTemperatureStatus(), bool)
-        # self.assertEqual(DEVICE_GetOverTemperatureStatus(), False)
+        self.assertEqual(DEVICE_GetOverTemperatureStatus(), False)
 
     def test_DEVICE_GetNomenclature_rsa306b(self):
         self.assertEqual(DEVICE_GetNomenclature(), 'RSA306B')
@@ -50,7 +199,7 @@ class rsa_api_test(unittest.TestCase):
         self.assertEqual(len(sn), 7)
 
     def test_DEVICE_GetAPIVersion(self):
-        # This has been updated to use the Linux API Version Number
+        # This uses the Linux API version number
         self.assertEqual(DEVICE_GetAPIVersion(), '1.0.0014')
 
     def test_DEVICE_GetFWVersion(self):
@@ -72,50 +221,145 @@ class rsa_api_test(unittest.TestCase):
         self.assertEqual(info['fpgaVersion'], 'V2.1')
         self.assertEqual(info['hwVersion'], 'V7')
 
-    """CONFIG Command Testing"""
+    """GNSS Command Testing"""
     
-    def test_CONFIG_Preset(self):
-        self.assertIsNone(CONFIG_Preset())
-        self.assertEqual(CONFIG_GetCenterFreq(), 1.5e9)
-        self.assertEqual(CONFIG_GetReferenceLevel(), 0)
-        self.assertEqual(IQBLK_GetIQBandwidth(), 40e6)
-        # self.assertEqual(IQBLK_GetIQRecordLength(), 1024)
+    def test_GNSS_GetHwInstalled(self):
+        self.assertFalse(GNSS_GetHwInstalled())
+
+    """IQBLK Command Testing"""
     
-    def test_CONFIG_ReferenceLevel(self):
-        refLevel = 17
-        self.assertIsNone(CONFIG_SetReferenceLevel(refLevel))
-        self.assertEqual(CONFIG_GetReferenceLevel(), refLevel)
-        self.assertRaises(TypeError, CONFIG_SetReferenceLevel, 'abc')
-        self.assertRaises(ValueError, CONFIG_SetReferenceLevel, 31)
-        self.assertRaises(ValueError, CONFIG_SetReferenceLevel, -131)
+    def test_IQBLK_MinMaxIQBandwidth(self):
+        maxBw = IQBLK_GetMaxIQBandwidth()
+        minBw = IQBLK_GetMinIQBandwidth()
+        IQBLK_SetIQBandwidth(maxBw) # To get maxRl properly
+        maxRl = IQBLK_GetMaxIQRecordLength()
+        self.assertEqual(maxBw, 40e6)
+        self.assertEqual(minBw, 100)
+        self.assertEqual(maxRl, 126000000)
     
-    def test_CONFIG_GetMaxCenterFreq_rsa507a(self):
-        self.assertEqual(CONFIG_GetMaxCenterFreq(), 6.2e9)
+    def test_IQBLK_IQBandwidth(self):
+        iqBw = 20e6
+        self.assertIsNone(IQBLK_SetIQBandwidth(iqBw))
+        self.assertEqual(iqBw, IQBLK_GetIQBandwidth())
+        self.assertRaises(ValueError, IQBLK_SetIQBandwidth, neg)
+        self.assertRaises(ValueError, IQBLK_SetIQBandwidth, 100e6)
+        self.assertRaises(TypeError, IQBLK_SetIQBandwidth, 'abc')
     
-    def test_CONFIG_GetMinCenterFreq(self):
-        minCf = 9e3
-        self.assertEqual(CONFIG_GetMinCenterFreq(), minCf)
+    def test_IQBLK_IQRecordLength(self):
+        iqRl = 8192
+        self.assertIsNone(IQBLK_SetIQRecordLength(iqRl))
+        self.assertEqual(iqRl, IQBLK_GetIQRecordLength())
+        self.assertRaises(ValueError, IQBLK_SetIQRecordLength, neg)
+        self.assertRaises(ValueError, IQBLK_SetIQRecordLength, 200e6)
+        self.assertRaises(TypeError, IQBLK_SetIQRecordLength, 'abc')
+
+    def test_IQBLK_GetSampleRate(self):
+        self.assertIsInstance(IQBLK_GetIQSampleRate(), float)
     
-    def test_CONFIG_CenterFreq(self):
-        cf = 2.4453e9
-        self.assertIsNone(CONFIG_SetCenterFreq(cf))
-        self.assertEqual(CONFIG_GetCenterFreq(), cf)
+    def test_IQBLK_GetIQData(self):
+        rl = 1000
+        IQBLK_Configure() # Configure to defaults
+        i, q = IQBLK_Acquire(IQBLK_GetIQDataDeinterleaved, rl, 10)
+        self.assertEqual(len(i), rl)
+        self.assertEqual(len(q), rl)
         
-        self.assertRaises(TypeError, CONFIG_SetCenterFreq, 'abc')
-        # self.assertRaises(TypeError, CONFIG_SetCenterFreq, False)
-        self.assertRaises(RSA_Error, CONFIG_SetCenterFreq, 400e9)
-        self.assertRaises(RSA_Error, CONFIG_SetCenterFreq, -40e6)
+        iq = IQBLK_Acquire(IQBLK_GetIQData, rl, 10)
+        self.assertEqual(len(iq), rl * 2)
+        
+        self.assertRaises(ValueError, IQBLK_Acquire, recLen=neg)
+        self.assertRaises(ValueError, IQBLK_Acquire, recLen=200000000)
+        self.assertRaises(TypeError, IQBLK_Acquire, recLen='abc')
+
+    """IQSTREAM Command Testing"""
     
-    """
-    def test_CONFIG_ExternalRef(self):
-        self.assertIsNone(CONFIG_SetExternalRefEnable(enable=True))
-        self.assertTrue(CONFIG_GetExternalRefEnable())
-        # CONFIG_GetExternalRefFrequency does not work in any Python
-        # implementation
-        extRefFreq = 10e6
-        self.assertEqual(CONFIG_GetExternalRefFrequency(), extRefFreq)
-    """
+    def test_IQSTREAM_MinMaxIQBandwidth(self):
+        minBandwidthHz = IQSTREAM_GetMinAcqBandwidth()
+        maxBandwidthHz = IQSTREAM_GetMaxAcqBandwidth()
+        self.assertEqual(minBandwidthHz, 9765.625)
+        self.assertEqual(maxBandwidthHz, 40e6)
     
+    def test_IQSTREAM_AcqBandwidth(self):
+        bwHz_req = [40e6, 20e6, 10e6, 5e6, 2.5e6, 1.25e6, 625e3, 312.5e3,
+                    156.25e3, 78125, 39062.5, 19531.25, 9765.625]
+        srSps_req = [56e6, 28e6, 14e6, 7e6, 3.5e6, 1.75e6, 875e3,
+                     437.5e3, 218.75e3, 109.375e3, 54687.5, 27343.75,
+                     13671.875]
+        baseSize = [65536, 65536, 65536, 65536, 65536, 32768, 16384, 8192,
+                    4096, 2048, 1024, 512, 256, 128]
+        for b, s, r in zip(bwHz_req, srSps_req, baseSize):
+            self.assertIsNone(IQSTREAM_SetAcqBandwidth(b))
+            bwHz_act, srSps = IQSTREAM_GetAcqParameters()
+            self.assertEqual(bwHz_act, b)
+            self.assertEqual(srSps, s)
+            self.assertIsNone(IQSTREAM_SetIQDataBufferSize(r))
+            self.assertEqual(IQSTREAM_GetIQDataBufferSize(), r)
+        
+        self.assertRaises(TypeError, IQSTREAM_SetAcqBandwidth, 'abc')
+        self.assertRaises(TypeError, IQSTREAM_SetAcqBandwidth, [num])
+        self.assertRaises(ValueError, IQSTREAM_SetAcqBandwidth, 41e6)
+    
+    def test_IQSTREAM_SetOutputConfiguration(self):
+        dest = ['CLIENT', 'FILE_TIQ', 'FILE_SIQ', 'FILE_SIQ_SPLIT']
+        dtype = ['SINGLE', 'INT32', 'INT16', 'SINGLE_SCALE_INT32']
+        
+        for d in dest:
+            for t in dtype:
+                if d is 'FILE_TIQ' and 'SINGLE' in t:
+                    self.assertRaises(RSA_Error,
+                                      IQSTREAM_SetOutputConfiguration, d, t)
+                else:
+                    self.assertIsNone(IQSTREAM_SetOutputConfiguration(d, t))
+        
+        self.assertRaises(TypeError, IQSTREAM_SetOutputConfiguration,
+                          num, dtype[0])
+        self.assertRaises(TypeError, IQSTREAM_SetOutputConfiguration,
+                          dest[0], num)
+        self.assertRaises(RSA_Error, IQSTREAM_SetOutputConfiguration, 'a', 'SINGLE')
+        self.assertRaises(RSA_Error, IQSTREAM_SetOutputConfiguration, 'CLIENT', 'a')
+
+    def test_IQSTREAM_SetDiskFilenameBase(self):
+        path = '/tmp/rsa_api_unittest'
+        if not isdir(path):
+            mkdir(path)
+        filename = 'iqstream_test'
+        filenameBase = path + filename
+        self.assertIsNone(IQSTREAM_SetDiskFilenameBase(filenameBase))
+        
+        self.assertRaises(TypeError, IQSTREAM_SetDiskFilenameBase, num)
+        self.assertRaises(TypeError, IQSTREAM_SetDiskFilenameBase, b'abc')
+        self.assertRaises(TypeError, IQSTREAM_SetDiskFilenameBase, [num])
+    
+    def test_IQSTREAM_SetDiskFilenameSuffix(self):
+        suffixCtl = [0, -1, -2]
+        for s in suffixCtl:
+            self.assertIsNone(IQSTREAM_SetDiskFilenameSuffix(s))
+        
+        self.assertRaises(TypeError, IQSTREAM_SetDiskFilenameSuffix, 'abc')
+        self.assertRaises(ValueError, IQSTREAM_SetDiskFilenameSuffix, neg)
+    
+    def test_IQSTREAM_SetDiskFileLength(self):
+        length = 100
+        self.assertIsNone(IQSTREAM_SetDiskFileLength(length))
+        self.assertRaises(TypeError, IQSTREAM_SetDiskFileLength, 'abc')
+        self.assertRaises(ValueError, IQSTREAM_SetDiskFileLength, neg)
+    
+    def test_IQSTREAM_Operation(self):
+        IQSTREAM_SetAcqBandwidth(5e6)
+        IQSTREAM_SetOutputConfiguration('CLIENT', 'INT16')
+        IQSTREAM_GetAcqParameters()
+        DEVICE_Run()
+        
+        self.assertIsNone(IQSTREAM_Start())
+        self.assertTrue(IQSTREAM_GetEnable())
+        
+        self.assertIsNone(IQSTREAM_Stop())
+        self.assertFalse(IQSTREAM_GetEnable())
+        
+        DEVICE_Stop()
+    
+    def test_IQSTREAM_ClearAcqStatus(self):
+        self.assertIsNone(IQSTREAM_ClearAcqStatus())
+
     """TRIG Command Testing"""
     
     def test_TRIG_TriggerMode(self):
@@ -131,7 +375,6 @@ class rsa_api_test(unittest.TestCase):
             self.assertEqual(TRIG_GetTriggerSource(), s)
     
     def test_TRIG_TriggerTransition(self):
-        # My version uses string input/output
         trans = ["LH", "HL", "Either"]
         for t in trans:
             self.assertIsNone(TRIG_SetTriggerTransition(t))
@@ -158,48 +401,6 @@ class rsa_api_test(unittest.TestCase):
     def test_TRIG_ForceTrigger(self):
         self.assertIsNone(TRIG_ForceTrigger())
     
-    """ALIGN Command Testing"""
-    
-    def test_ALIGN_GetWarmupStatus(self):
-        self.assertIsInstance(ALIGN_GetWarmupStatus(), bool)
-    
-    def test_ALIGN_GetAlignmentNeeded(self):
-        self.assertIsInstance(ALIGN_GetAlignmentNeeded(), bool)
-    
-    """DEVICE Global Command Testing"""
-    
-    def test_DEVICE_PrepareForRun(self):
-        self.assertIsNone(DEVICE_PrepareForRun())
-    
-    def test_DEVICE_Run(self):
-        self.assertIsNone(DEVICE_Run())
-        self.assertTrue(DEVICE_GetEnable())
-    
-    def test_DEVICE_Stop(self):
-        self.assertIsNone(DEVICE_Stop())
-        self.assertFalse(DEVICE_GetEnable())
-    
-    def test_DEVICE_GetEventStatus_no_signal(self):
-        eventType = ['OVERRANGE', 'TRIGGER', '1PPS']
-        for e in eventType:
-            event, timestamp = DEVICE_GetEventStatus(e)
-            self.assertFalse(event)
-            self.assertEqual(timestamp, 0)
-    
-    def test_DEVICE_GetEventStatus_trig_event(self):
-        DEVICE_Run()
-        TRIG_ForceTrigger()
-        sleep(0.05)
-        trig, trigTs = DEVICE_GetEventStatus('TRIGGER')
-        self.assertTrue(trig)
-        self.assertGreater(trigTs, 0)
-    
-    """
-    # Unknown how to test without using actual overrange event.
-    def test_DEVICE_GetEventStatus_overrange(self):
-        pass
-    """
-    
     """REFTIME Command Testing"""
     
     def test_REFTIME_GetTimestampRate(self):
@@ -219,47 +420,12 @@ class rsa_api_test(unittest.TestCase):
         self.assertEqual(o_timeSec, refTimeSec)
         self.assertEqual(o_timeNsec, refTimeNsec)
         self.assertEqual(o_timestamp, refTimestamp)
-    
-    """IQBLK Command Testing"""
-    
-    def test_IQBLK_MinMax(self):
-        maxBw = IQBLK_GetMaxIQBandwidth()
-        minBw = IQBLK_GetMinIQBandwidth()
-        IQBLK_SetIQBandwidth(maxBw) # To get maxRl properly
-        maxRl = IQBLK_GetMaxIQRecordLength()
-        self.assertEqual(maxBw, 40e6)
-        self.assertEqual(minBw, 100)
-        self.assertEqual(maxRl, 126000000)
-    
-    def test_IQBLK_IQBandwidth(self):
-        iqBw = 20e6
-        self.assertIsNone(IQBLK_SetIQBandwidth(iqBw))
-        self.assertEqual(iqBw, IQBLK_GetIQBandwidth())
-        self.assertRaises(ValueError, IQBLK_SetIQBandwidth, neg)
-        self.assertRaises(ValueError, IQBLK_SetIQBandwidth, 100e6)
-        self.assertRaises(TypeError, IQBLK_SetIQBandwidth, 'abc')
-    
-    def test_IQBLK_IQRecordLength(self):
-        iqRl = 8192
-        self.assertIsNone(IQBLK_SetIQRecordLength(iqRl))
-        self.assertEqual(iqRl, IQBLK_GetIQRecordLength())
-        self.assertRaises(ValueError, IQBLK_SetIQRecordLength, neg)
-        self.assertRaises(ValueError, IQBLK_SetIQRecordLength, 200e6)
-        self.assertRaises(TypeError, IQBLK_SetIQRecordLength, 'abc')
-    
-    def test_IQBLK_GetIQData(self):
-        rl = 1000
-        IQBLK_Configure() # Configure to defaults
-        i, q = IQBLK_Acquire(IQBLK_GetIQDataDeinterleaved, rl, 10)
-        self.assertEqual(len(i), rl)
-        self.assertEqual(len(q), rl)
-        
-        iq = IQBLK_Acquire(IQBLK_GetIQData, rl, 10)
-        self.assertEqual(len(iq), rl * 2)
-        
-        self.assertRaises(ValueError, IQBLK_Acquire, recLen=neg)
-        self.assertRaises(ValueError, IQBLK_Acquire, recLen=200000000)
-        self.assertRaises(TypeError, IQBLK_Acquire, recLen='abc')
+
+    def test_REFTIME_GetIntervalSinceRefTimeSet(self):
+        self.assertIsInstance(REFTIME_GetIntervalSinceRefTimeSet(), float)
+
+    def test_REFTIME_GetReferenceTimeSource(self):
+        self.assertIsInstance(REFTIME_GetReferenceTimeSource(), str)
     
     """SPECTRUM Command Testing"""
     
@@ -346,162 +512,17 @@ class rsa_api_test(unittest.TestCase):
         self.assertIsInstance(traceInfo, dict)
         self.assertEqual(len(traceInfo), 2)
 
-    """AUDIO Command Testing"""
-    
-    def test_AUDIO_Mode(self):
-        for mode in range(6):
-            self.assertIsNone(AUDIO_SetMode(mode))
-            self.assertEqual(AUDIO_GetMode(), mode)
-        
-        self.assertRaises(TypeError, AUDIO_SetMode, 'abc')
-        self.assertRaises(ValueError, AUDIO_SetMode, num)
-        self.assertRaises(ValueError, AUDIO_SetMode, neg)
-    
-    def test_AUDIO_Volume(self):
-        vol = 0.75
-        self.assertIsNone(AUDIO_SetVolume(vol))
-        self.assertEqual(AUDIO_GetVolume(), vol)
-        self.assertRaises(TypeError, AUDIO_SetVolume, 'abc')
-        self.assertRaises(ValueError, AUDIO_SetVolume, num)
-        self.assertRaises(ValueError, AUDIO_SetVolume, neg)
-    
-    def test_AUDIO_Mute(self):
-        mute = [False, True]
-        for m in mute:
-            self.assertIsNone(AUDIO_SetMute(m))
-            self.assertEqual(AUDIO_GetMute(), m)
-        
-        self.assertRaises(TypeError, AUDIO_SetMute, 'abc')
-        self.assertRaises(TypeError, AUDIO_SetMute, neg)
-        self.assertRaises(TypeError, AUDIO_SetMute, num)
-        self.assertRaises(TypeError, AUDIO_SetMute, 0)
-    
-    def test_AUDIO_FrequencyOffset(self):
-        freq = 437e3
-        self.assertIsNone(AUDIO_SetFrequencyOffset(freq))
-        self.assertEqual(AUDIO_GetFrequencyOffset(), freq)
-        
-        self.assertRaises(RSA_Error, AUDIO_SetFrequencyOffset, 50e6)
-        self.assertRaises(RSA_Error, AUDIO_SetFrequencyOffset, -50e6)
-        self.assertRaises(TypeError, AUDIO_SetFrequencyOffset, 'abc')
-        self.assertRaises(TypeError, AUDIO_SetFrequencyOffset, [num])
-    
-    """IQSTREAM Command Testing"""
-    
-    def test_IQSTREAM_MinMax(self):
-        minBandwidthHz = IQSTREAM_GetMinAcqBandwidth()
-        maxBandwidthHz = IQSTREAM_GetMaxAcqBandwidth()
-        self.assertEqual(minBandwidthHz, 9765.625)
-        self.assertEqual(maxBandwidthHz, 40e6)
-    
-    def test_IQSTREAM_AcqBandwidth(self):
-        bwHz_req = [40e6, 20e6, 10e6, 5e6, 2.5e6, 1.25e6, 625e3, 312.5e3,
-                    156.25e3, 78125, 39062.5, 19531.25, 9765.625]
-        srSps_req = [56e6, 28e6, 14e6, 7e6, 3.5e6, 1.75e6, 875e3,
-                     437.5e3, 218.75e3, 109.375e3, 54687.5, 27343.75,
-                     13671.875]
-        baseSize = [65536, 65536, 65536, 65536, 65536, 32768, 16384, 8192,
-                    4096, 2048, 1024, 512, 256, 128]
-        for b, s, r in zip(bwHz_req, srSps_req, baseSize):
-            self.assertIsNone(IQSTREAM_SetAcqBandwidth(b))
-            bwHz_act, srSps = IQSTREAM_GetAcqParameters()
-            self.assertEqual(bwHz_act, b)
-            self.assertEqual(srSps, s)
-            self.assertIsNone(IQSTREAM_SetIQDataBufferSize(r))
-            self.assertEqual(IQSTREAM_GetIQDataBufferSize(), r)
-        
-        self.assertRaises(TypeError, IQSTREAM_SetAcqBandwidth, 'abc')
-        self.assertRaises(TypeError, IQSTREAM_SetAcqBandwidth, [num])
-        self.assertRaises(ValueError, IQSTREAM_SetAcqBandwidth, 41e6)
-    
-    # Causes segmentation fault. Fixing all other errors first.
-    def test_IQSTREAM_SetOutputConfiguration(self):
-        dest = ['CLIENT', 'FILE_TIQ', 'FILE_SIQ', 'FILE_SIQ_SPLIT']
-        dtype = ['SINGLE', 'INT32', 'INT16', 'SINGLE_SCALE_INT32']
-        
-        for d in dest:
-            for t in dtype:
-                if d is 'FILE_TIQ' and t in ['SINGLE', 'SINGLE_SCALE_INT32']:
-                    self.assertRaises(RSA_Error,
-                                      IQSTREAM_SetOutputConfiguration, d, t)
-                else:
-                    self.assertIsNone(IQSTREAM_SetOutputConfiguration(d, t))
-        
-        self.assertRaises(TypeError, IQSTREAM_SetOutputConfiguration,
-                          0, dtype[0])
-        self.assertRaises(TypeError, IQSTREAM_SetOutputConfiguration,
-                          dest[0], 0)
-
-    def test_IQSTREAM_SetDiskFilenameBase(self):
-        path = '/tmp/rsa_api_unittest'
-        if not isdir(path):
-            mkdir(path)
-        filename = 'iqstream_test'
-        filenameBase = path + filename
-        self.assertIsNone(IQSTREAM_SetDiskFilenameBase(filenameBase))
-        
-        self.assertRaises(TypeError, IQSTREAM_SetDiskFilenameBase, num)
-        self.assertRaises(TypeError, IQSTREAM_SetDiskFilenameBase, b'abc')
-        self.assertRaises(TypeError, IQSTREAM_SetDiskFilenameBase, [num])
-    
-    def test_IQSTREAM_SetDiskFilenameSuffix(self):
-        suffixCtl = [0, -1, -2]
-        for s in suffixCtl:
-            self.assertIsNone(IQSTREAM_SetDiskFilenameSuffix(s))
-        
-        self.assertRaises(TypeError, IQSTREAM_SetDiskFilenameSuffix, 'abc')
-        # Commented line below was in original testing code, but should not
-        # cause an error, since all positive integers are allowed.
-        # self.assertRaises(RSA_Error, IQSTREAM_SetDiskFilenameSuffix, num)
-        self.assertRaises(ValueError, IQSTREAM_SetDiskFilenameSuffix, neg)
-    
-    def test_IQSTREAM_SetDiskFileLength(self):
-        length = 100
-        self.assertIsNone(IQSTREAM_SetDiskFileLength(length))
-        self.assertRaises(TypeError, IQSTREAM_SetDiskFileLength, 'abc')
-        self.assertRaises(ValueError, IQSTREAM_SetDiskFileLength, neg)
-    
-    def test_IQSTREAM_Operation(self):
-        IQSTREAM_SetAcqBandwidth(5e6)
-        IQSTREAM_SetOutputConfiguration('CLIENT', 'INT16')
-        IQSTREAM_GetAcqParameters()
-        DEVICE_Run()
-        
-        self.assertIsNone(IQSTREAM_Start())
-        self.assertTrue(IQSTREAM_GetEnable())
-        
-        self.assertIsNone(IQSTREAM_Stop())
-        self.assertFalse(IQSTREAM_GetEnable())
-        
-        DEVICE_Stop()
-    
-    # Develop a test for this function
-    # def test_IQSTREAM_WaitForIQDataReady(self):
-    #     pass
-    
-    def test_IQSTREAM_ClearAcqStatus(self):
-        self.assertIsNone(IQSTREAM_ClearAcqStatus())
-    
-    """GNSS Command Testing"""
-    
-    def test_GNSS_GetHwInstalled(self):
-        self.assertFalse(GNSS_GetHwInstalled())
-        
-    def test_cleanup(self):
-        DEVICE_Stop()
-        DEVICE_Disconnect()
-
-
 if __name__ == '__main__':
-    """There must be a connected RSA in order to correctly test these params"""
+    """There must be a connected RSA 306B in order to test."""
     DEVICE_Connect(0)
-    
     if DEVICE_GetNomenclature() != 'RSA306B':
         raise Exception('Incorrect RSA model, please connect RSA306B')
     
+    # Some values used in testing
     num = 400
     neg = -400
     unittest.main()
     
+    # Test cleanup
     DEVICE_Stop()
     DEVICE_Disconnect()

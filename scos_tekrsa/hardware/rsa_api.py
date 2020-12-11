@@ -92,6 +92,51 @@ TRIGGER_MODE = ('freeRun', 'triggered')
 TRIGGER_SOURCE = ('External', 'IFPowerLevel')
 TRIGGER_TRANSITION = ('LH', 'HL', 'Either')
 
+""" CUSTOM DATA STRUCTURES """
+
+class SPECTRUM_LIMITS(Structure):
+    _fields_ = [('maxSpan', c_double),
+                ('minSpan', c_double),
+                ('maxRBW', c_double),
+                ('minRBW', c_double),
+                ('maxVBW', c_double),
+                ('minVBW', c_double),
+                ('maxTraceLength', c_int),
+                ('minTraceLength', c_int)]
+
+class SPECTRUM_SETTINGS(Structure):
+    _fields_ = [('span', c_double),
+                ('rbw', c_double),
+                ('enableVBW', c_bool),
+                ('vbw', c_double),
+                ('traceLength', c_int),
+                ('window', c_int),
+                ('verticalUnit', c_int),
+                ('actualStartFreq', c_double),
+                ('actualStopFreq', c_double),
+                ('actualFreqStepSize', c_double),
+                ('actualRBW', c_double),
+                ('actualVBW', c_double),
+                ('actualNumIQSamples', c_int)]
+
+class SPECTRUM_TRACEINFO(Structure):
+    _fields_ = [('timestamp', c_int64),
+                ('acqDataStatus', c_uint16)]
+
+class IQBLK_ACQINFO(Structure):
+    _fields_ = [('sample0Timestamp', c_uint64),
+                ('triggerSampleIndex', c_uint64),
+                ('triggerTimestamp', c_uint64),
+                ('acqStatus', c_uint32)]
+
+class IQSTREAM_File_Info(Structure):
+    _fields_ = [('numberSamples', c_uint64),
+                ('sample0Timestamp', c_uint64),
+                ('triggerSampleIndex', c_uint64),
+                ('triggerTimestamp', c_uint64),
+                ('acqStatus', c_uint32),
+                ('filenames', c_wchar_p)]
+
 """ ERROR HANDLING """
 
 class RSA_Error(Exception):
@@ -255,6 +300,7 @@ class ReturnStatus(Enum):
     notImplemented = -1
 
 def err_check(rs):
+    """Obtain internal API ErrorStatus and pass to RSA_Error."""
     if ReturnStatus(rs) != ReturnStatus.noError:
         raise RSA_Error(ReturnStatus(rs).name)
 
@@ -274,6 +320,7 @@ def check_range(input, min, max, incl=True):
                 + ", exclusive.")
 
 def check_int(input):
+    """Check if input is an integer."""
     if type(input) is int:
         return input
     elif type(input) is float and input.is_integer():
@@ -283,67 +330,25 @@ def check_int(input):
         raise TypeError("Input must be an integer.")
 
 def check_string(input):
+    """Check if input is a string."""
     if type(input) is str:
         return input
     else:
         raise TypeError("Input must be a string.")
 
 def check_num(input):
+    """Check if input is a number (float or int)."""
     if type(input) is int or type(input) is float:
         return input
     else:
         raise TypeError("Input must be a number (float or int).")
 
 def check_bool(input):
+    """Check if input is a boolean."""
     if type(input) is bool:
         return input
     else:
         raise TypeError("Input must be a boolean.")
-
-""" CUSTOM DATA STRUCTURES """
-
-class SPECTRUM_LIMITS(Structure):
-    _fields_ = [('maxSpan', c_double),
-                ('minSpan', c_double),
-                ('maxRBW', c_double),
-                ('minRBW', c_double),
-                ('maxVBW', c_double),
-                ('minVBW', c_double),
-                ('maxTraceLength', c_int),
-                ('minTraceLength', c_int)]
-
-class SPECTRUM_SETTINGS(Structure):
-    _fields_ = [('span', c_double),
-                ('rbw', c_double),
-                ('enableVBW', c_bool),
-                ('vbw', c_double),
-                ('traceLength', c_int),
-                ('window', c_int),
-                ('verticalUnit', c_int),
-                ('actualStartFreq', c_double),
-                ('actualStopFreq', c_double),
-                ('actualFreqStepSize', c_double),
-                ('actualRBW', c_double),
-                ('actualVBW', c_double),
-                ('actualNumIQSamples', c_int)]
-
-class SPECTRUM_TRACEINFO(Structure):
-    _fields_ = [('timestamp', c_int64),
-                ('acqDataStatus', c_uint16)]
-
-class IQBLK_ACQINFO(Structure):
-    _fields_ = [('sample0Timestamp', c_uint64),
-                ('triggerSampleIndex', c_uint64),
-                ('triggerTimestamp', c_uint64),
-                ('acqStatus', c_uint32)]
-
-class IQSTREAM_File_Info(Structure):
-    _fields_ = [('numberSamples', c_uint64),
-                ('sample0Timestamp', c_uint64),
-                ('triggerSampleIndex', c_uint64),
-                ('triggerTimestamp', c_uint64),
-                ('acqStatus', c_uint32),
-                ('filenames', c_wchar_p)]
 
 """ ALIGNMENT METHODS """
 
@@ -405,6 +410,7 @@ def AUDIO_SetFrequencyOffset(freqOffsetHz):
         Range: -20e6 <= freqOffsetHz <= 20e6
     """
     freqOffsetHz = check_num(freqOffsetHz)
+    freOffsetHz = check_range(freqOffsetHz, -20e6, 20e6)
     err_check(rsa.AUDIO_SetFrequencyOffset(c_double(freqOffsetHz)))
 
 def AUDIO_GetFrequencyOffset():
@@ -445,16 +451,15 @@ def AUDIO_GetData(inSize):
 
     Returns
     -------
-    data : int array
-        Contains an array of audio data.
-    outSize : int
-        Amount of audio data samples stored in the data array.
+    data : Numpy array
+        Contains an array of audio data as integers.
     """
     inSize = check_int(inSize)
+    inSize = check_range(inSize, 0, float('inf'))
     data = (c_int16 * inSize)()
     outSize = c_uint16()
     err_check(rsa.AUDIO_GetData(byref(data), c_uint16(inSize), byref(outSize)))
-    return np.ctypeslib.as_array(data), outSize.value
+    return np.ctypeslib.as_array(data)
 
 def AUDIO_GetMode():
     """
@@ -654,6 +659,7 @@ def CONFIG_Preset():
     samples, and the reference level to 0 dBm.
     """
     err_check(rsa.CONFIG_Preset())
+    err_check(rsa.IQBLK_SetIQRecordLength(1024))
 
 def CONFIG_SetCenterFreq(cf):
     """
@@ -668,6 +674,7 @@ def CONFIG_SetCenterFreq(cf):
         Value to set center frequency, in Hz.
     """
     cf = check_num(cf)
+    cf = check_range(cf, CONFIG_GetMinCenterFreq(), CONFIG_GetMaxCenterFreq())
     err_check(rsa.CONFIG_SetCenterFreq(c_double(cf)))
 
 def CONFIG_SetExternalRefEnable(exRefEn):
@@ -735,8 +742,11 @@ def CONFIG_SetFrequencyReferenceSource(src):
     """
     src = check_string(src)
     if src in FREQREF_SOURCE:
-        value = c_int(FREQREF_SOURCE.index(src))
-        err_check(rsa.CONFIG_SetFrequencyReferenceSource(value))
+        if src is 'GNSS':
+            raise RSA_Error("RSA 306B does not support GNSS reference.")
+        else:
+            value = c_int(FREQREF_SOURCE.index(src))
+            err_check(rsa.CONFIG_SetFrequencyReferenceSource(value))
     else:
         raise RSA_Error("Input does not match a valid setting.")
 
@@ -777,6 +787,7 @@ def DEVICE_Connect(deviceID=0):
         The deviceID of the target device.
     """
     deviceID = check_int(deviceID)
+    deviceID = check_range(deviceID, 0, float('inf'))
     err_check(rsa.DEVICE_Connect(c_int(deviceID)))
 
 def DEVICE_Disconnect():
@@ -2831,3 +2842,14 @@ def IQBLK_Acquire(func=IQBLK_GetIQDataDeinterleaved, recLen=1024, tOutMs=10):
     while not IQBLK_WaitForIQDataReady(tOutMs):
         pass
     return func(recLen)
+
+def AUDIO_Acquire(inSize=1000, mode=3):
+    DEVICE_Run()
+    AUDIO_SetMode(mode)
+    AUDIO_Start()
+    if AUDIO_GetEnable():
+        data = AUDIO_GetData(inSize)
+    else:
+        raise RSA_Error("Audio mode not enabled after starting.")
+    AUDIO_Stop()
+    return data
