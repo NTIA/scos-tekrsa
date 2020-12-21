@@ -31,6 +31,5 @@ setup(
     python_requires=">=3.6",
     install_requires=install_requires,
     package_data={"scos_tekrsa": ["configs/*.example",
-                                  "configs/actions/*.yml",
-                                  "hardware/api_wrap/*"]},
+                                  "configs/actions/*.yml"]},
 )
