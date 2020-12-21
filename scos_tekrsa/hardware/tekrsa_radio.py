@@ -6,8 +6,6 @@ from scos_actions import utils
 from scos_actions.hardware.radio_iface import RadioInterface
 
 from scos_tekrsa import settings
-import scos_tekrsa.hardware.api_wrap.rsa306b_api as rsa306b
-
 # from scos_tekrsa.hardware import calibration
 # from scos_tekrsa.hardware.calibration import (
 #     DEFAULT_SENSOR_CALIBRATION,
@@ -24,7 +22,7 @@ class RSARadio(RadioInterface):
         # sigan_cal_file=settings.SIGAN_CALIBRATION_FILE,
     ):
         self._is_available = False
-        self.rsa = rsa306b
+        self.rsa = None
 
         self.ALLOWED_SR = []
         self.ALLOWED_BW = []
@@ -67,6 +65,14 @@ class RSARadio(RadioInterface):
     def connect(self):
         # Device already connected
         if self._is_available:
+            return
+
+        # Load API Wrapper
+        try:
+            import scos_tekrsa.hardware.api_wrap.rsa306b_api as rsa306b
+            self.rsa = rsa306b
+        except ImportError:
+            logger.warning("RSA API not available. Disabling radio.")
             return
 
         # Search for and connect to device using loaded API wrapper
