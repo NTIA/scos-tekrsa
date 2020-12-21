@@ -6,6 +6,8 @@ from scos_actions import utils
 from scos_actions.hardware.radio_iface import RadioInterface
 
 from scos_tekrsa import settings
+from scos_tekrsa.hardware.api_wrap.rsa306b_api import *
+
 # from scos_tekrsa.hardware import calibration
 # from scos_tekrsa.hardware.calibration import (
 #     DEFAULT_SENSOR_CALIBRATION,
@@ -22,7 +24,6 @@ class RSARadio(RadioInterface):
         # sigan_cal_file=settings.SIGAN_CALIBRATION_FILE,
     ):
         self._is_available = False
-        self.rsa = None
 
         self.ALLOWED_SR = []
         self.ALLOWED_BW = []
@@ -59,32 +60,24 @@ class RSARadio(RadioInterface):
         # self.get_calibration(sensor_cal_file, sigan_cal_file)
 
     def get_constraints(self):
-        self.min_frequency = self.rsa.CONFIG_GetMinCenterFreq()
-        self.max_frequency = self.rsa.CONFIG_GetMaxCenterFreq()
+        self.min_frequency = CONFIG_GetMinCenterFreq()
+        self.max_frequency = CONFIG_GetMaxCenterFreq()
 
     def connect(self):
         # Device already connected
         if self._is_available:
             return
 
-        # Load API Wrapper
-        try:
-            import scos_tekrsa.hardware.api_wrap.rsa306b_api as rsa306b
-            self.rsa = rsa306b
-        except ImportError:
-            logger.warning("RSA API not available. Disabling radio.")
-            return
-
         # Search for and connect to device using loaded API wrapper
         try:
-            self.rsa.DEVICE_SearchAndConnect()
+            DEVICE_SearchAndConnect()
             self.get_constraints()
         except Exception as e:
             logger.exception(e)
             return
 
         logger.debug("Using the following Tektronix RSA device:")
-        logger.debug(self.rsa.DEVICE_GetNomenclature())
+        logger.debug(DEVICE_GetNomenclature())
 
         try:
             self._is_available = True
@@ -127,7 +120,7 @@ class RSARadio(RadioInterface):
 
     @property
     def sample_rate(self):
-        return self.rsa.IQSTREAM_GetAcqParameters()[1]
+        return IQSTREAM_GetAcqParameters()[1]
 
     @sample_rate.setter
     def sample_rate(self, sample_rate):
@@ -145,31 +138,31 @@ class RSARadio(RadioInterface):
         # Set RSA IQ Bandwidth based on sample_rate
         # The IQ Bandwidth determines the RSA sample rate.
         bw = self.sr_bw_map.get(sample_rate)
-        self.rsa.IQSTREAM_SetAcqBandwidth(bw)
+        IQSTREAM_SetAcqBandwidth(bw)
         msg = "set Tektronix RSA sample rate: {:.1f} samples/sec"
-        logger.debug(msg.format(self.rsa.IQSTREAM_GetAcqParameters()[1]))
+        logger.debug(msg.format(IQSTREAM_GetAcqParameters()[1]))
 
     @property
     def frequency(self):
-        return self.rsa.CONFIG_GetCenterFreq()
+        return CONFIG_GetCenterFreq()
 
     @frequency.setter
     def frequency(self, freq):
         """Set the device center frequency."""
-        self.rsa.CONFIG_SetCenterFreq(freq)
+        CONFIG_SetCenterFreq(freq)
         msg = "Set Tektronix RSA center frequency: {:.1f} Hz"
-        logger.debug(msg.format(self.rsa.CONFIG_GetCenterFreq()))
+        logger.debug(msg.format(CONFIG_GetCenterFreq()))
 
     @property
     def reference_level(self):
-        return self.rsa.CONFIG_GetReferenceLevel()
+        return CONFIG_GetReferenceLevel()
 
     @reference_level.setter
     def reference_level(self, reference_level):
         """Set the device reference level."""
-        self.rsa.CONFIG_SetReferenceLevel(reference_level)
+        CONFIG_SetReferenceLevel(reference_level)
         msg = "Set Tektronix RSA reference level: {:.1f} dB"
-        logger.debug(msg.format(self.rsa.CONFIG_GetReferenceLevel()))
+        logger.debug(msg.format(CONFIG_GetReferenceLevel()))
 
     @property
     def last_calibration_time(self):
@@ -314,7 +307,7 @@ class RSARadio(RadioInterface):
         
         while True:
             try:
-                result_data = self.rsa.IQSTREAM_Tempfile(
+                result_data = IQSTREAM_Tempfile(
                                             self.frequency,
                                             self.reference_level,
                                             self.sr_bw_map[self.sample_rate],
@@ -340,7 +333,7 @@ class RSARadio(RadioInterface):
                     "overload": False, # overload check occurs automatically after measurement
                     "frequency": self.frequency,
                     "reference_level": self.reference_level,
-                    "sample_rate": self.rsa.IQSTREAM_GetAcqParameters()[1],
+                    "sample_rate": IQSTREAM_GetAcqParameters()[1],
                     "capture_time": durationMsec, # capture duration in milliseconds
                     "calibration_annotation": self.create_calibration_annotation()
                 }
