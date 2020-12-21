@@ -2,9 +2,9 @@
 
 This repository is a plugin to add support for the Tektronix RSA306B signal analyzer to scos-sensor. See the [scos-sensor documentation](https://github.com/NTIA/scos-sensor/blob/SMBWTB475_refactor_radio_interface/README.md) for more information about scos-sensor, especially the section about [Actions and Hardware Support](https://github.com/NTIA/scos-sensor/blob/SMBWTB475_refactor_radio_interface/DEVELOPING.md#actions-and-hardware-support).
 
-This plugin makes use of the [Python RSA API by Tektronix](https://github.com/tektronix/RSA_API/tree/master/Python). A wrapper for this API which masks the Ctypes dependency, handles error-checking, and implements a few helper methods, is found in scos_tekrsa/hardware/rsa_api.py.
+This plugin makes use of the [Python RSA API by Tektronix](https://github.com/tektronix/RSA_API/tree/master/Python). A wrapper for this API which masks the Ctypes dependency, handles error-checking, and implements a few helper methods, is found in scos_tekrsa/hardware/api_wrap, along with a README and a testing file for the wrapper. 
 
-This repository includes many 700MHz band actions in scos_tekrsa/configs/actions. Action classes, RadioInterface, and signals are used from scos_actions.
+This repository also includes many 700MHz band actions in scos_tekrsa/configs/actions. Action classes, RadioInterface, and signals are used from scos_actions.
 
 For information on adding actions, see the [scos_actions documentation](https://github.com/NTIA/scos-actions/blob/PublicRelease/README.md#adding-actions).
 
@@ -34,7 +34,7 @@ Below are the steps to run scos-sensor with the scos-tekrsa plugin:
 
 3. If it does not exist, create env file while in the root scos-sensor directory `cp env.template ./env`
 
-4. Make sure the scos-tekrsa dependency is in requirements.txt in the scos-sensor/src folder. If you are using a different branch than master, change master in the following line to the branch you are using: `scos_tekrsa @ git+${DOCKER_GIT_CREDENTIALS}/NTIA/scos-tekrsa@master#egg=scos_tekrsa`
+4. Make sure the scos_tekrsa dependency is in requirements.txt in the scos-sensor/src folder. If you are using a different branch than master, change master in the following line to the branch you are using: `scos_tekrsa @ git+${DOCKER_GIT_CREDENTIALS}/NTIA/scos-tekrsa@master#egg=scos_tekrsa`
 
 	- Additionally, remove or comment any unnecessary dependencies, such as scos-usrp.
 
@@ -42,11 +42,13 @@ Below are the steps to run scos-sensor with the scos-tekrsa plugin:
 
 	- While this repository is private, [authentication with GitHub packages](https://docs.github.com/en/free-pro-team@latest/packages/using-github-packages-with-your-projects-ecosystem/configuring-docker-for-use-with-github-packages#authenticating-to-github-packages) using a [GitHub personal access token](https://docs.github.com/en/free-pro-team@latest/packages/publishing-and-managing-packages/about-github-packages#about-tokens) is required. 
 
-6. Get environment variables: `source ./env`
+6. Download the [RSA API for Linux](https://www.tek.com/spectrum-analyzer/rsa306-software/rsa-application-programming-interface--api-for-64bit-linux--v100014) from Tektronix. Place the two driver files, `libRSA_API.so` and `libcyusb_shared.so`, in the `drivers` folder.
 
-7. Build and start containers: `docker-compose up -d --build --force-recreate`
+7. Get environment variables: `source ./env`
 
-8. Optionally, view logs: `docker-compose logs -f`
+8. Build and start containers: `docker-compose up -d --build --force-recreate`
+
+9. Optionally, view logs: `docker-compose logs -f`
 
 ## 5. Development
 

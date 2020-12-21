@@ -7,7 +7,8 @@ from time import sleep
 
 """ LOAD RSA DRIVER """
 
-#SO_DIR = dirname(realpath(__file__))
+# References the scos-sensor drivers directory
+
 SO_DIR = '/opt/scos-sensor/drivers/'
 RTLD_LAZY = 0x0001
 LAZYLOAD = RTLD_LAZY | RTLD_GLOBAL
