@@ -6,13 +6,14 @@ from scos_actions import utils
 from scos_actions.hardware.radio_iface import RadioInterface
 
 from scos_tekrsa import settings
-from scos_tekrsa.hardware.api_wrap.rsa306b_api import *
+from scos_tekrsa.hardware import calibration
+from scos_tekrsa.hardware.calibration import (
+    DEFAULT_SENSOR_CALIBRATION,
+    DEFAULT_SIGAN_CALIBRATION
+)
 
-# from scos_tekrsa.hardware import calibration
-# from scos_tekrsa.hardware.calibration import (
-#     DEFAULT_SENSOR_CALIBRATION,
-#     DEFAULT_SIGAN_CALIBRATION
-# )
+from scos_tekrsa.hardware.api_wrap.rsa306b_api import *
+from scos_tekrsa.hardware.tests.resources.utils import create_dummy_calibration
 
 logger = logging.getLogger(__name__)
 
@@ -20,8 +21,8 @@ class RSARadio(RadioInterface):
 
     def __init__(
         self,
-        # sensor_cal_file=settings.SENSOR_CALIBRATION_FILE,
-        # sigan_cal_file=settings.SIGAN_CALIBRATION_FILE,
+        sensor_cal_file=settings.SENSOR_CALIBRATION_FILE,
+        sigan_cal_file=settings.SIGAN_CALIBRATION_FILE,
     ):
         self._is_available = False
 
@@ -57,7 +58,7 @@ class RSARadio(RadioInterface):
         self.sigan_calibration = None
 
         self.connect()
-        # self.get_calibration(sensor_cal_file, sigan_cal_file)
+        self.get_calibration(sensor_cal_file, sigan_cal_file)
 
     def get_constraints(self):
         self.min_frequency = CONFIG_GetMinCenterFreq()
@@ -91,6 +92,7 @@ class RSARadio(RadioInterface):
         return self._is_available
 
     def get_calibration(self, sensor_cal_file, sigan_cal_file):
+        """Get calibration data from sensor_cal_file and sigan_cal_file."""
         # Set the default calibration values
         self.sensor_calibration_data = DEFAULT_SENSOR_CALIBRATION.copy()
         self.sigan_calibration_data = DEFAULT_SIGAN_CALIBRATION.copy()
@@ -112,8 +114,6 @@ class RSARadio(RadioInterface):
                 logger.exception(e)
                 self.sigan_calibration = None
         else:  # If in testing, create our own test files
-            # from scos_usrp import hardware as test_utils
-
             dummy_calibration = create_dummy_calibration()
             self.sensor_calibration = dummy_calibration
             self.sigan_calibration = dummy_calibration
@@ -166,6 +166,7 @@ class RSARadio(RadioInterface):
 
     @property
     def last_calibration_time(self):
+        """Return the last calibration time from calibration data."""
         if self.sensor_calibration:
             return utils.convert_string_to_millisecond_iso_format(
                 self.sensor_calibration.calibration_datetime
@@ -182,7 +183,7 @@ class RSARadio(RadioInterface):
                 self.sensor_calibration.get_calibration_dict(
                     sample_rate=self.sample_rate,
                     lo_frequency=self.frequency,
-                    attenuation=self.attenuation,
+                    reference_level=self.reference_level,
                 )
             )
 
@@ -193,7 +194,7 @@ class RSARadio(RadioInterface):
                 self.sigan_calibration.get_calibration_dict(
                     sample_rate=self.sample_rate,
                     lo_frequency=self.frequency,
-                    attenuation=self.attenuation,
+                    reference_level=self.reference_level,
                 )
             )
 
@@ -223,47 +224,29 @@ class RSARadio(RadioInterface):
             )
 
     def create_calibration_annotation(self):
-        # While calibration isn't yet done, return placeholder info
-        # This was needed for testing, pre-calibration.
-        calDone = False
-        if calDone:
-            annotation_md = {
-                "ntia-core:annotation_type": "CalibrationAnnotation",
-                "ntia-sensor:gain_sigan": self.sigan_calibration_data["gain_sigan"],
-                "ntia-sensor:noise_figure_sigan": self.sigan_calibration_data[
-                    "noise_figure_sigan"
-                ],
-                "ntia-sensor:1db_compression_point_sigan": self.sigan_calibration_data[
-                    "1db_compression_sigan"
-                ],
-                "ntia-sensor:enbw_sigan": self.sigan_calibration_data["enbw_sigan"],
-                "ntia-sensor:gain_preselector": self.sensor_calibration_data[
-                    "gain_preselector"
-                ],
-                "ntia-sensor:noise_figure_sensor": self.sensor_calibration_data[
-                    "noise_figure_sensor"
-                ],
-                "ntia-sensor:1db_compression_point_sensor": self.sensor_calibration_data[
-                    "1db_compression_sensor"
-                ],
-                "ntia-sensor:enbw_sensor": self.sensor_calibration_data["enbw_sensor"],
-            }
-        else:
-            annotation_md = {
-                "ntia-core:annotation_type": "CalibrationAnnotation",
-                "ntia-sensor:gain_sigan": 1,
-                "ntia-sensor:noise_figure_sigan": 1,
-                "ntia-sensor:1db_compression_point_sigan": 1,
-                "ntia-sensor:enbw_sigan": 1,
-                "ntia-sensor:gain_preselector": 1,
-                "ntia-sensor:noise_figure_sensor": 1,
-                "ntia-sensor:1db_compression_point_sensor": 1,
-                "ntia-sensor:enbw_sensor": 1,
-            }
+        """Create the SigMF calibration annotation."""
+        annotation_md = {
+            "ntia-core:annotation_type": "CalibrationAnnotation",
+            "ntia-sensor:gain_sigan": self.sigan_calibration_data["gain_sigan"],
+            "ntia-sensor:noise_figure_sigan": self.sigan_calibration_data[
+                "noise_figure_sigan"
+            ],
+            "ntia-sensor:1db_compression_point_sigan": self.sigan_calibration_data[
+                "1db_compression_sigan"
+            ],
+            "ntia-sensor:enbw_sigan": self.sigan_calibration_data["enbw_sigan"],
+            "ntia-sensor:gain_preselector": self.sensor_calibration_data[
+                "gain_preselector"
+            ],
+            "ntia-sensor:noise_figure_sensor": self.sensor_calibration_data[
+                "noise_figure_sensor"
+            ],
+            "ntia-sensor:1db_compression_point_sensor": self.sensor_calibration_data[
+                "1db_compression_sensor"
+            ],
+            "ntia-sensor:enbw_sensor": self.sensor_calibration_data["enbw_sensor"],
+        }
         return annotation_md
-
-    def configure(self, action_name):
-        pass
 
     @property
     def healthy(self, num_samples=100000):
