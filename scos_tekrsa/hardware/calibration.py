@@ -168,7 +168,7 @@ def load_from_json(fname):
                 rl = ref_level_row["reference_level"]
                 cal_point = ref_level_row["calibration_data"]
 
-                # MInitialize dictionaries
+                # Initialize dictionaries
                 if sr not in calibration_data.keys():
                     calibration_data[sr] = {}
                 if f not in calibration_data[sr].keys():
