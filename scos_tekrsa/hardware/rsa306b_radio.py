@@ -17,7 +17,7 @@ from scos_tekrsa.hardware.tests.resources.utils import create_dummy_calibration
 
 logger = logging.getLogger(__name__)
 
-class RSARadio(RadioInterface):
+class RSA306BRadio(RadioInterface):
 
     def __init__(
         self,
