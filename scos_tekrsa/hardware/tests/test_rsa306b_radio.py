@@ -1,99 +1,47 @@
-import time
-from datetime import datetime
-from unittest.mock import Mock, create_autospec, patch
+"""Test aspects of RadioInterface with mocked RSA306B."""
 
-import numpy as np
+# This does not work even slightly yet, it's just copied from USRP at the moment.
+
 import pytest
-from pytest import approx
 
-from scos_tekrsa import settings
-
-from scos_tekrsa.hardware.rsa306b_radio import RSARadio
+from scos_tekrsa.hardware import rsa306b_radio
 from scos_tekrsa.hardware.tests.resources.utils import (
     create_dummy_calibration,
     easy_gain,
+    is_close,
 )
 
 
-class TestRSA:
-    def setup_method(self):
-        """ Create the mock Keysight"""
+class TestRSA306B:
+    # Ensure we write the test cal file and use mocks
+    setup_complete = False
 
-        # https://stackoverflow.com/questions/57299968/python-how-to-reuse-a-mock-to-avoid-writing-mock-patch-multiple-times
-        self.keysight_measurement_patcher = patch(
-            "scos_sensor_keysight.hardware.n6841a_radio.Measurement"
-        )
-        self.keysight_utils_patcher = patch(
-            "scos_sensor_keysight.hardware.n6841a_radio.Utils"
-        )
-        self.keysight_system_info_patcher = patch(
-            "scos_sensor_keysight.hardware.n6841a_radio.SystemInfo"
-        )
-        self.mock_keysight_measurement = self.keysight_measurement_patcher.start()
-        self.mock_keysight_utils = self.keysight_utils_patcher.start()
-        self.mock_keysight_system_info = self.keysight_system_info_patcher.start()
+    @pytest.fixture(autouse=True)
+    def setup_mock_rsa306b(self):
+        """Create the mock RSA306B."""
 
-        def side_effect_attributes(metadata):
-            metadata.update(
-                {
-                    "attenuation_max": 43,
-                    "attenuation_min": -10,
-                    "center_freq_max": 6e9,
-                    "center_freq_min": 20e4,
-                }
-            )
+        # Only setup once
+        if self.setup_complete:
+            return
 
-        self.mock_keysight_system_info.get_all_attributes.side_effect = (
-            side_effect_attributes
-        )
+        # Create the RadioInterface and get the radio
+        if not rsa306b_radio.is_available:
+            raise RuntimeError("Receiver is not available.")
+        self.rx = rsa306b_radio
 
-        caps = SALLinux.salSensorCapabilities2()
-        caps.maxSampleRate = 28e6
-        self.mock_keysight_system_info.get_capabilities = Mock(return_value=caps)
+        # Alert that the setup was complete
+        self.setup_complete = True
 
-        self.tuner_info = SALLinux.salTunerParms()
-        self.tuner_info.sampleRate = 28e6
-        self.tuner_info.centerFrequency = 700e6
-        self.tuner_info.attenuation = 40
-        self.mock_keysight_measurement.get_tuner = Mock(return_value=self.tuner_info)
-        self.rx = N6841ARadio(
-            sensor_cal_file=settings.SENSOR_CALIBRATION_FILE,
-            sigan_cal_file=settings.SIGAN_CALIBRATION_FILE,
-        )
-
-    def teardown_method(self):
-        self.keysight_measurement_patcher.stop()
-        self.keysight_utils_patcher.stop()
-        self.keysight_system_info_patcher.stop()
-
+    # Ensure the usrp can recover from acquisition errors
     def test_acquire_samples_with_retries(self):
         """Acquire samples should retry without error up to `max_retries`."""
 
+        # Check that the setup was completed
+        assert self.setup_complete, "Setup was not completed"
+
         max_retries = 5
         times_to_fail = 3
-
-        call_count = 0
-
-        def side_effect(*args, **kwargs):
-            nonlocal call_count
-            if call_count < times_to_fail:
-                call_count += 1
-                result = Measurement.IQResult()
-                result.data = np.arange(0, 500, dtype=np.csingle)
-                result.sigan_overload = False
-                result.capture_time = datetime.now()
-                return result
-            else:
-                call_count += 1
-                result = Measurement.IQResult()
-                result.data = np.arange(0, 1000, dtype=np.csingle)
-                result.sigan_overload = False
-                result.capture_time = datetime.now()
-                return result
-
-        self.mock_keysight_measurement.time_domain_iq_measurement.side_effect = (
-            side_effect
-        )
+        self.rx.usrp.set_times_to_fail_recv(times_to_fail)
 
         try:
             self.rx.acquire_time_domain_samples(1000, retries=max_retries)
@@ -103,33 +51,17 @@ class TestRSA:
             msg = msg.format(times_to_fail, max_retries)
             pytest.fail(msg)
 
+        self.rx.usrp.set_times_to_fail_recv(0)
+
     def test_acquire_samples_fails_when_over_max_retries(self):
         """After `max_retries`, an error should be thrown."""
 
+        # Check that the setup was completed
+        assert self.setup_complete, "Setup was not completed"
+
         max_retries = 5
         times_to_fail = 7
-        call_count = 0
-
-        def side_effect(*args, **kwargs):
-            nonlocal call_count
-            if call_count < times_to_fail:
-                call_count += 1
-                result = Measurement.IQResult()
-                result.data = np.arange(0, 500, dtype=np.csingle)
-                result.capture_time = datetime.now()
-                result.sigan_overload = False
-                return result
-            else:
-                call_count += 1
-                result = Measurement.IQResult()
-                result.data = np.arange(0, 1000, dtype=np.csingle)
-                result.capture_time = datetime.now()
-                result.sigan_overload = False
-                return result
-
-        self.mock_keysight_measurement.time_domain_iq_measurement.side_effect = (
-            side_effect
-        )
+        self.rx.usrp.set_times_to_fail_recv(times_to_fail)
 
         msg = "Acquisition failing {} times sequentially with {}\n"
         msg += "retries requested SHOULD have raised an error."
@@ -138,47 +70,45 @@ class TestRSA:
             self.rx.acquire_time_domain_samples(1000, 1000, max_retries)
             pytest.fail(msg)
 
-    def test_tune_result_frequency(self):
-        """Check that the tuning is correct"""
-        assert self.tuner_info.centerFrequency == self.rx.frequency
+        self.rx.usrp.set_times_to_fail_recv(0)
 
+    def test_tune_result(self):
+        """Check that the tuning is correct"""
+        # Check that the setup was completed
+        assert self.setup_complete, "Setup was not completed"
+
+        # Use a positive DSP frequency
         f_lo = 1.0e9
-        self.rx.frequency = f_lo
-        tuner_info = self.tuner_info
-        tuner_info.centerFrequency = f_lo
-        args, kwargs = self.mock_keysight_measurement.set_tuner.call_args
-        assert args[1] == tuner_info or kwargs["tuner"] == tuner_info
+        f_dsp = 1.0e6
+        self.rx.tune_frequency(f_lo, f_dsp)
+        assert f_lo == self.rx.lo_freq and f_dsp == self.rx.dsp_freq
 
-    def test_tune_result_sample_rate(self):
-        """Check that the tuning is correct"""
-        sample_rate = 14e6
-        self.rx.sample_rate = sample_rate
-        tuner_info = self.tuner_info
-        tuner_info.sampleRate = sample_rate
-        args, kwargs = self.mock_keysight_measurement.set_tuner.call_args
-        assert args[1] == tuner_info or kwargs["tuner"] == tuner_info
+        # Use a 0Hz for DSP frequency
+        f_lo = 1.0e9
+        f_dsp = 0.0
+        self.rx.frequency = f_lo
+        assert f_lo == self.rx.lo_freq and f_dsp == self.rx.dsp_freq
+
+        # Use a negative DSP frequency
+        f_lo = 1.0e9
+        f_dsp = -1.0e6
+        self.rx.tune_frequency(f_lo, f_dsp)
+        assert f_lo == self.rx.lo_freq and f_dsp == self.rx.dsp_freq
 
     def test_scaled_data_acquisition(self):
         """Check that the samples are properly scaled"""
-        db_gain = 20
-        self.rx.sensor_calibration_data["gain_sensor"] = db_gain
+        # Check that the setup was completed
+        assert self.setup_complete, "Setup was not completed"
 
-        def side_effect(*args, **kwargs):
-            result = Measurement.IQResult()
-            result.data = np.repeat(1.0, 1000)
-            result.sigan_overload = False
-            result.capture_time = datetime.now()
-            return result
-
-        self.mock_keysight_measurement.time_domain_iq_measurement.side_effect = (
-            side_effect
-        )
-
+        # Do an arbitrary data collection
+        self.rx.sample_rate = int(10e6)
+        self.rx.frequency = 1e9
+        self.rx.gain = 20
         measurement_result = self.rx.acquire_time_domain_samples(1000)
         data = measurement_result["data"]
 
         # The true value should be the 1 / linear gain
-        true_val = easy_gain(int(10e6), 1e9, db_gain) - 10
+        true_val = easy_gain(int(10e6), 1e9, 20) - 10
         true_val = 10 ** (-1 * float(true_val) / 20)
 
         # Get the observed value
@@ -190,8 +120,21 @@ class TestRSA:
         msg += "    Algorithm: {}\n".format(observed_val)
         msg += "    Expected: {}\n".format(true_val)
         msg += "    Tolerance: {}\r\n".format(tolerance)
-        # assert is_close(true_val, observed_val, tolerance), msg
-        observed_val == approx(true_val, abs=tolerance)
+        assert is_close(true_val, observed_val, tolerance), msg
+
+    def test_set_sample_rate_also_sets_clock_rate(self):
+        """Setting sample_rate should adjust clock_rate"""
+
+        # Check that the setup was completed
+        assert self.setup_complete, "Setup was not completed"
+
+        expected_clock_rate = 30720000
+
+        # Set the sample rate and check the clock rate
+        self.rx.sample_rate = 15360000
+        observed_clock_rate = self.rx.clock_rate
+
+        assert expected_clock_rate == observed_clock_rate
 
     def check_defaulted_calibration_parameter(self, param, expected, observed):
         msg = "Default calibration parameters were not properly set.\n"
@@ -211,29 +154,27 @@ class TestRSA:
 
         # Create some dummy setups to ensure calibration updates
         sample_rates = [10e6, 40e6, 1e6, 56e6]
-        attenuation_settings = [0, 43, -19, 43]
+        gain_settings = [40, 60, 0, 60]
         frequencies = [1000e6, 2000e6, 10e6, 1500e6]
 
         # Run each set
         for i in range(len(sample_rates)):
             # Get the parameters for this run
             sample_rate = sample_rates[i]
-            attenuation_setting = attenuation_settings[i]
+            gain_setting = gain_settings[i]
             frequency = frequencies[i]
 
             # Setup the rx
-            tuner_info = SALLinux.salTunerParms()
-            tuner_info.sampleRate = sample_rate
-            tuner_info.centerFrequency = frequency
-            tuner_info.attenuation = attenuation_setting
-            self.mock_keysight_measurement.get_tuner = Mock(return_value=tuner_info)
+            self.rx.sample_rate = sample_rate
+            self.rx.gain = gain_setting
+            self.rx.frequency = frequency
 
             # Recompute the calibration parameters
             self.rx.recompute_calibration_data()
 
             # Check the defaulted calibration parameters
             self.check_defaulted_calibration_parameter(
-                "gain_sigan", 0, self.rx.sigan_calibration_data["gain_sigan"]
+                "gain_sigan", gain_setting, self.rx.sigan_calibration_data["gain_sigan"]
             )
             self.check_defaulted_calibration_parameter(
                 "enbw_sigan", sample_rate, self.rx.sigan_calibration_data["enbw_sigan"]
@@ -249,7 +190,9 @@ class TestRSA:
                 self.rx.sigan_calibration_data["1db_compression_sigan"],
             )
             self.check_defaulted_calibration_parameter(
-                "gain_sensor", 0, self.rx.sensor_calibration_data["gain_sensor"],
+                "gain_sensor",
+                gain_setting,
+                self.rx.sensor_calibration_data["gain_sensor"],
             )
             self.check_defaulted_calibration_parameter(
                 "enbw_sensor",
@@ -294,21 +237,20 @@ class TestRSA:
 
         # Create some dummy setups to ensure calibration updates
         sample_rates = [10e6, 40e6, 1e6, 56e6]
-        attenuation_settings = [0, 43, -19, 43]
+        gain_settings = [40, 60, 0, 60]
         frequencies = [1000e6, 2000e6, 10e6, 1500e6]
 
         # Run each set
         for i in range(len(sample_rates)):
             # Get the parameters for this run
             sample_rate = sample_rates[i]
-            attenuation_setting = attenuation_settings[i]
+            gain_setting = gain_settings[i]
             frequency = frequencies[i]
 
-            tuner_info = SALLinux.salTunerParms()
-            tuner_info.sampleRate = sample_rate
-            tuner_info.centerFrequency = frequency
-            tuner_info.attenuation = attenuation_setting
-            self.mock_keysight_measurement.get_tuner = Mock(return_value=tuner_info)
+            # Setup the rx
+            self.rx.sample_rate = sample_rate
+            self.rx.gain = gain_setting
+            self.rx.frequency = frequency
 
             # Recompute the calibration parameters
             self.rx.recompute_calibration_data()
@@ -322,26 +264,3 @@ class TestRSA:
 
         # Reload the dummy sensor calibration in case they're used elsewhere
         self.rx.sensor_calibration = create_dummy_calibration()
-
-    def test_healthy_no_connection(self):
-        def side_effect(ip_address):
-            raise SensorConnectionException()
-
-        self.mock_keysight_utils.sensor.side_effect = side_effect
-        assert not self.rx.healthy
-
-    def test_healthy_no_time_data(self):
-        def side_effect(sensor):
-            return SALLinux.salTimeInfo()
-
-        self.mock_keysight_system_info.get_sensor_time.side_effect = side_effect
-        assert not self.rx.healthy
-
-    def test_healthy_with_connection(self):
-        def side_effect(sensor):
-            time_info = SALLinux.salTimeInfo()
-            time_info.timestampSeconds = int(time.time())
-            return time_info
-
-        self.mock_keysight_system_info.get_sensor_time.side_effect = side_effect
-        assert self.rx.healthy

@@ -9,6 +9,10 @@ def easy_gain(sr, f, rl):
     """Create an easily interpolated value."""
     return (30-rl)*(sr/1e6)*(f/1e9)
 
+def is_close(a, b, tolerance):
+    """ Handle floating point comparisons """
+    return abs(a - b) <= tolerance
+
 def create_dummy_calibration(empty_cal=False):
     """Create a dummy calibration object"""
 
