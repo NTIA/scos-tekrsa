@@ -72,6 +72,7 @@ class RSA306BRadio(RadioInterface):
         # Search for and connect to device using loaded API wrapper
         try:
             DEVICE_SearchAndConnect()
+            self.align()
             self.get_constraints()
         except Exception as e:
             logger.exception(e)
@@ -86,6 +87,32 @@ class RSA306BRadio(RadioInterface):
         except Exception as e:
             logger.exception(e)
             return
+
+    def align(self, retries=3):
+        """Check if device alignment is needed, and if so, run it."""
+        while True:
+            try:
+                if ALIGN_GetWarmupStatus(): # Must be warmed up first
+                    if ALIGN_GetAlignmentNeeded():
+                        ALIGN_RunAlignment()
+                        return
+                    else:
+                        logger.debug("Device already aligned.")
+                else:
+                    logger.debug("Device not yet warmed up.")
+                return
+            except Exception as e:
+                logger.error(e)
+                if retries > 0:
+                    logger.info("Waiting 5 seconds before retrying device alignment...")
+                    retries = retries - 1
+                    time.sleep(5)
+                    continue
+                else:
+                    error_message = "Max retries exceeded."
+                    logger.error(error_message)
+                    raise RuntimeError(error_message)
+
 
     @property
     def is_available(self):
@@ -139,7 +166,7 @@ class RSA306BRadio(RadioInterface):
         # The IQ Bandwidth determines the RSA sample rate.
         bw = self.sr_bw_map.get(sample_rate)
         IQSTREAM_SetAcqBandwidth(bw)
-        msg = "set Tektronix RSA sample rate: {:.1f} samples/sec"
+        msg = "set Tektronix RSA 306B sample rate: {:.1f} samples/sec"
         logger.debug(msg.format(IQSTREAM_GetAcqParameters()[1]))
 
     @property
@@ -150,7 +177,7 @@ class RSA306BRadio(RadioInterface):
     def frequency(self, freq):
         """Set the device center frequency."""
         CONFIG_SetCenterFreq(freq)
-        msg = "Set Tektronix RSA center frequency: {:.1f} Hz"
+        msg = "Set Tektronix RSA 306B center frequency: {:.1f} Hz"
         logger.debug(msg.format(CONFIG_GetCenterFreq()))
 
     @property
@@ -161,7 +188,7 @@ class RSA306BRadio(RadioInterface):
     def reference_level(self, reference_level):
         """Set the device reference level."""
         CONFIG_SetReferenceLevel(reference_level)
-        msg = "Set Tektronix RSA reference level: {:.1f} dB"
+        msg = "Set Tektronix RSA 306B reference level: {:.1f} dB"
         logger.debug(msg.format(CONFIG_GetReferenceLevel()))
 
     @property
@@ -251,11 +278,7 @@ class RSA306BRadio(RadioInterface):
     @property
     def healthy(self, num_samples=100000):
         """Perform health check by collecting IQ samples."""
-        logger.debug("Performing Tektronix RSA health check.")
-
-        if not self.is_available:
-            # Device not available
-            return False
+        logger.debug("Performing Tektronix RSA 306B health check.")
 
         try:
             measurement_result = self.acquire_time_domain_samples(num_samples)
