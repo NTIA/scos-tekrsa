@@ -40,9 +40,10 @@ Below are the steps to run scos-sensor with the scos-tekrsa plugin:
 
 5. Make sure `BASE_IMAGE` is set to `BASE_IMAGE=docker.pkg.github.com/ntia/scos-tekrsa/tekrsa_usb:0.1.0` in the env file
 
-	- While this repository is private, [authentication with GitHub packages](https://docs.github.com/en/free-pro-team@latest/packages/using-github-packages-with-your-projects-ecosystem/configuring-docker-for-use-with-github-packages#authenticating-to-github-packages) using a [GitHub personal access token](https://docs.github.com/en/free-pro-team@latest/packages/publishing-and-managing-packages/about-github-packages#about-tokens) is required. 
+	- While this repository is private, [authentication with GitHub packages](https://docs.github.com/en/free-pro-team@latest/packages/using-github-packages-with-your-projects-ecosystem/configuring-docker-for-use-with-github-packages#authenticating-to-github-packages) using a [GitHub personal access token](https://docs.github.com/en/free-pro-team@latest/packages/publishing-and-managing-packages/about-github-packages#about-tokens) is required.
+	- For personal access token is stored at `~/token.txt`, this can be done by running: `cat ~/token.txt | docker login https://docker.pkg.github.com -u <GITHUB_USERNAME> --password-stdin`
 
-6. Download the [RSA API for Linux](https://www.tek.com/spectrum-analyzer/rsa306-software/rsa-application-programming-interface--api-for-64bit-linux--v100014) from Tektronix. Place the two driver files, `libRSA_API.so` and `libcyusb_shared.so`, in the `drivers` folder.
+6. Download the [RSA API for Linux](https://www.tek.com/spectrum-analyzer/rsa306-software/rsa-application-programming-interface--api-for-64bit-linux--v100014) from Tektronix. Place the two driver files, `libRSA_API.so` and `libcyusb_shared.so`, in the directory `scos-sensor/drivers`.
 
 7. Get environment variables: `source ./env`
 
