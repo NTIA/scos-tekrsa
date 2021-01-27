@@ -1,10 +1,8 @@
 """Test aspects of RadioInterface with mocked RSA306B."""
 
-# This does not work even slightly yet, it's just copied from USRP at the moment.
-
 import pytest
 
-from scos_tekrsa.hardware import rsa306b_radio
+from scos_tekrsa.hardware import radio
 from scos_tekrsa.hardware.tests.resources.utils import (
     create_dummy_calibration,
     easy_gain,
@@ -25,14 +23,14 @@ class TestRSA306B:
             return
 
         # Create the RadioInterface and get the radio
-        if not rsa306b_radio.is_available:
+        if not radio.is_available:
             raise RuntimeError("Receiver is not available.")
-        self.rx = rsa306b_radio
+        self.rx = radio
 
         # Alert that the setup was complete
         self.setup_complete = True
 
-    # Ensure the usrp can recover from acquisition errors
+    # Ensure recovery from acquisition errors
     def test_acquire_samples_with_retries(self):
         """Acquire samples should retry without error up to `max_retries`."""
 
@@ -40,18 +38,14 @@ class TestRSA306B:
         assert self.setup_complete, "Setup was not completed"
 
         max_retries = 5
-        times_to_fail = 3
-        self.rx.usrp.set_times_to_fail_recv(times_to_fail)
 
         try:
             self.rx.acquire_time_domain_samples(1000, retries=max_retries)
         except RuntimeError:
-            msg = "Acquisition failing {} times sequentially with {}\n"
-            msg += "retries requested should NOT have raised an error."
-            msg = msg.format(times_to_fail, max_retries)
+            msg = "Acquisition failing with {} retries \n"
+            msg += "requested should NOT have raised an error."
+            msg = msg.format(max_retries)
             pytest.fail(msg)
-
-        self.rx.usrp.set_times_to_fail_recv(0)
 
     def test_acquire_samples_fails_when_over_max_retries(self):
         """After `max_retries`, an error should be thrown."""
@@ -60,40 +54,13 @@ class TestRSA306B:
         assert self.setup_complete, "Setup was not completed"
 
         max_retries = 5
-        times_to_fail = 7
-        self.rx.usrp.set_times_to_fail_recv(times_to_fail)
 
-        msg = "Acquisition failing {} times sequentially with {}\n"
-        msg += "retries requested SHOULD have raised an error."
-        msg = msg.format(times_to_fail, max_retries)
+        msg = "Acquisition failing with {} retries\n"
+        msg += "requested SHOULD have raised an error."
+        msg = msg.format(max_retries)
         with pytest.raises(RuntimeError):
             self.rx.acquire_time_domain_samples(1000, 1000, max_retries)
             pytest.fail(msg)
-
-        self.rx.usrp.set_times_to_fail_recv(0)
-
-    def test_tune_result(self):
-        """Check that the tuning is correct"""
-        # Check that the setup was completed
-        assert self.setup_complete, "Setup was not completed"
-
-        # Use a positive DSP frequency
-        f_lo = 1.0e9
-        f_dsp = 1.0e6
-        self.rx.tune_frequency(f_lo, f_dsp)
-        assert f_lo == self.rx.lo_freq and f_dsp == self.rx.dsp_freq
-
-        # Use a 0Hz for DSP frequency
-        f_lo = 1.0e9
-        f_dsp = 0.0
-        self.rx.frequency = f_lo
-        assert f_lo == self.rx.lo_freq and f_dsp == self.rx.dsp_freq
-
-        # Use a negative DSP frequency
-        f_lo = 1.0e9
-        f_dsp = -1.0e6
-        self.rx.tune_frequency(f_lo, f_dsp)
-        assert f_lo == self.rx.lo_freq and f_dsp == self.rx.dsp_freq
 
     def test_scaled_data_acquisition(self):
         """Check that the samples are properly scaled"""
@@ -103,7 +70,7 @@ class TestRSA306B:
         # Do an arbitrary data collection
         self.rx.sample_rate = int(10e6)
         self.rx.frequency = 1e9
-        self.rx.gain = 20
+        self.rx.reference_level = 0
         measurement_result = self.rx.acquire_time_domain_samples(1000)
         data = measurement_result["data"]
 
@@ -121,20 +88,6 @@ class TestRSA306B:
         msg += "    Expected: {}\n".format(true_val)
         msg += "    Tolerance: {}\r\n".format(tolerance)
         assert is_close(true_val, observed_val, tolerance), msg
-
-    def test_set_sample_rate_also_sets_clock_rate(self):
-        """Setting sample_rate should adjust clock_rate"""
-
-        # Check that the setup was completed
-        assert self.setup_complete, "Setup was not completed"
-
-        expected_clock_rate = 30720000
-
-        # Set the sample rate and check the clock rate
-        self.rx.sample_rate = 15360000
-        observed_clock_rate = self.rx.clock_rate
-
-        assert expected_clock_rate == observed_clock_rate
 
     def check_defaulted_calibration_parameter(self, param, expected, observed):
         msg = "Default calibration parameters were not properly set.\n"
@@ -154,19 +107,19 @@ class TestRSA306B:
 
         # Create some dummy setups to ensure calibration updates
         sample_rates = [10e6, 40e6, 1e6, 56e6]
-        gain_settings = [40, 60, 0, 60]
+        ref_lev_settings = [40, 60, 0, 60]
         frequencies = [1000e6, 2000e6, 10e6, 1500e6]
 
         # Run each set
         for i in range(len(sample_rates)):
             # Get the parameters for this run
             sample_rate = sample_rates[i]
-            gain_setting = gain_settings[i]
+            ref_lev_setting = ref_lev_settings[i]
             frequency = frequencies[i]
 
             # Setup the rx
             self.rx.sample_rate = sample_rate
-            self.rx.gain = gain_setting
+            self.rx.reference_level = ref_lev_setting
             self.rx.frequency = frequency
 
             # Recompute the calibration parameters
@@ -174,7 +127,7 @@ class TestRSA306B:
 
             # Check the defaulted calibration parameters
             self.check_defaulted_calibration_parameter(
-                "gain_sigan", gain_setting, self.rx.sigan_calibration_data["gain_sigan"]
+                "gain_sigan", ref_lev_setting, self.rx.sigan_calibration_data["gain_sigan"]
             )
             self.check_defaulted_calibration_parameter(
                 "enbw_sigan", sample_rate, self.rx.sigan_calibration_data["enbw_sigan"]
@@ -190,9 +143,9 @@ class TestRSA306B:
                 self.rx.sigan_calibration_data["1db_compression_sigan"],
             )
             self.check_defaulted_calibration_parameter(
-                "gain_sensor",
-                gain_setting,
-                self.rx.sensor_calibration_data["gain_sensor"],
+                "reference_level",
+                ref_lev_setting,
+                self.rx.sensor_calibration_data["reference_level"],
             )
             self.check_defaulted_calibration_parameter(
                 "enbw_sensor",
@@ -237,19 +190,19 @@ class TestRSA306B:
 
         # Create some dummy setups to ensure calibration updates
         sample_rates = [10e6, 40e6, 1e6, 56e6]
-        gain_settings = [40, 60, 0, 60]
+        ref_lev_settings = [40, 60, 0, 60]
         frequencies = [1000e6, 2000e6, 10e6, 1500e6]
 
         # Run each set
         for i in range(len(sample_rates)):
             # Get the parameters for this run
             sample_rate = sample_rates[i]
-            gain_setting = gain_settings[i]
+            ref_lev_setting = ref_lev_settings[i]
             frequency = frequencies[i]
 
             # Setup the rx
             self.rx.sample_rate = sample_rate
-            self.rx.gain = gain_setting
+            self.rx.reference_level = ref_lev_setting
             self.rx.frequency = frequency
 
             # Recompute the calibration parameters
@@ -257,9 +210,9 @@ class TestRSA306B:
 
             # Check the defaulted calibration parameters
             self.check_defaulted_calibration_parameter(
-                "gain_sensor",
+                "reference_level",
                 self.rx.sigan_calibration_data["gain_sigan"],
-                self.rx.sensor_calibration_data["gain_sensor"],
+                self.rx.sensor_calibration_data["reference_level"],
             )
 
         # Reload the dummy sensor calibration in case they're used elsewhere

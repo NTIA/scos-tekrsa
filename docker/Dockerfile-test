@@ -1,0 +1,7 @@
+FROM docker.pkg.github.com/ntia/scos-tekrsa/tekrsa_usb:0.1.0
+
+ARG DOCKER_GIT_CREDENTIALS
+RUN python3 -m pip install --upgrade pip
+RUN pip3 install --no-cache-dir -r requirements-dev.txt
+
+ENTRYPOINT["pytest"]
