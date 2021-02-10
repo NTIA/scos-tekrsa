@@ -8,8 +8,12 @@ from time import sleep
 """ LOAD RSA DRIVER """
 
 # References the scos-sensor drivers directory
-
 SO_DIR = '/opt/scos-sensor/drivers/'
+from os import listdir
+from os.path import isfile, join
+onlyfiles = [f for f in listdir(SO_DIR) if isfile(join(SO_DIR, f))]
+print(onlyfiles)
+
 RTLD_LAZY = 0x0001
 LAZYLOAD = RTLD_LAZY | RTLD_GLOBAL
 rsa = CDLL(SO_DIR + 'libRSA_API.so', LAZYLOAD)

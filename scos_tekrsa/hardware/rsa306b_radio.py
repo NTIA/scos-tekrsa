@@ -12,7 +12,9 @@ from scos_tekrsa.hardware.calibration import (
     DEFAULT_SIGAN_CALIBRATION
 )
 
-from scos_tekrsa.hardware.api_wrap.rsa306b_api import *
+# from scos_tekrsa.hardware.api_wrap.rsa306b_api import *
+from scos_tekrsa.hardware.tests.mock_306b_api import *
+
 from scos_tekrsa.hardware.tests.resources.utils import create_dummy_calibration
 
 logger = logging.getLogger(__name__)
@@ -157,9 +159,9 @@ class RSA306BRadio(RadioInterface):
             logger.error(err_msg)
             raise Exception(err_msg)
         if sample_rate not in self.ALLOWED_SR:
-            allowed_sample_rates_str = ", ".join(self.ALLOWED_SR)
+            allowed_sample_rates_str = ", ".join(map(str, self.ALLOWED_SR))
             err_msg = (f"Requested sample rate {sample_rate} not in allowed sample rates."
-                + " Allowed sample rates are {allowed_sample_rates_str}")
+                + f" Allowed sample rates are {allowed_sample_rates_str}")
             logger.error(err_msg)
             raise Exception(err_msg)
         # Set RSA IQ Bandwidth based on sample_rate

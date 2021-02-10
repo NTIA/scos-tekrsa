@@ -1,6 +1,11 @@
 """Test aspects of RadioInterface with mocked RSA306B."""
 
 import pytest
+from unittest.mock import Mock
+
+# Mock RSA API
+import sys
+sys.modules['scos_tekrsa.hardware.api_wrap.rsa306b_api'] = Mock()
 
 from scos_tekrsa.hardware import radio
 from scos_tekrsa.hardware.tests.resources.utils import (
@@ -189,7 +194,7 @@ class TestRSA306B:
         self.rx.sensor_calibration = create_dummy_calibration(empty_cal=True)
 
         # Create some dummy setups to ensure calibration updates
-        sample_rates = [10e6, 40e6, 1e6, 56e6]
+        sample_rates = [7e6, 14e6, 28e6, 56e6]
         ref_lev_settings = [40, 60, 0, 60]
         frequencies = [1000e6, 2000e6, 10e6, 1500e6]
 
@@ -212,7 +217,7 @@ class TestRSA306B:
             self.check_defaulted_calibration_parameter(
                 "reference_level",
                 self.rx.sigan_calibration_data["gain_sigan"],
-                self.rx.sensor_calibration_data["reference_level"],
+                self.rx.sensor_calibration_data["gain_sensor"],
             )
 
         # Reload the dummy sensor calibration in case they're used elsewhere

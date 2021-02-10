@@ -52,6 +52,5 @@ def create_dummy_calibration(empty_cal=False):
     return Calibration(
         calibration_datetime,
         calibration_data,
-        calibration_sample_clock_rate_lookup,
         calibration_frequency_divisions,
     )
