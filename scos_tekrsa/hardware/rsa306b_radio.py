@@ -71,8 +71,8 @@ class RSA306BRadio(RadioInterface):
         else:
             try:
                 # Load API wrapper
-                from scos_tekrsa.hardware.api_wrap import rsa306b_api_class
-                self.rsa_api = rsa306b_api_class
+                from scos_tekrsa.hardware.api_wrap import rsa306b_api
+                self.rsa_api = rsa306b_api
             except ImportError:
                 logger.warning("API Wrapper not loaded - disabling radio.")
                 self._is_available = False
