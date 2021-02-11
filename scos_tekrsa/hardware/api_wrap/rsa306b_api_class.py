@@ -13,8 +13,8 @@ class RSA306B:
         SO_DIR = '/opt/scos-sensor/drivers/'
         RTLD_LAZY = 0x0001
         LAZYLOAD = RTLD_LAZY | RTLD_GLOBAL
-        rsa = CDLL(SO_DIR + 'libRSA_API.so', LAZYLOAD)
-        usbapi = CDLL(SO_DIR + 'libcyusb_shared.so', LAZYLOAD)
+        self.rsa = CDLL(SO_DIR + 'libRSA_API.so', LAZYLOAD)
+        self.usbapi = CDLL(SO_DIR + 'libcyusb_shared.so', LAZYLOAD)
 
     """ GLOBAL CONSTANTS """
 
@@ -318,7 +318,7 @@ class RSA306B:
             True indicates an alignment is needed, False for not needed.
         """
         needed = c_bool()
-        RSA306B.err_check(rsa.ALIGN_GetAlignmentNeeded(byref(needed)))
+        RSA306B.err_check(self.rsa.ALIGN_GetAlignmentNeeded(byref(needed)))
         return needed.value
 
     def ALIGN_GetWarmupStatus(self):
@@ -336,12 +336,12 @@ class RSA306B:
             False indicates warm-up has not been reached
         """
         warmedUp = c_bool()
-        RSA306B.err_check(rsa.ALIGN_GetWarmupStatus(byref(warmedUp)))
+        RSA306B.err_check(self.rsa.ALIGN_GetWarmupStatus(byref(warmedUp)))
         return warmedUp.value
 
     def ALIGN_RunAlignment(self):
         """Run the device alignment process."""
-        RSA306B.err_check(rsa.ALIGN_RunAlignment())
+        RSA306B.err_check(self.rsa.ALIGN_RunAlignment())
 
     """ AUDIO METHODS """
 
@@ -364,7 +364,7 @@ class RSA306B:
         """
         freqOffsetHz = RSA306B.check_num(freqOffsetHz)
         freOffsetHz = RSA306B.check_range(freqOffsetHz, -20e6, 20e6)
-        RSA306B.err_check(rsa.AUDIO_SetFrequencyOffset(c_double(freqOffsetHz)))
+        RSA306B.err_check(self.rsa.AUDIO_SetFrequencyOffset(c_double(freqOffsetHz)))
 
     def AUDIO_GetFrequencyOffset(self):
         """
@@ -376,7 +376,7 @@ class RSA306B:
             Current audio frequency offset from the center frequency in Hz.
         """
         freqOffsetHz = c_double()
-        RSA306B.err_check(rsa.AUDIO_GetFrequencyOffset(byref(freqOffsetHz)))
+        RSA306B.err_check(self.rsa.AUDIO_GetFrequencyOffset(byref(freqOffsetHz)))
         return freqOffsetHz.value
 
     def AUDIO_GetEnable(self):
@@ -390,7 +390,7 @@ class RSA306B:
             False indicates it is stopped.
         """
         enable = c_bool()
-        RSA306B.err_check(rsa.AUDIO_GetEnable(byref(enable)))
+        RSA306B.err_check(self.rsa.AUDIO_GetEnable(byref(enable)))
         return enable.value
 
     def AUDIO_GetData(self, inSize):
@@ -411,7 +411,7 @@ class RSA306B:
         inSize = RSA306B.check_range(inSize, 0, float('inf'))
         data = (c_int16 * inSize)()
         outSize = c_uint16()
-        RSA306B.err_check(rsa.AUDIO_GetData(byref(data), c_uint16(inSize), byref(outSize)))
+        RSA306B.err_check(self.rsa.AUDIO_GetData(byref(data), c_uint16(inSize), byref(outSize)))
         return np.ctypeslib.as_array(data)
 
     def AUDIO_GetMode(self):
@@ -433,7 +433,7 @@ class RSA306B:
             If the audio demodulation mode has not yet been set.
         """
         mode = c_int()
-        RSA306B.err_check(rsa.AUDIO_GetMode(byref(mode)))
+        RSA306B.err_check(self.rsa.AUDIO_GetMode(byref(mode)))
         if mode.value > 5 or mode.value < 0:
             raise RSA306B.RSA_Error("Audio demodulation mode has not yet been set.")
         return mode.value
@@ -452,13 +452,13 @@ class RSA306B:
                 is muted, False indicates output is not muted.
         """
         mute = c_bool()
-        RSA306B.err_check(rsa.AUDIO_GetMute(byref(mute)))
+        RSA306B.err_check(self.rsa.AUDIO_GetMute(byref(mute)))
         return mute.value
 
     def AUDIO_GetVolume(self):
         """Query the volume, which must be a real value from 0 to 1."""
         volume = c_float()
-        RSA306B.err_check(rsa.AUDIO_GetVolume(byref(volume)))
+        RSA306B.err_check(self.rsa.AUDIO_GetVolume(byref(volume)))
         return volume.value
 
     def AUDIO_SetMode(self, mode):
@@ -474,7 +474,7 @@ class RSA306B:
         """
         mode = RSA306B.check_int(mode)
         mode = RSA306B.check_range(mode, 0, 5)
-        RSA306B.err_check(rsa.AUDIO_SetMode(c_int(mode)))
+        RSA306B.err_check(self.rsa.AUDIO_SetMode(c_int(mode)))
 
     def AUDIO_SetMute(self, mute):
         """
@@ -488,7 +488,7 @@ class RSA306B:
             Mute status. True mutes the output, False restores the output.
         """
         mute = RSA306B.check_bool(mute)
-        RSA306B.err_check(rsa.AUDIO_SetMute(c_bool(mute)))
+        RSA306B.err_check(self.rsa.AUDIO_SetMute(c_bool(mute)))
 
     def AUDIO_SetVolume(self, volume):
         """
@@ -504,22 +504,22 @@ class RSA306B:
         """
         volume = RSA306B.check_num(volume)
         volume = RSA306B.check_range(volume, 0.0, 1.0)
-        RSA306B.err_check(rsa.AUDIO_SetVolume(c_float(volume)))
+        RSA306B.err_check(self.rsa.AUDIO_SetVolume(c_float(volume)))
 
     def AUDIO_Start(self):
         """Start the audio demodulation output generation."""
-        RSA306B.err_check(rsa.AUDIO_Start())
+        RSA306B.err_check(self.rsa.AUDIO_Start())
 
     def AUDIO_Stop(self):
         """Stop the audio demodulation output generation."""
-        RSA306B.err_check(rsa.AUDIO_Stop())
+        RSA306B.err_check(self.rsa.AUDIO_Stop())
 
     """ CONFIG METHODS """
 
     def CONFIG_GetCenterFreq(self):
         """Return the current center frequency in Hz."""
         cf = c_double()
-        RSA306B.err_check(rsa.CONFIG_GetCenterFreq(byref(cf)))
+        RSA306B.err_check(self.rsa.CONFIG_GetCenterFreq(byref(cf)))
         return cf.value
 
     def CONFIG_GetExternalRefEnable(self):
@@ -537,7 +537,7 @@ class RSA306B:
             True means external reference is enabled, False means disabled.
         """
         exRefEn = c_bool()
-        RSA306B.err_check(rsa.CONFIG_GetExternalRefEnable(byref(exRefEn)))
+        RSA306B.err_check(self.rsa.CONFIG_GetExternalRefEnable(byref(exRefEn)))
         return exRefEn.value
 
     def CONFIG_GetExternalRefFrequency(self):
@@ -562,7 +562,7 @@ class RSA306B:
             raise RSA306B.RSA_Error("External frequency reference not in use.")
         else:
             extFreq = c_double()
-            RSA306B.err_check(rsa.CONFIG_GetExternalRefFrequency(byref(extFreq)))
+            RSA306B.err_check(self.rsa.CONFIG_GetExternalRefFrequency(byref(extFreq)))
             return extFreq.value
 
     def CONFIG_GetFrequencyReferenceSource(self):
@@ -582,25 +582,25 @@ class RSA306B:
                 USER : Previously set USER setting, or, if none, INTERNAL.
         """
         src = c_int()
-        RSA306B.err_check(rsa.CONFIG_GetFrequencyReferenceSource(byref(src)))
+        RSA306B.err_check(self.rsa.CONFIG_GetFrequencyReferenceSource(byref(src)))
         return RSA306B.FREQREF_SOURCE[src.value]
 
     def CONFIG_GetMaxCenterFreq(self):
         """Return the maximum center frequency in Hz."""
         maxCF = c_double()
-        RSA306B.err_check(rsa.CONFIG_GetMaxCenterFreq(byref(maxCF)))
+        RSA306B.err_check(self.rsa.CONFIG_GetMaxCenterFreq(byref(maxCF)))
         return maxCF.value
 
     def CONFIG_GetMinCenterFreq(self):
         """Return the minimum center frequency in Hz."""
         minCF = c_double()
-        RSA306B.err_check(rsa.CONFIG_GetMinCenterFreq(byref(minCF)))
+        RSA306B.err_check(self.rsa.CONFIG_GetMinCenterFreq(byref(minCF)))
         return minCF.value
 
     def CONFIG_GetReferenceLevel(self):
         """Return the current reference level, measured in dBm."""
         refLevel = c_double()
-        RSA306B.err_check(rsa.CONFIG_GetReferenceLevel(byref(refLevel)))
+        RSA306B.err_check(self.rsa.CONFIG_GetReferenceLevel(byref(refLevel)))
         return refLevel.value
 
     def CONFIG_Preset(self):
@@ -611,10 +611,10 @@ class RSA306B:
         to 1.5 GHz, the span to 40 MHz, the IQ record length to 1024 
         samples, and the reference level to 0 dBm.
         """
-        RSA306B.err_check(rsa.CONFIG_Preset())
+        RSA306B.err_check(self.rsa.CONFIG_Preset())
         # For some reason, the record lengths is not successfully set.
         # Manual override:
-        RSA306B.err_check(rsa.IQBLK_SetIQRecordLength(1024))
+        RSA306B.err_check(self.rsa.IQBLK_SetIQRecordLength(1024))
 
     def CONFIG_SetCenterFreq(self, cf):
         """
@@ -630,7 +630,7 @@ class RSA306B:
         """
         cf = RSA306B.check_num(cf)
         cf = RSA306B.check_range(cf, self.CONFIG_GetMinCenterFreq(), self.CONFIG_GetMaxCenterFreq())
-        RSA306B.err_check(rsa.CONFIG_SetCenterFreq(c_double(cf)))
+        RSA306B.err_check(self.rsa.CONFIG_SetCenterFreq(c_double(cf)))
 
     def CONFIG_SetExternalRefEnable(self, exRefEn):
         """
@@ -650,7 +650,7 @@ class RSA306B:
             True enables the external reference. False disables it.
         """
         exRefEn = RSA306B.check_bool(exRefEn)
-        RSA306B.err_check(rsa.CONFIG_SetExternalRefEnable(c_bool(exRefEn)))
+        RSA306B.err_check(self.rsa.CONFIG_SetExternalRefEnable(c_bool(exRefEn)))
 
     def CONFIG_SetFrequencyReferenceSource(self, src):
         """
@@ -701,7 +701,7 @@ class RSA306B:
                 raise RSA306B.RSA_Error("RSA 306B does not support GNSS reference.")
             else:
                 value = c_int(RSA306B.FREQREF_SOURCE.index(src))
-                RSA306B.err_check(rsa.CONFIG_SetFrequencyReferenceSource(value))
+                RSA306B.err_check(self.rsa.CONFIG_SetFrequencyReferenceSource(value))
         else:
             raise RSA306B.RSA_Error("Input does not match a valid setting.")
 
@@ -722,7 +722,7 @@ class RSA306B:
         """
         refLevel = RSA306B.check_num(refLevel)
         refLevel = RSA306B.check_range(refLevel, -130, 30)
-        RSA306B.err_check(rsa.CONFIG_SetReferenceLevel(c_double(refLevel)))
+        RSA306B.err_check(self.rsa.CONFIG_SetReferenceLevel(c_double(refLevel)))
 
     """ DEVICE METHODS """
 
@@ -743,11 +743,11 @@ class RSA306B:
         """
         deviceID = RSA306B.check_int(deviceID)
         deviceID = RSA306B.check_range(deviceID, 0, float('inf'))
-        RSA306B.err_check(rsa.DEVICE_Connect(c_int(deviceID)))
+        RSA306B.err_check(self.rsa.DEVICE_Connect(c_int(deviceID)))
 
     def DEVICE_Disconnect(self):
         """Stop data acquisition and disconnect from connected device."""
-        RSA306B.err_check(rsa.DEVICE_Disconnect())
+        RSA306B.err_check(self.rsa.DEVICE_Disconnect())
 
     def DEVICE_GetEnable(self):
         """
@@ -763,7 +763,7 @@ class RSA306B:
            that it is in the stop state.
         """
         enable = c_bool()
-        RSA306B.err_check(rsa.DEVICE_GetEnable(byref(enable)))
+        RSA306B.err_check(self.rsa.DEVICE_GetEnable(byref(enable)))
         return enable.value
 
     def DEVICE_GetFPGAVersion(self):
@@ -780,7 +780,7 @@ class RSA306B:
             The FPGA version number, formatted as described above.
         """
         fpgaVersion = (c_char * FPGA_VERSION_STRLEN)()
-        RSA306B.err_check(rsa.DEVICE_GetFPGAVersion(byref(fpgaVersion)))
+        RSA306B.err_check(self.rsa.DEVICE_GetFPGAVersion(byref(fpgaVersion)))
         return fpgaVersion.value.decode('utf-8')
 
     def DEVICE_GetFWVersion(self):
@@ -797,7 +797,7 @@ class RSA306B:
             The firmware version number, formatted as described above.
         """
         fwVersion = (c_char * FW_VERSION_STRLEN)()
-        RSA306B.err_check(rsa.DEVICE_GetFWVersion(byref(fwVersion)))
+        RSA306B.err_check(self.rsa.DEVICE_GetFWVersion(byref(fwVersion)))
         return fwVersion.value.decode('utf-8')
 
     def DEVICE_GetHWVersion(self):
@@ -813,7 +813,7 @@ class RSA306B:
             The hardware version number, formatted as described above.
         """
         hwVersion = (c_char * HW_VERSION_STRLEN)()
-        RSA306B.err_check(rsa.DEVICE_GetHWVersion(byref(hwVersion)))
+        RSA306B.err_check(self.rsa.DEVICE_GetHWVersion(byref(hwVersion)))
         return hwVersion.value.decode('utf-8')
 
     def DEVICE_GetNomenclature(self):
@@ -829,7 +829,7 @@ class RSA306B:
             Name of the device.
         """
         nomenclature = (c_char * NOMENCLATURE_STRLEN)()
-        RSA306B.err_check(rsa.DEVICE_GetNomenclature(byref(nomenclature)))
+        RSA306B.err_check(self.rsa.DEVICE_GetNomenclature(byref(nomenclature)))
         return nomenclature.value.decode('utf-8')
 
     def DEVICE_GetSerialNumber(self):
@@ -845,7 +845,7 @@ class RSA306B:
             Serial number of the device.
         """
         serialNum = (c_char * MAX_SERIAL_STRLEN)()
-        RSA306B.err_check(rsa.DEVICE_GetSerialNumber(byref(serialNum)))
+        RSA306B.err_check(self.rsa.DEVICE_GetSerialNumber(byref(serialNum)))
         return serialNum.value.decode('utf-8')
 
     def DEVICE_GetAPIVersion(self):
@@ -862,7 +862,7 @@ class RSA306B:
             The API version number, formatted as described above.
         """
         apiVersion = (c_char * API_VERSION_STRLEN)()
-        RSA306B.err_check(rsa.DEVICE_GetAPIVersion(byref(apiVersion)))
+        RSA306B.err_check(self.rsa.DEVICE_GetAPIVersion(byref(apiVersion)))
         return apiVersion.value.decode('utf-8')
 
     def DEVICE_PrepareForRun(self):
@@ -876,7 +876,7 @@ class RSA306B:
         the DEVICE_Run() method, which immediately starts data streaming
         without waiting for a "go" signal.
         """
-        RSA306B.err_check(rsa.DEVICE_PrepareForRun())
+        RSA306B.err_check(self.rsa.DEVICE_PrepareForRun())
 
     def DEVICE_GetInfo(self):
         """
@@ -926,7 +926,7 @@ class RSA306B:
             within the safe operating range.
         """
         overTemp = c_bool()
-        RSA306B.err_check(rsa.DEVICE_GetOverTemperatureStatus(byref(overTemp)))
+        RSA306B.err_check(self.rsa.DEVICE_GetOverTemperatureStatus(byref(overTemp)))
         return overTemp.value
 
     def DEVICE_Reset(self, deviceID=-1):
@@ -955,11 +955,11 @@ class RSA306B:
         elif numFound > 1 and deviceID == -1:
             raise RSA306B.RSA_Error("Multiple devices found, but no ID specified.")
         deviceID = RSA306B.check_int(deviceID)
-        RSA306B.err_check(rsa.DEVICE_Reset(c_int(deviceID)))   
+        RSA306B.err_check(self.rsa.DEVICE_Reset(c_int(deviceID)))   
 
     def DEVICE_Run(self):
         """Start data acquisition."""
-        RSA306B.err_check(rsa.DEVICE_Run()) 
+        RSA306B.err_check(self.rsa.DEVICE_Run()) 
 
     def DEVICE_Search(self):
         """
@@ -991,7 +991,7 @@ class RSA306B:
         devSerial = ((c_char * RSA306B.MAX_NUM_DEVICES) * RSA306B.MAX_SERIAL_STRLEN)()
         devType = ((c_char * RSA306B.MAX_NUM_DEVICES) * RSA306B.MAX_DEVTYPE_STRLEN)()
 
-        RSA306B.err_check(rsa.DEVICE_Search(byref(numFound), byref(devIDs), devSerial,
+        RSA306B.err_check(self.rsa.DEVICE_Search(byref(numFound), byref(devIDs), devSerial,
             devType))
 
         foundDevices = {
@@ -1016,7 +1016,7 @@ class RSA306B:
         to any internal data or settings, and data streaming will begin
         assuming there are no errors.
         """
-        RSA306B.err_check(rsa.DEVICE_StartFrameTransfer())
+        RSA306B.err_check(self.rsa.DEVICE_StartFrameTransfer())
 
     def DEVICE_Stop(self):
         """
@@ -1025,7 +1025,7 @@ class RSA306B:
         This method must be called when changes are made to values that
         affect the signal.
         """
-        RSA306B.err_check(rsa.DEVICE_Stop())
+        RSA306B.err_check(self.rsa.DEVICE_Stop())
 
     def DEVICE_GetEventStatus(self, eventID):
         """
@@ -1087,7 +1087,7 @@ class RSA306B:
             value = c_int(RSA306B.DEVEVENT.index(eventID))
         else:
             raise RSA306B.RSA_Error("Input string does not match one of the valid settings.")
-        RSA306B.err_check(rsa.DEVICE_GetEventStatus(value, byref(occurred),
+        RSA306B.err_check(self.rsa.DEVICE_GetEventStatus(value, byref(occurred),
             byref(timestamp)))
         return occurred.value, timestamp.value
 
@@ -1106,7 +1106,7 @@ class RSA306B:
             True indicates GNSS receiver HW installed, False otherwise.
         """
         installed = c_bool()
-        RSA306B.err_check(rsa.GNSS_GetHwInstalled(byref(installed)))
+        RSA306B.err_check(self.rsa.GNSS_GetHwInstalled(byref(installed)))
         return installed.value
 
     """ IQ BLOCK METHODS """
@@ -1146,7 +1146,7 @@ class RSA306B:
             "Word" with acquisition status bits. See above for details.
         """
         acqInfo = RSA306B.IQBLK_ACQINFO()
-        RSA306B.err_check(rsa.IQBLK_GetIQAcqInfo(byref(acqInfo)))
+        RSA306B.err_check(self.rsa.IQBLK_GetIQAcqInfo(byref(acqInfo)))
         info = (acqInfo.sample0Timestamp.value, acqInfo.triggerSampleIndex.value,
             acqInfo.triggerTimestamp.value, acqInfo.acqStatus.value)
         return info
@@ -1164,7 +1164,7 @@ class RSA306B:
         Level, any desired Trigger conditions, and the IQBLK Bandwidth and
         Record Length settings.
         """
-        RSA306B.err_check(rsa.IQBLK_AcquireIQData())
+        RSA306B.err_check(self.rsa.IQBLK_AcquireIQData())
 
     def IQBLK_GetIQBandwidth(self):
         """
@@ -1176,7 +1176,7 @@ class RSA306B:
             The IQ bandwidth value.
         """
         iqBandwidth = c_double()
-        RSA306B.err_check(rsa.IQBLK_GetIQBandwidth(byref(iqBandwidth)))
+        RSA306B.err_check(self.rsa.IQBLK_GetIQBandwidth(byref(iqBandwidth)))
         return iqBandwidth.value
 
     def IQBLK_GetIQData(self, reqLength):
@@ -1202,7 +1202,7 @@ class RSA306B:
         reqLength = RSA306B.check_range(reqLength, 2, self.IQBLK_GetMaxIQRecordLength())
         outLength = c_int()
         iqData = (c_float * (reqLength*2))()
-        RSA306B.err_check(rsa.IQBLK_GetIQData(byref(iqData), byref(outLength), c_int(reqLength)))
+        RSA306B.err_check(self.rsa.IQBLK_GetIQData(byref(iqData), byref(outLength), c_int(reqLength)))
         return np.ctypeslib.as_array(iqData)
 
     def IQBLK_GetIQDataDeinterleaved(self, reqLength):
@@ -1237,7 +1237,7 @@ class RSA306B:
         iData = (c_float * reqLength)()
         qData = (c_float * reqLength)()
         outLength = c_int()
-        RSA306B.err_check(rsa.IQBLK_GetIQDataDeinterleaved(byref(iData), byref(qData), 
+        RSA306B.err_check(self.rsa.IQBLK_GetIQDataDeinterleaved(byref(iData), byref(qData), 
             byref(outLength), c_int(reqLength)))
         return np.ctypeslib.as_array(iData), np.ctypeslib.as_array(qData)
 
@@ -1254,7 +1254,7 @@ class RSA306B:
             Number of IQ data samples to be generated with each acquisition.
         """
         recordLength = c_int()
-        RSA306B.err_check(rsa.IQBLK_GetIQRecordLength(byref(recordLength)))
+        RSA306B.err_check(self.rsa.IQBLK_GetIQRecordLength(byref(recordLength)))
         return recordLength.value
 
     def IQBLK_GetIQSampleRate(self):
@@ -1270,7 +1270,7 @@ class RSA306B:
             The IQ sampling frequency, in samples/second.
         """
         iqSampleRate = c_double()
-        RSA306B.err_check(rsa.IQBLK_GetIQSampleRate(byref(iqSampleRate)))
+        RSA306B.err_check(self.rsa.IQBLK_GetIQSampleRate(byref(iqSampleRate)))
         return iqSampleRate.value
 
     def IQBLK_GetMaxIQBandwidth(self):
@@ -1283,7 +1283,7 @@ class RSA306B:
             The maximum IQ bandwidth, measured in Hz.
         """
         maxBandwidth = c_double()
-        RSA306B.err_check(rsa.IQBLK_GetMaxIQBandwidth(byref(maxBandwidth)))
+        RSA306B.err_check(self.rsa.IQBLK_GetMaxIQBandwidth(byref(maxBandwidth)))
         return maxBandwidth.value
 
     def IQBLK_GetMaxIQRecordLength(self):
@@ -1305,7 +1305,7 @@ class RSA306B:
             The maximum IQ record length, measured in samples.
         """
         maxIqRecLen = c_int()
-        RSA306B.err_check(rsa.IQBLK_GetMaxIQRecordLength(byref(maxIqRecLen)))
+        RSA306B.err_check(self.rsa.IQBLK_GetMaxIQRecordLength(byref(maxIqRecLen)))
         return maxIqRecLen.value
 
     def IQBLK_GetMinIQBandwidth(self):
@@ -1318,7 +1318,7 @@ class RSA306B:
             The minimum IQ bandwidth, measured in Hz.
         """
         minBandwidth = c_double()
-        RSA306B.err_check(rsa.IQBLK_GetMinIQBandwidth(byref(minBandwidth)))
+        RSA306B.err_check(self.rsa.IQBLK_GetMinIQBandwidth(byref(minBandwidth)))
         return minBandwidth.value
 
     def IQBLK_SetIQBandwidth(self, iqBandwidth):
@@ -1337,7 +1337,7 @@ class RSA306B:
         iqBandwidth = RSA306B.check_num(iqBandwidth)
         iqBandwidth = RSA306B.check_range(iqBandwidth, self.IQBLK_GetMinIQBandwidth(),
             self.IQBLK_GetMaxIQBandwidth())
-        RSA306B.err_check(rsa.IQBLK_SetIQBandwidth(c_double(iqBandwidth)))
+        RSA306B.err_check(self.rsa.IQBLK_SetIQBandwidth(c_double(iqBandwidth)))
 
     def IQBLK_SetIQRecordLength(self, recordLength):
         """
@@ -1355,7 +1355,7 @@ class RSA306B:
         """
         recordLength = RSA306B.check_int(recordLength)
         recordLength = RSA306B.check_range(recordLength, 2, self.IQBLK_GetMaxIQRecordLength())
-        RSA306B.err_check(rsa.IQBLK_SetIQRecordLength(c_int(recordLength)))
+        RSA306B.err_check(self.rsa.IQBLK_SetIQRecordLength(c_int(recordLength)))
 
     def IQBLK_WaitForIQDataReady(self, timeoutMsec):
         """
@@ -1374,7 +1374,7 @@ class RSA306B:
         """
         timeoutMsec = RSA306B.check_int(timeoutMsec)
         ready = c_bool()
-        RSA306B.err_check(rsa.IQBLK_WaitForIQDataReady(c_int(timeoutMsec), byref(ready)))
+        RSA306B.err_check(self.rsa.IQBLK_WaitForIQDataReady(c_int(timeoutMsec), byref(ready)))
         return ready.value
 
     """ IQ STREAM METHODS """
@@ -1392,7 +1392,7 @@ class RSA306B:
             The maximum IQ bandwidth supported by IQ streaming, in Hz.
         """
         maxBandwidthHz = c_double()
-        RSA306B.err_check(rsa.IQSTREAM_GetMaxAcqBandwidth(byref(maxBandwidthHz)))
+        RSA306B.err_check(self.rsa.IQSTREAM_GetMaxAcqBandwidth(byref(maxBandwidthHz)))
         return maxBandwidthHz.value
 
     def IQSTREAM_GetMinAcqBandwidth(self):
@@ -1408,7 +1408,7 @@ class RSA306B:
             The minimum IQ bandwidth supported by IQ streaming, in Hz.
         """
         minBandwidthHz = c_double()
-        RSA306B.err_check(rsa.IQSTREAM_GetMinAcqBandwidth(byref(minBandwidthHz)))
+        RSA306B.err_check(self.rsa.IQSTREAM_GetMinAcqBandwidth(byref(minBandwidthHz)))
         return minBandwidthHz.value
 
     def IQSTREAM_ClearAcqStatus(self):
@@ -1418,7 +1418,7 @@ class RSA306B:
 
         This is effective for both client and file destination runs.
         """
-        RSA306B.err_check(rsa.IQSTREAM_ClearAcqStatus())
+        RSA306B.err_check(self.rsa.IQSTREAM_ClearAcqStatus())
 
     def IQSTREAM_GetAcqParameters(self):
         """
@@ -1439,7 +1439,7 @@ class RSA306B:
         """
         bwHz_act = c_double()
         srSps = c_double()
-        RSA306B.err_check(rsa.IQSTREAM_GetAcqParameters(byref(bwHz_act), byref(srSps)))
+        RSA306B.err_check(self.rsa.IQSTREAM_GetAcqParameters(byref(bwHz_act), byref(srSps)))
         return bwHz_act.value, srSps.value
 
     def IQSTREAM_GetDiskFileInfo(self):
@@ -1515,7 +1515,7 @@ class RSA306B:
                     Bit 22 - Bit 31 : Unused, always 0.
         """
         fileinfo = RSA306B.IQSTREAM_File_Info()
-        RSA306B.err_check(rsa.IQSTREAM_GetDiskFileInfo(byref(fileinfo)))
+        RSA306B.err_check(self.rsa.IQSTREAM_GetDiskFileInfo(byref(fileinfo)))
         return fileinfo
             
     def IQSTREAM_GetDiskFileWriteStatus(self):
@@ -1561,7 +1561,7 @@ class RSA306B:
         """
         isComplete = c_bool()
         isWriting = c_bool()
-        RSA306B.err_check(rsa.IQSTREAM_GetDiskFileWriteStatus(byref(isComplete),
+        RSA306B.err_check(self.rsa.IQSTREAM_GetDiskFileWriteStatus(byref(isComplete),
             byref(isWriting)))
         return isComplete.value, isWriting.value
 
@@ -1576,7 +1576,7 @@ class RSA306B:
             False if inactive.
         """
         enabled = c_bool()
-        RSA306B.err_check(rsa.IQSTREAM_GetEnable(byref(enabled)))
+        RSA306B.err_check(self.rsa.IQSTREAM_GetEnable(byref(enabled)))
         return enabled.value
 
     def IQSTREAM_GetIQDataBufferSize(self):
@@ -1592,7 +1592,7 @@ class RSA306B:
             IQ access. Size value is in IQ sample pairs.
         """
         maxSize = c_int()
-        RSA306B.err_check(rsa.IQSTREAM_GetIQDataBufferSize(byref(maxSize)))
+        RSA306B.err_check(self.rsa.IQSTREAM_GetIQDataBufferSize(byref(maxSize)))
         return maxSize.value
 
     def IQSTREAM_SetAcqBandwidth(self, bwHz_req):
@@ -1634,7 +1634,7 @@ class RSA306B:
         bwHz_req = RSA306B.check_num(bwHz_req)
         bwHz_req = RSA306B.check_range(bwHz_req, self.IQSTREAM_GetMinAcqBandwidth(),
             self.IQSTREAM_GetMaxAcqBandwidth())
-        RSA306B.err_check(rsa.IQSTREAM_SetAcqBandwidth(c_double(bwHz_req)))
+        RSA306B.err_check(self.rsa.IQSTREAM_SetAcqBandwidth(c_double(bwHz_req)))
 
     def IQSTREAM_SetDiskFileLength(self, msec):
         """
@@ -1658,7 +1658,7 @@ class RSA306B:
         """
         msec = RSA306B.check_int(msec)
         msec = RSA306B.check_range(msec, 0, float('inf'))
-        RSA306B.err_check(rsa.IQSTREAM_SetDiskFileLength(c_int(msec)))
+        RSA306B.err_check(self.rsa.IQSTREAM_SetDiskFileLength(c_int(msec)))
 
     def IQSTREAM_SetDiskFilenameBase(self, filenameBase):
         """
@@ -1682,7 +1682,7 @@ class RSA306B:
             Base filename for file output.
         """
         filenameBase = RSA306B.check_string(filenameBase)
-        RSA306B.err_check(rsa.IQSTREAM_SetDiskFilenameBaseW(c_wchar_p(filenameBase)))
+        RSA306B.err_check(self.rsa.IQSTREAM_SetDiskFilenameBaseW(c_wchar_p(filenameBase)))
 
     def IQSTREAM_SetDiskFilenameSuffix(self, suffixCtl):
         """
@@ -1713,7 +1713,7 @@ class RSA306B:
         """
         suffixCtl = RSA306B.check_int(suffixCtl)
         suffixCtl = RSA306B.check_range(suffixCtl, -2, float('inf'))
-        RSA306B.err_check(rsa.IQSTREAM_SetDiskFilenameSuffix(c_int(suffixCtl)))
+        RSA306B.err_check(self.rsa.IQSTREAM_SetDiskFilenameSuffix(c_int(suffixCtl)))
 
     def IQSTREAM_SetIQDataBufferSize(self, reqSize):
         """
@@ -1728,7 +1728,7 @@ class RSA306B:
             0 resets to default.
         """
         reqSize = RSA306B.check_int(reqSize)
-        RSA306B.err_check(rsa.IQSTREAM_SetIQDataBufferSize(c_int(reqSize)))
+        RSA306B.err_check(self.rsa.IQSTREAM_SetIQDataBufferSize(c_int(reqSize)))
 
     def IQSTREAM_SetOutputConfiguration(self, dest, dtype):
         """
@@ -1779,7 +1779,7 @@ class RSA306B:
             else:
                 val1 = c_int(RSA306B.IQSOUTDEST.index(dest))
                 val2 = c_int(RSA306B.IQSOUTDTYPE.index(dtype))
-                RSA306B.err_check(rsa.IQSTREAM_SetOutputConfiguration(val1, val2))
+                RSA306B.err_check(self.rsa.IQSTREAM_SetOutputConfiguration(val1, val2))
         else:
             raise RSA306B.RSA_Error("Input data type or destination string invalid.")
 
@@ -1800,7 +1800,7 @@ class RSA306B:
         a trigger event. The client must begin retrieving data as soon
         after IQSTREAM_Start() as possible.
         """
-        RSA306B.err_check(rsa.IQSTREAM_Start())
+        RSA306B.err_check(self.rsa.IQSTREAM_Start())
 
     def IQSTREAM_Stop(self):
         """
@@ -1809,7 +1809,7 @@ class RSA306B:
         If the data destination is file, file writing is stopped and the
         output file is closed.
         """
-        RSA306B.err_check(rsa.IQSTREAM_Stop())
+        RSA306B.err_check(self.rsa.IQSTREAM_Stop())
 
     def IQSTREAM_WaitForIQDataReady(self, timeoutMsec):
         """
@@ -1835,7 +1835,7 @@ class RSA306B:
         timeoutMsec = RSA306B.check_int(timeoutMsec)
         timeoutMsec = RSA306B.check_range(timeoutMsec, 0, float('inf'))
         ready = c_bool()
-        RSA306B.err_check(rsa.IQSTREAM_WaitForIQDataReady(c_int(timeoutMsec),
+        RSA306B.err_check(self.rsa.IQSTREAM_WaitForIQDataReady(c_int(timeoutMsec),
             byref(ready)))
         return ready.value
 
@@ -1850,7 +1850,7 @@ class RSA306B:
         any desired trigger conditions, and the spectrum configuration
         settings.
         """
-        RSA306B.err_check(rsa.SPECTRUM_AcquireTrace())
+        RSA306B.err_check(self.rsa.SPECTRUM_AcquireTrace())
 
     def SPECTRUM_GetEnable(self):
         """
@@ -1862,7 +1862,7 @@ class RSA306B:
             True if spectrum measurement enabled, False if disabled.
         """
         enable = c_bool()
-        RSA306B.err_check(rsa.SPECTRUM_GetEnable(byref(enable)))
+        RSA306B.err_check(self.rsa.SPECTRUM_GetEnable(byref(enable)))
         return enable.value
 
     def SPECTRUM_GetLimits(self):
@@ -1890,7 +1890,7 @@ class RSA306B:
             Minimum trace length.
         """
         limits = RSA306B.SPECTRUM_LIMITS()
-        RSA306B.err_check(rsa.SPECTRUM_GetLimits(byref(limits)))
+        RSA306B.err_check(self.rsa.SPECTRUM_GetLimits(byref(limits)))
         limits_dict = {'maxSpan' : limits.maxSpan,
             'minSpan' : limits.minSpan, 'maxRBW' : limits.maxRBW,
             'minRBW' : limits.minRBW, 'maxVBW' : limits.maxVBW,
@@ -1937,7 +1937,7 @@ class RSA306B:
             Actual number of IQ samples used for transform.
         """
         sets = RSA306B.SPECTRUM_SETTINGS()
-        RSA306B.err_check(rsa.SPECTRUM_GetSettings(byref(sets)))
+        RSA306B.err_check(self.rsa.SPECTRUM_GetSettings(byref(sets)))
         settings_dict = {'span' : sets.span,
             'rbw' : sets.rbw,
             'enableVBW' : sets.enableVBW,
@@ -1986,7 +1986,7 @@ class RSA306B:
             raise RSA306B.RSA_Error("Invalid trace input.")
         traceData = (c_float * maxTracePoints)()
         outTracePoints = c_int()
-        RSA306B.err_check(rsa.SPECTRUM_GetTrace(traceVal, c_int(maxTracePoints),
+        RSA306B.err_check(self.rsa.SPECTRUM_GetTrace(traceVal, c_int(maxTracePoints),
                                         byref(traceData), byref(outTracePoints)))
         return np.ctypeslib.as_array(traceData), outTracePoints.value
 
@@ -2004,7 +2004,7 @@ class RSA306B:
             1 for adcOverrange, 2 for refFreqUnlock, and 32 for adcDataLost.
         """
         traceInfo = RSA306B.SPECTRUM_TRACEINFO()
-        RSA306B.err_check(rsa.SPECTRUM_GetTraceInfo(byref(traceInfo)))
+        RSA306B.err_check(self.rsa.SPECTRUM_GetTraceInfo(byref(traceInfo)))
         info_dict = { 'timestamp' : traceInfo.timestamp,
                 'acqDataStatus' : traceInfo.acqDataStatus}
         return info_dict
@@ -2038,7 +2038,7 @@ class RSA306B:
             raise RSA306B.RSA_Error("Invalid trace input.")
         enable = c_bool()
         detector = c_int()
-        RSA306B.err_check(rsa.SPECTRUM_GetTraceType(traceVal, byref(enable), byref(detector)))
+        RSA306B.err_check(self.rsa.SPECTRUM_GetTraceType(traceVal, byref(enable), byref(detector)))
         return enable.value, RSA306B.SPECTRUM_DETECTORS[detector.value]
 
     def SPECTRUM_SetDefault(self):
@@ -2058,7 +2058,7 @@ class RSA306B:
             Trace 1 : Disable, -Peak
             Trace 2 : Disable, Average
         """
-        RSA306B.err_check(rsa.SPECTRUM_SetDefault())
+        RSA306B.err_check(self.rsa.SPECTRUM_SetDefault())
 
     def SPECTRUM_SetEnable(self, enable):
         """
@@ -2073,7 +2073,7 @@ class RSA306B:
             True enables the spectrum measurement. False disables it.
         """
         enable = RSA306B.check_bool(enable)
-        RSA306B.err_check(rsa.SPECTRUM_SetEnable(c_bool(enable)))
+        RSA306B.err_check(self.rsa.SPECTRUM_SetEnable(c_bool(enable)))
 
     def SPECTRUM_SetSettings(self, span, rbw, enableVBW, vbw, traceLen, win, vertUnit):
         """
@@ -2114,7 +2114,7 @@ class RSA306B:
             settings.traceLength = RSA306B.check_int(traceLen)
             settings.window = RSA306B.SPECTRUM_WINDOWS.index(win)
             settings.verticalUnit = RSA306B.SPECTRUM_VERTICAL_UNITS.index(vertUnit)
-            RSA306B.err_check(rsa.SPECTRUM_SetSettings(settings))
+            RSA306B.err_check(self.rsa.SPECTRUM_SetSettings(settings))
         else:
             raise RSA306B.RSA_Error("Window or vertical unit input invalid.")
 
@@ -2143,7 +2143,7 @@ class RSA306B:
         if trace in RSA306B.SPECTRUM_TRACES and detector in RSA306B.SPECTRUM_DETECTORS:
             traceVal = c_int(RSA306B.SPECTRUM_TRACES.index(trace))
             detVal = c_int(RSA306B.SPECTRUM_DETECTORS.index(detector))
-            RSA306B.err_check(rsa.SPECTRUM_SetTraceType(traceVal, c_bool(enable), detVal))
+            RSA306B.err_check(self.rsa.SPECTRUM_SetTraceType(traceVal, c_bool(enable), detVal))
         else:
             raise RSA306B.RSA_Error("Trace or detectory type input invalid.")
 
@@ -2164,7 +2164,7 @@ class RSA306B:
         """
         timeoutMsec = RSA306B.check_int(timeoutMsec)
         ready = c_bool()
-        RSA306B.err_check(rsa.SPECTRUM_WaitForTraceReady(c_int(timeoutMsec),
+        RSA306B.err_check(self.rsa.SPECTRUM_WaitForTraceReady(c_int(timeoutMsec),
                                                  byref(ready)))
         return ready.value
 
@@ -2218,7 +2218,7 @@ class RSA306B:
         refTimeSec = RSA306B.check_int(refTimeSec)
         refTimeNsec = RSA306B.check_int(refTimeNsec)
         refTimestamp = RSA306B.check_int(refTimestamp)
-        RSA306B.err_check(rsa.REFTIME_SetReferenceTime(c_uint64(refTimeSec),
+        RSA306B.err_check(self.rsa.REFTIME_SetReferenceTime(c_uint64(refTimeSec),
                                                c_uint64(refTimeNsec),
                                                c_uint64(refTimestamp)))
 
@@ -2247,7 +2247,7 @@ class RSA306B:
         refTimeSec = c_uint64()
         refTimeNsec = c_uint64()
         refTimestamp = c_uint64()
-        RSA306B.err_check(rsa.REFTIME_GetReferenceTime(byref(refTimeSec),
+        RSA306B.err_check(self.rsa.REFTIME_GetReferenceTime(byref(refTimeSec),
                                                byref(refTimeNsec),
                                                byref(refTimestamp)))
         return refTimeSec.value, refTimeNsec.value, refTimestamp.value
@@ -2277,7 +2277,7 @@ class RSA306B:
         o_timeSec = c_uint64()
         o_timeNsec = c_uint64()
         o_timestamp = c_uint64()
-        RSA306B.err_check(rsa.REFTIME_GetCurrentTime(byref(o_timeSec), byref(o_timeNsec),
+        RSA306B.err_check(self.rsa.REFTIME_GetCurrentTime(byref(o_timeSec), byref(o_timeNsec),
                                              byref(o_timestamp)))
         return o_timeSec.value, o_timeNsec.value, o_timestamp.value
 
@@ -2292,7 +2292,7 @@ class RSA306B:
             was last set.
         """
         sec = c_double()
-        RSA306B.err_check(rsa.REFTIME_GetIntervalSinceRefTimeSet(byref(sec)))
+        RSA306B.err_check(self.rsa.REFTIME_GetIntervalSinceRefTimeSet(byref(sec)))
         return sec.value
 
     def REFTIME_GetReferenceTimeSource(self):
@@ -2306,7 +2306,7 @@ class RSA306B:
                 NONE, SYSTEM, GNSS, or USER.
         """
         srcVal = c_int()
-        RSA306B.err_check(rsa.REFTIME_GetReferenceTimeSource(byref(srcVal)))
+        RSA306B.err_check(self.rsa.REFTIME_GetReferenceTimeSource(byref(srcVal)))
         return RSA306B.REFTIME_SRC[srcVal.value]
 
     def REFTIME_GetTimeFromTimestamp(self, i_timestamp):
@@ -2328,7 +2328,7 @@ class RSA306B:
         i_timestamp = RSA306B.check_int(i_timestamp)
         o_timeSec = c_uint64()
         o_timeNsec = c_uint64()
-        RSA306B.err_check(rsa.REFTIME_GetTimeFromTimestamp(c_uint64(i_timestamp),
+        RSA306B.err_check(self.rsa.REFTIME_GetTimeFromTimestamp(c_uint64(i_timestamp),
                                                    byref(o_timeSec),
                                                    byref(o_timeNsec)))
         return o_timeSec.value, o_timeNsec.value
@@ -2352,7 +2352,7 @@ class RSA306B:
         i_timeSec = RSA306B.check_int(i_timeSec)
         i_timeNsec = RSA306B.check_int(i_timeNsec)
         o_timestamp = c_uint64()    
-        RSA306B.err_check(rsa.REFTIME_GetTimestampFromTime(c_uint64(i_timeSec),
+        RSA306B.err_check(self.rsa.REFTIME_GetTimestampFromTime(c_uint64(i_timeSec),
                                                    c_uint64(i_timeNsec),
                                                    byref(o_timestamp)))
         return o_timestamp.value
@@ -2369,14 +2369,14 @@ class RSA306B:
             Timestamp counter clock rate.
         """
         refTimestampRate = c_uint64()
-        RSA306B.err_check(rsa.REFTIME_GetTimestampRate(byref(refTimestampRate)))
+        RSA306B.err_check(self.rsa.REFTIME_GetTimestampRate(byref(refTimestampRate)))
         return refTimestampRate.value
 
     """ TRIGGER METHODS """
 
     def TRIG_ForceTrigger(self):
         """Force the device to trigger."""
-        RSA306B.err_check(rsa.TRIG_ForceTrigger())
+        RSA306B.err_check(self.rsa.TRIG_ForceTrigger())
 
     def TRIG_GetIFPowerTriggerLevel(self):
         """
@@ -2388,7 +2388,7 @@ class RSA306B:
             Detection power level for the IF power trigger source
         """
         level = c_double()
-        RSA306B.err_check(rsa.TRIG_GetIFPowerTriggerLevel(byref(level)))
+        RSA306B.err_check(self.rsa.TRIG_GetIFPowerTriggerLevel(byref(level)))
         return level.value
 
     def TRIG_GetTriggerMode(self):
@@ -2405,7 +2405,7 @@ class RSA306B:
             Either "freeRun" or "Triggered".
         """
         mode = c_int()
-        RSA306B.err_check(rsa.TRIG_GetTriggerMode(byref(mode)))
+        RSA306B.err_check(self.rsa.TRIG_GetTriggerMode(byref(mode)))
         return RSA306B.TRIGGER_MODE[mode.value]
 
     def TRIG_GetTriggerPositionPercent(self):
@@ -2421,7 +2421,7 @@ class RSA306B:
             Trigger position percent value when the method completes.
         """
         trigPosPercent = c_double()
-        RSA306B.err_check(rsa.TRIG_GetTriggerPositionPercent(byref(trigPosPercent)))
+        RSA306B.err_check(self.rsa.TRIG_GetTriggerPositionPercent(byref(trigPosPercent)))
         return trigPosPercent.value
 
     def TRIG_GetTriggerSource(self):
@@ -2440,7 +2440,7 @@ class RSA306B:
                 IFPowerLevel : IF power level source.
         """
         source = c_int()
-        RSA306B.err_check(rsa.TRIG_GetTriggerSource(byref(source)))
+        RSA306B.err_check(self.rsa.TRIG_GetTriggerSource(byref(source)))
         return RSA306B.TRIGGER_SOURCE[source.value]
 
     def TRIG_GetTriggerTransition(self):
@@ -2456,7 +2456,7 @@ class RSA306B:
                 Either : Trigger on either LH or HL transitions.
         """
         transition = c_int()
-        RSA306B.err_check(rsa.TRIG_GetTriggerTransition(byref(transition)))
+        RSA306B.err_check(self.rsa.TRIG_GetTriggerTransition(byref(transition)))
         return RSA306B.TRIGGER_TRANSITION[transition.value]
 
     def TRIG_SetIFPowerTriggerLevel(self, level):
@@ -2474,7 +2474,7 @@ class RSA306B:
         """
         level = RSA306B.check_num(level)
         level = RSA306B.check_range(level, -130, 30)
-        RSA306B.err_check(rsa.TRIG_SetIFPowerTriggerLevel(c_double(level)))
+        RSA306B.err_check(self.rsa.TRIG_SetIFPowerTriggerLevel(c_double(level)))
 
     def TRIG_SetTriggerMode(self, mode):
         """
@@ -2495,7 +2495,7 @@ class RSA306B:
         mode = RSA306B.check_string(mode)
         if mode in RSA306B.TRIGGER_MODE:
             modeValue = RSA306B.TRIGGER_MODE.index(mode)
-            RSA306B.err_check(rsa.TRIG_SetTriggerMode(c_int(modeValue)))
+            RSA306B.err_check(self.rsa.TRIG_SetTriggerMode(c_int(modeValue)))
         else:
             raise RSA306B.RSA_Error("Invalid trigger mode input string.")
 
@@ -2517,7 +2517,7 @@ class RSA306B:
         """
         trigPosPercent = RSA306B.check_num(trigPosPercent)
         trigPosPercent = RSA306B.check_range(trigPosPercent, 1, 99)
-        RSA306B.err_check(rsa.TRIG_SetTriggerPositionPercent(c_double(trigPosPercent)))
+        RSA306B.err_check(self.rsa.TRIG_SetTriggerPositionPercent(c_double(trigPosPercent)))
 
     def TRIG_SetTriggerSource(self, source):
         """
@@ -2538,7 +2538,7 @@ class RSA306B:
         source = RSA306B.check_string(source)
         if source in RSA306B.TRIGGER_SOURCE:
             sourceValue = RSA306B.TRIGGER_SOURCE.index(source)
-            RSA306B.err_check(rsa.TRIG_SetTriggerSource(c_int(sourceValue)))
+            RSA306B.err_check(self.rsa.TRIG_SetTriggerSource(c_int(sourceValue)))
         else:
             raise RSA306B.RSA_Error("Invalid trigger source input string.")
 
@@ -2562,7 +2562,7 @@ class RSA306B:
         transition = RSA306B.check_string(transition)
         if transition in RSA306B.TRIGGER_TRANSITION:
             transValue = RSA306B.TRIGGER_TRANSITION.index(transition)
-            RSA306B.err_check(rsa.TRIG_SetTriggerTransition(c_int(transValue)))
+            RSA306B.err_check(self.rsa.TRIG_SetTriggerTransition(c_int(transValue)))
         else:
             raise RSA306B.RSA_Error("Invalid trigger transition mode input string.")
 
