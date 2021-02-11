@@ -78,7 +78,7 @@ class RSA306BRadio(RadioInterface):
                 self._is_available = False
                 return
             try:
-                self.rsa = self.rsa_api.RSA306B
+                self.rsa = self.rsa_api.RSA306B()
                 # Connect to device using API wrapper
                 self.rsa.DEVICE_SearchAndConnect()
                 self.align()
