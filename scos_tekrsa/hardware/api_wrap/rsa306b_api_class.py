@@ -2773,7 +2773,7 @@ class RSA306B:
         self.IQBLK_SetIQBandwidth(iqBw)
         self.IQBLK_SetIQRecordLength(recordLength)
 
-    def IQBLK_Acquire(self, func=self.IQBLK_GetIQDataDeinterleaved, recLen=1024, tOutMs=10):
+    def IQBLK_Acquire(self, func=IQBLK_GetIQDataDeinterleaved, recLen=1024, tOutMs=10):
         """
         Acquire IQBLK data using selected method.
 
@@ -2796,7 +2796,7 @@ class RSA306B:
         self.IQBLK_AcquireIQData()
         while not self.IQBLK_WaitForIQDataReady(tOutMs):
             pass
-        return func(recLen)
+        return self.func(recLen)
 
     def AUDIO_Acquire(self, inSize=1000, mode=3):
         self.DEVICE_Run()
