@@ -5,20 +5,6 @@ from enum import Enum
 from os.path import dirname, realpath
 from time import sleep
 
-""" LOAD RSA DRIVER """
-
-# References the scos-sensor drivers directory
-SO_DIR = '/opt/scos-sensor/drivers/'
-from os import listdir
-from os.path import isfile, join
-onlyfiles = [f for f in listdir(SO_DIR) if isfile(join(SO_DIR, f))]
-print(onlyfiles)
-
-RTLD_LAZY = 0x0001
-LAZYLOAD = RTLD_LAZY | RTLD_GLOBAL
-rsa = CDLL(SO_DIR + 'libRSA_API.so', LAZYLOAD)
-usbapi = CDLL(SO_DIR + 'libcyusb_shared.so', LAZYLOAD)
-
 """ GLOBAL CONSTANTS """
 
 MAX_NUM_DEVICES = 10 # Max num. of devices that could be found
@@ -2569,6 +2555,20 @@ def TRIG_SetTriggerTransition(transition):
 
 """ HELPER METHODS """
 
+def RSA_LoadDriver():
+    """
+    Load the RSA USB Driver. This must be run before any API calls will work.
+
+    This is run automatically by DEVICE_SearchAndConnect().
+     """
+
+    # References the scos-sensor drivers directory
+    SO_DIR = '/opt/scos-sensor/drivers/'
+    RTLD_LAZY = 0x0001
+    LAZYLOAD = RTLD_LAZY | RTLD_GLOBAL
+    rsa = CDLL(SO_DIR + 'libRSA_API.so', LAZYLOAD)
+    usbapi = CDLL(SO_DIR + 'libcyusb_shared.so', LAZYLOAD)
+
 def DEVICE_SearchAndConnect(verbose=False):
     """
     Search for and connect to a Tektronix RSA device. 
@@ -2589,6 +2589,8 @@ def DEVICE_SearchAndConnect(verbose=False):
         If no matching device is found, if more than one matching
         device are found, or if connection fails.
     """
+    RSA_LoadDriver()
+
     if verbose:
         print("Searching for devices...")
 

@@ -7,15 +7,12 @@ from scos_actions.hardware.radio_iface import RadioInterface
 
 from scos_tekrsa import settings
 from scos_tekrsa.hardware import calibration
+from scos_tekrsa.hardware.mocks.rsa_block import MockRSA
+from scos_tekrsa.hardware.tests.resources.utils import create_dummy_calibration
 from scos_tekrsa.hardware.calibration import (
     DEFAULT_SENSOR_CALIBRATION,
     DEFAULT_SIGAN_CALIBRATION
 )
-
-# from scos_tekrsa.hardware.api_wrap.rsa306b_api import *
-from scos_tekrsa.hardware.tests.mock_306b_api import *
-
-from scos_tekrsa.hardware.tests.resources.utils import create_dummy_calibration
 
 logger = logging.getLogger(__name__)
 
@@ -24,35 +21,30 @@ class RSA306BRadio(RadioInterface):
     def __init__(
         self,
         sensor_cal_file=settings.SENSOR_CALIBRATION_FILE,
-        sigan_cal_file=settings.SIGAN_CALIBRATION_FILE,
+        sigan_cal_file=settings.SIGAN_CALIBRATION_FILE
     ):
+        self.rsa_api = None
+        self.rsa = None
         self._is_available = False
 
-        self.ALLOWED_SR = []
-        self.ALLOWED_BW = []
+        # Allowed sample rates and bandwidth settings for RSA306B,
+        # ordered from greatest to least. SR in samples/sec, BW in Hz.
+        self.ALLOWED_SR = [56.0e6, 28000000.0, 14000000.0, 7000000.0,
+                           3500000.0, 750000.0, 875000.0, 437500.0, 218750.0,
+                           109375.0, 54687.5, 27343.75, 13671.875]
+        self.ALLOWED_BW = [40.0e6, 20.0e6, 10.0e6, 5.0e6, 2.5e6, 1.25e6, 6.25e5,
+                           3.125e5, 156250.0, 78125.0, 39062.5, 19531.25, 9765.625]
+        
+        # Use values defined above to create SR/BW mapping dict,
+        # with SR as keys and BW as values.
+        self.sr_bw_map = {self.ALLOWED_SR[i] : self.ALLOWED_BW[i]
+                          for i in range(len(self.ALLOWED_SR))}
 
-        self.max_sample_rate = 56.0e6 # Hz, constant
+        self.max_sample_rate = self.ALLOWED_SR[0]
         self.max_reference_level = 30 # dBm, constant
         self.min_reference_level = -130 # dBm, constant
         self.max_frequency = None
         self.min_frequency = None
-        
-        allowed_sample_rate = self.max_sample_rate # max. cardinal SR
-        allowed_acq_bw = 40.0e6 # max. corresponding BW
-
-        while allowed_sample_rate > 13670.0:
-            # IQ Block acquisition allows for lower SR's. This loop
-            # adds only the SR's available for BOTH IQ block and IQ
-            # streaming acquisitions. acquire_time_domain_samples uses
-            # IQ streaming rather than IQ block acquisition.
-            self.ALLOWED_SR.append(allowed_sample_rate)
-            self.ALLOWED_BW.append(allowed_acq_bw)
-            allowed_acq_bw /= 2
-            allowed_sample_rate /= 2
-
-        # Create SR/BW mapping dict with SR as keys, BW as values
-        self.sr_bw_map = {self.ALLOWED_SR[i] : self.ALLOWED_BW[i]
-                          for i in range(len(self.ALLOWED_SR))}
         
         self.sensor_calibration_data = None
         self.sigan_calibration_data = None
@@ -63,40 +55,51 @@ class RSA306BRadio(RadioInterface):
         self.get_calibration(sensor_cal_file, sigan_cal_file)
 
     def get_constraints(self):
-        self.min_frequency = CONFIG_GetMinCenterFreq()
-        self.max_frequency = CONFIG_GetMaxCenterFreq()
+        self.min_frequency = self.rsa.CONFIG_GetMinCenterFreq()
+        self.max_frequency = self.rsa.CONFIG_GetMaxCenterFreq()
 
     def connect(self):
         # Device already connected
         if self._is_available:
             return
 
-        # Search for and connect to device using loaded API wrapper
-        try:
-            DEVICE_SearchAndConnect()
-            self.align()
-            self.get_constraints()
-        except Exception as e:
-            logger.exception(e)
-            return
+        if settings.RUNNING_TESTS or settings.MOCK_RADIO:
+            # Mock radio if desired
+            logger.warning("Using mock Tektronix RSA.")
+            random = settings.MOCK_RADIO_RANDOM
+            self.rsa = MockRSA(randomize_values=random)
+        else:
+            try:
+                # Load API wrapper
+                import scos_tekrsa.hardware.api_wrap.rsa306b_api_class as rsa_api
+                self.rsa_api = rsa_api
+            except ImportError:
+                logger.warning("API Wrapper not loaded - disabling radio.")
+                self._is_available = False
+                return
+            try:
+                self.rsa = self.rsa_api.RSA306B
+                # Connect to device using API wrapper
+                self.rsa.DEVICE_SearchAndConnect()
+                self.align()
+                self.get_constraints()
+            except Exception as e:
+                logger.exception(e)
+                return
 
         logger.debug("Using the following Tektronix RSA device:")
-        logger.debug(DEVICE_GetNomenclature())
+        logger.debug(self.rsa.DEVICE_GetNomenclature())
 
-        try:
-            self._is_available = True
-            return
-        except Exception as e:
-            logger.exception(e)
-            return
+        self._is_available = True
+        
 
     def align(self, retries=3):
         """Check if device alignment is needed, and if so, run it."""
         while True:
             try:
-                if ALIGN_GetWarmupStatus(): # Must be warmed up first
-                    if ALIGN_GetAlignmentNeeded():
-                        ALIGN_RunAlignment()
+                if self.rsa.ALIGN_GetWarmupStatus(): # Must be warmed up first
+                    if self.rsa.ALIGN_GetAlignmentNeeded():
+                        self.rsa.ALIGN_RunAlignment()
                         return
                     else:
                         logger.debug("Device already aligned.")
@@ -149,7 +152,7 @@ class RSA306BRadio(RadioInterface):
 
     @property
     def sample_rate(self):
-        return IQSTREAM_GetAcqParameters()[1]
+        return self.rsa.IQSTREAM_GetAcqParameters()[1]
 
     @sample_rate.setter
     def sample_rate(self, sample_rate):
@@ -159,39 +162,40 @@ class RSA306BRadio(RadioInterface):
             logger.error(err_msg)
             raise Exception(err_msg)
         if sample_rate not in self.ALLOWED_SR:
+            # If requested sample rate is not an allowed value
             allowed_sample_rates_str = ", ".join(map(str, self.ALLOWED_SR))
             err_msg = (f"Requested sample rate {sample_rate} not in allowed sample rates."
                 + f" Allowed sample rates are {allowed_sample_rates_str}")
             logger.error(err_msg)
-            raise Exception(err_msg)
+            raise ValueError(err_msg)
         # Set RSA IQ Bandwidth based on sample_rate
         # The IQ Bandwidth determines the RSA sample rate.
         bw = self.sr_bw_map.get(sample_rate)
-        IQSTREAM_SetAcqBandwidth(bw)
+        self.rsa.IQSTREAM_SetAcqBandwidth(bw)
         msg = "set Tektronix RSA 306B sample rate: {:.1f} samples/sec"
-        logger.debug(msg.format(IQSTREAM_GetAcqParameters()[1]))
+        logger.debug(msg.format(self.rsa.IQSTREAM_GetAcqParameters()[1]))
 
     @property
     def frequency(self):
-        return CONFIG_GetCenterFreq()
+        return self.rsa.CONFIG_GetCenterFreq()
 
     @frequency.setter
     def frequency(self, freq):
         """Set the device center frequency."""
-        CONFIG_SetCenterFreq(freq)
+        self.rsa.CONFIG_SetCenterFreq(freq)
         msg = "Set Tektronix RSA 306B center frequency: {:.1f} Hz"
-        logger.debug(msg.format(CONFIG_GetCenterFreq()))
+        logger.debug(msg.format(self.rsa.CONFIG_GetCenterFreq()))
 
     @property
     def reference_level(self):
-        return CONFIG_GetReferenceLevel()
+        return self.rsa.CONFIG_GetReferenceLevel()
 
     @reference_level.setter
     def reference_level(self, reference_level):
         """Set the device reference level."""
-        CONFIG_SetReferenceLevel(reference_level)
+        self.rsa.CONFIG_SetReferenceLevel(reference_level)
         msg = "Set Tektronix RSA 306B reference level: {:.1f} dB"
-        logger.debug(msg.format(CONFIG_GetReferenceLevel()))
+        logger.debug(msg.format(self.rsa.CONFIG_GetReferenceLevel()))
 
     @property
     def last_calibration_time(self):
@@ -303,11 +307,11 @@ class RSA306BRadio(RadioInterface):
         # Determine correct time length for num_samples based on current SR
         total_samples = num_samples + num_samples_skip
         durationMsec = int((total_samples/self.sample_rate)*1000)
-        # Calibration data not currently recomputed since calibration not done
-        #self.recompute_calibration_data()
+        
+        self.recompute_calibration_data()
         #db_gain = self.sensor_calibration_data["gain_sensor"]
         # Placeholder db_gain:
-        db_gain = 1
+        db_gain = 0
         logger.debug(f"Number of retries = {retries}")
         
         # Compute the linear gain
@@ -315,11 +319,11 @@ class RSA306BRadio(RadioInterface):
         
         while True:
             try:
-                result_data = IQSTREAM_Tempfile(
-                                            self.frequency,
-                                            self.reference_level,
-                                            self.sr_bw_map[self.sample_rate],
-                                            durationMsec)
+                result_data = self.rsa.IQSTREAM_Tempfile(
+                                    self.frequency, self.reference_level,
+                                    self.sr_bw_map[self.sample_rate], durationMsec
+                              )
+
                 received_samples = len(result_data)
                 if received_samples < total_samples:
                     logger.warning(
@@ -341,7 +345,7 @@ class RSA306BRadio(RadioInterface):
                     "overload": False, # overload check occurs automatically after measurement
                     "frequency": self.frequency,
                     "reference_level": self.reference_level,
-                    "sample_rate": IQSTREAM_GetAcqParameters()[1],
+                    "sample_rate": self.rsa.IQSTREAM_GetAcqParameters()[1],
                     "capture_time": durationMsec, # capture duration in milliseconds
                     "calibration_annotation": self.create_calibration_annotation()
                 }

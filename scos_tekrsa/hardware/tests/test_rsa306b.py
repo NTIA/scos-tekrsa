@@ -1,11 +1,6 @@
 """Test aspects of RadioInterface with mocked RSA306B."""
 
 import pytest
-from unittest.mock import Mock
-
-# Mock RSA API
-import sys
-sys.modules['scos_tekrsa.hardware.api_wrap.rsa306b_api'] = Mock()
 
 from scos_tekrsa.hardware import radio
 from scos_tekrsa.hardware.tests.resources.utils import (
@@ -42,10 +37,9 @@ class TestRSA306B:
         # Check that the setup was completed
         assert self.setup_complete, "Setup was not completed"
 
-        max_retries = 5
-
         try:
-            self.rx.acquire_time_domain_samples(1000, retries=max_retries)
+            # Uses default of 5 retries
+            self.rx.acquire_time_domain_samples(1000)
         except RuntimeError:
             msg = "Acquisition failing with {} retries \n"
             msg += "requested should NOT have raised an error."
@@ -73,7 +67,7 @@ class TestRSA306B:
         assert self.setup_complete, "Setup was not completed"
 
         # Do an arbitrary data collection
-        self.rx.sample_rate = int(10e6)
+        self.rx.sample_rate = 14e6
         self.rx.frequency = 1e9
         self.rx.reference_level = 0
         measurement_result = self.rx.acquire_time_domain_samples(1000)
@@ -111,77 +105,83 @@ class TestRSA306B:
         self.rx.sensor_calibration = None
 
         # Create some dummy setups to ensure calibration updates
-        sample_rates = [10e6, 40e6, 1e6, 56e6]
-        ref_lev_settings = [40, 60, 0, 60]
-        frequencies = [1000e6, 2000e6, 10e6, 1500e6]
+        sample_rates = [10e6, 56e6, 40e6]
+        ref_lev_settings = [-40, 0, 20]
+        frequencies = [1e9, 2e9, 3e9, 4e9]
 
         # Run each set
         for i in range(len(sample_rates)):
             # Get the parameters for this run
             sample_rate = sample_rates[i]
-            ref_lev_setting = ref_lev_settings[i]
-            frequency = frequencies[i]
+            if sample_rate not in self.rx.ALLOWED_SR:
+                # Should raise error if not an allowed value
+                with pytest.raises(ValueError):
+                    self.rx.sample_rate = sample_rate
+            else:
+                # Proceed for allowed SR's
+                ref_lev_setting = ref_lev_settings[i]
+                frequency = frequencies[i]
 
-            # Setup the rx
-            self.rx.sample_rate = sample_rate
-            self.rx.reference_level = ref_lev_setting
-            self.rx.frequency = frequency
+                # Setup the rx
+                self.rx.sample_rate = sample_rate
+                self.rx.reference_level = ref_lev_setting
+                self.rx.frequency = frequency
 
-            # Recompute the calibration parameters
-            self.rx.recompute_calibration_data()
+                # Recompute the calibration parameters
+                self.rx.recompute_calibration_data()
 
-            # Check the defaulted calibration parameters
-            self.check_defaulted_calibration_parameter(
-                "gain_sigan", ref_lev_setting, self.rx.sigan_calibration_data["gain_sigan"]
-            )
-            self.check_defaulted_calibration_parameter(
-                "enbw_sigan", sample_rate, self.rx.sigan_calibration_data["enbw_sigan"]
-            )
-            self.check_defaulted_calibration_parameter(
-                "noise_figure_sigan",
-                0,
-                self.rx.sigan_calibration_data["noise_figure_sigan"],
-            )
-            self.check_defaulted_calibration_parameter(
-                "1db_compression_sigan",
-                100,
-                self.rx.sigan_calibration_data["1db_compression_sigan"],
-            )
-            self.check_defaulted_calibration_parameter(
-                "reference_level",
-                ref_lev_setting,
-                self.rx.sensor_calibration_data["reference_level"],
-            )
-            self.check_defaulted_calibration_parameter(
-                "enbw_sensor",
-                sample_rate,
-                self.rx.sensor_calibration_data["enbw_sensor"],
-            )
-            self.check_defaulted_calibration_parameter(
-                "noise_figure_sensor",
-                0,
-                self.rx.sensor_calibration_data["noise_figure_sensor"],
-            )
-            self.check_defaulted_calibration_parameter(
-                "1db_compression_sensor",
-                100,
-                self.rx.sensor_calibration_data["1db_compression_sensor"],
-            )
-            self.check_defaulted_calibration_parameter(
-                "gain_preselector",
-                0,
-                self.rx.sensor_calibration_data["gain_preselector"],
-            )
-            self.check_defaulted_calibration_parameter(
-                "noise_figure_preselector",
-                0,
-                self.rx.sensor_calibration_data["noise_figure_preselector"],
-            )
-            self.check_defaulted_calibration_parameter(
-                "1db_compression_preselector",
-                100,
-                self.rx.sensor_calibration_data["1db_compression_preselector"],
-            )
+                # Check the defaulted calibration parameters
+                self.check_defaulted_calibration_parameter(
+                    "gain_sigan", 0, self.rx.sigan_calibration_data["gain_sigan"]
+                )
+                self.check_defaulted_calibration_parameter(
+                    "enbw_sigan", sample_rate, self.rx.sigan_calibration_data["enbw_sigan"]
+                )
+                self.check_defaulted_calibration_parameter(
+                    "noise_figure_sigan",
+                    0,
+                    self.rx.sigan_calibration_data["noise_figure_sigan"],
+                )
+                self.check_defaulted_calibration_parameter(
+                    "1db_compression_sigan",
+                    100,
+                    self.rx.sigan_calibration_data["1db_compression_sigan"],
+                )
+                self.check_defaulted_calibration_parameter(
+                    "gain_sensor",
+                    0,
+                    self.rx.sensor_calibration_data["gain_sensor"],
+                )
+                self.check_defaulted_calibration_parameter(
+                    "enbw_sensor",
+                    sample_rate,
+                    self.rx.sensor_calibration_data["enbw_sensor"],
+                )
+                self.check_defaulted_calibration_parameter(
+                    "noise_figure_sensor",
+                    0,
+                    self.rx.sensor_calibration_data["noise_figure_sensor"],
+                )
+                self.check_defaulted_calibration_parameter(
+                    "1db_compression_sensor",
+                    100,
+                    self.rx.sensor_calibration_data["1db_compression_sensor"],
+                )
+                self.check_defaulted_calibration_parameter(
+                    "gain_preselector",
+                    0,
+                    self.rx.sensor_calibration_data["gain_preselector"],
+                )
+                self.check_defaulted_calibration_parameter(
+                    "noise_figure_preselector",
+                    0,
+                    self.rx.sensor_calibration_data["noise_figure_preselector"],
+                )
+                self.check_defaulted_calibration_parameter(
+                    "1db_compression_preselector",
+                    100,
+                    self.rx.sensor_calibration_data["1db_compression_preselector"],
+                )
 
         # Reload the calibrations in case they're used elsewhere
         self.rx.sigan_calibration = sigan_calibration

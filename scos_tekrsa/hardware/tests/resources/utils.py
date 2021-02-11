@@ -17,7 +17,7 @@ def create_dummy_calibration(empty_cal=False):
     """Create a dummy calibration object"""
 
     # Define the calibration file steps
-    sample_rates = [14e6, 28e6, 56e6]
+    sample_rates = [10e6, 14e6, 40e6]
     reference_levels = [-40, -20, 0, 20]
     frequencies = [1e9, 2e9, 3e9, 4e9]
 

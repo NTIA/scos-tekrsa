@@ -5,8 +5,13 @@ from os import mkdir
 from scos_tekrsa.hardware.api_wrap.rsa306b_api import *
 from time import sleep
 
+"""
+This is a test for the entire API Wrapper for the Tektronix RSA306B.
+It requires a compatible RSA device to be connected.
+"""
+
 class rsa_api_test(unittest.TestCase):
-    """Test for rsa_api.py"""
+    """Test for rsa306b_api.py"""
 
     """ALIGN Command Testing"""
 

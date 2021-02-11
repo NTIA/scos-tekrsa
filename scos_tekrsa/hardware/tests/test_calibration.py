@@ -111,8 +111,8 @@ class TestCalibrationFile:
         ref_levels = list(
             range(self.reflev_min, self.reflev_max, self.ref_level_step)
         ) + [self.reflev_max]
-        self.frequency_min = 1000000000
-        self.frequency_max = 3400000000
+        self.frequency_min = 9000
+        self.frequency_max = 6200000000
         self.frequency_step = 200000000
         frequencies = list(
             range(self.frequency_min, self.frequency_max, self.frequency_step)
@@ -156,7 +156,7 @@ class TestCalibrationFile:
                 cal_data_f["calibration_data"]["ref_levels"] = []
                 for j in range(len(ref_levels)):
                     cal_data_rl = {}
-                    cal_data_rl["ref_level"] = ref_levels[j]
+                    cal_data_rl["reference_level"] = ref_levels[j]
 
                     # Create the scale factor that ensures easy interpolation
                     gain_sigan = easy_gain(
