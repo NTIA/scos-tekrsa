@@ -26,8 +26,6 @@ class RSA306B:
     HW_VERSION_STRLEN = 4 # Bytes allocated for HW version number string
     NOMENCLATURE_STRLEN = 8 # Bytes allocated for device nomenclature string
     API_VERSION_STRLEN = 8 # Bytes allocated for API version number string
-    DEVINFO_MAX_STRLEN = 100 # Bytes for date/time string
-    MAX_IQBLK_RECLEN = 126000000 # Maximum IQBLK Record Length
 
     """ ENUMERATION TUPLES """
 
@@ -779,7 +777,7 @@ class RSA306B:
         string
             The FPGA version number, formatted as described above.
         """
-        fpgaVersion = (c_char * FPGA_VERSION_STRLEN)()
+        fpgaVersion = (c_char * RSA306B.FPGA_VERSION_STRLEN)()
         RSA306B.err_check(self.rsa.DEVICE_GetFPGAVersion(byref(fpgaVersion)))
         return fpgaVersion.value.decode('utf-8')
 
@@ -796,7 +794,7 @@ class RSA306B:
         string
             The firmware version number, formatted as described above.
         """
-        fwVersion = (c_char * FW_VERSION_STRLEN)()
+        fwVersion = (c_char * RSA306B.FW_VERSION_STRLEN)()
         RSA306B.err_check(self.rsa.DEVICE_GetFWVersion(byref(fwVersion)))
         return fwVersion.value.decode('utf-8')
 
@@ -812,7 +810,7 @@ class RSA306B:
         string
             The hardware version number, formatted as described above.
         """
-        hwVersion = (c_char * HW_VERSION_STRLEN)()
+        hwVersion = (c_char * RSA306B.HW_VERSION_STRLEN)()
         RSA306B.err_check(self.rsa.DEVICE_GetHWVersion(byref(hwVersion)))
         return hwVersion.value.decode('utf-8')
 
@@ -828,7 +826,7 @@ class RSA306B:
         string
             Name of the device.
         """
-        nomenclature = (c_char * NOMENCLATURE_STRLEN)()
+        nomenclature = (c_char * RSA306B.NOMENCLATURE_STRLEN)()
         RSA306B.err_check(self.rsa.DEVICE_GetNomenclature(byref(nomenclature)))
         return nomenclature.value.decode('utf-8')
 
@@ -844,7 +842,7 @@ class RSA306B:
         string
             Serial number of the device.
         """
-        serialNum = (c_char * MAX_SERIAL_STRLEN)()
+        serialNum = (c_char * RSA306B.MAX_SERIAL_STRLEN)()
         RSA306B.err_check(self.rsa.DEVICE_GetSerialNumber(byref(serialNum)))
         return serialNum.value.decode('utf-8')
 
@@ -861,7 +859,7 @@ class RSA306B:
         string
             The API version number, formatted as described above.
         """
-        apiVersion = (c_char * API_VERSION_STRLEN)()
+        apiVersion = (c_char * RSA306B.API_VERSION_STRLEN)()
         RSA306B.err_check(self.rsa.DEVICE_GetAPIVersion(byref(apiVersion)))
         return apiVersion.value.decode('utf-8')
 
@@ -2636,8 +2634,8 @@ class RSA306B:
             IQ data, with each element in the form (I + j*Q)
         """
         # Configuration parameters
-        dest=IQSOUTDEST[3] # Split SIQ format
-        dType=IQSOUTDTYPE[0] # 32-bit single precision floating point
+        dest=RSA306B.IQSOUTDEST[3] # Split SIQ format
+        dType=RSA306B.IQSOUTDTYPE[0] # 32-bit single precision floating point
         suffixCtl=-2 # No file suffix
         filename = 'tempIQ'
         sleepTimeSec = 0.1 # Loop sleep time checking if acquisition complete
