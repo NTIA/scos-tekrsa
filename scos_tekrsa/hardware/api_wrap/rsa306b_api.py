@@ -94,7 +94,7 @@ class RSA306B:
         def __init__(self, err_txt=""):
             self.err_txt = err_txt
             err = "RSA Error:\r\n{}".format(self.err_txt)
-            super(RSA_Error, self).__init__(err)
+            super(RSA306B.RSA_Error, self).__init__(err)
 
     class ReturnStatus(Enum):
         noError = 0
