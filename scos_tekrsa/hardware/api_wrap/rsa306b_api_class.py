@@ -7,7 +7,7 @@ from time import sleep
 
 class RSA306B:
 
-    def __init__():
+    def __init__(self):
         """ Load the RSA USB Driver """
         # References the scos-sensor drivers directory
         SO_DIR = '/opt/scos-sensor/drivers/'
