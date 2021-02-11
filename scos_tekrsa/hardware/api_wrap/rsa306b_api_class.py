@@ -252,12 +252,12 @@ class RSA306B:
         errorPlaceholder = 9999
         notImplemented = -1
 
-    def err_check(self, rs):
+    def err_check(rs):
         """Obtain internal API ErrorStatus and pass to RSA_Error."""
         if RSA306B.ReturnStatus(rs) != RSA306B.ReturnStatus.noError:
             raise RSA306B.RSA_Error(RSA306B.ReturnStatus(rs).name)
 
-    def check_range(self, input, min, max, incl=True):
+    def check_range(input, min, max, incl=True):
         """Check if input is in valid range, inclusive or exclusive"""
         if incl:
             if min <= input <= max:
@@ -272,7 +272,7 @@ class RSA306B:
                 raise ValueError("Input must be in range {} to {}".format(min, max)
                     + ", exclusive.")
 
-    def check_int(self, input):
+    def check_int(input):
         """Check if input is an integer."""
         if type(input) is int:
             return input
@@ -282,21 +282,21 @@ class RSA306B:
         else:
             raise TypeError("Input must be an integer.")
 
-    def check_string(self, input):
+    def check_string(input):
         """Check if input is a string."""
         if type(input) is str:
             return input
         else:
             raise TypeError("Input must be a string.")
 
-    def check_num(self, input):
+    def check_num(input):
         """Check if input is a number (float or int)."""
         if type(input) is int or type(input) is float:
             return input
         else:
             raise TypeError("Input must be a number (float or int).")
 
-    def check_bool(self, input):
+    def check_bool(input):
         """Check if input is a boolean."""
         if type(input) is bool:
             return input
@@ -991,8 +991,7 @@ class RSA306B:
         devSerial = ((c_char * RSA306B.MAX_NUM_DEVICES) * RSA306B.MAX_SERIAL_STRLEN)()
         devType = ((c_char * RSA306B.MAX_NUM_DEVICES) * RSA306B.MAX_DEVTYPE_STRLEN)()
 
-        RSA306B.err_check(self.rsa.DEVICE_Search(byref(numFound), byref(devIDs), devSerial,
-            devType))
+        RSA306B.err_check(self.rsa.DEVICE_Search(byref(numFound), byref(devIDs), devSerial, devType))
 
         foundDevices = {
             ID : (devSerial[ID].value.decode(), devType[ID].value.decode()) \
