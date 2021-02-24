@@ -81,6 +81,8 @@ class RSA306BRadio(RadioInterface):
                 self.rsa = self.rsa_api.RSA306B()
                 # Connect to device using API wrapper
                 self.rsa.DEVICE_SearchAndConnect()
+                # Alignment related API not currently supported for Ubuntu
+                #self.align()
                 self.get_constraints()
             except Exception as e:
                 logger.exception(e)
@@ -90,6 +92,37 @@ class RSA306BRadio(RadioInterface):
         logger.debug(self.rsa.DEVICE_GetNomenclature())
 
         self._is_available = True
+        
+
+    def align(self, retries=3):
+        """Check if device alignment is needed, and if so, run it."""
+        # Currently unused due to known issue in RSA API for Linux v1.0.0014:
+        # Alignment related API is not supported on Ubuntu
+        # If this changes in the future, this method can/should be called before
+        # get_constraints in the connect method above.
+        while True:
+            try:
+                if self.rsa.ALIGN_GetWarmupStatus(): # Must be warmed up first
+                    if self.rsa.ALIGN_GetAlignmentNeeded():
+                        self.rsa.ALIGN_RunAlignment()
+                        return
+                    else:
+                        logger.debug("Device already aligned.")
+                else:
+                    logger.debug("Device not yet warmed up.")
+                return
+            except Exception as e:
+                logger.error(e)
+                if retries > 0:
+                    logger.info("Waiting 5 seconds before retrying device alignment...")
+                    retries = retries - 1
+                    time.sleep(5)
+                    continue
+                else:
+                    error_message = "Max retries exceeded."
+                    logger.error(error_message)
+                    raise RuntimeError(error_message)
+
 
     @property
     def is_available(self):
