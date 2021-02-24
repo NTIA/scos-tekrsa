@@ -2,7 +2,7 @@ FROM ubuntu:18.04
 
 COPY docker/cyusb.conf /etc/cyusb.conf
 COPY docker/libRSA_API.so /opt/scos-sensor/drivers/libRSA_API.so
-COPY docker/libcyusb_shared.so /opt/scos-sensor/driver/libcyusb_shared.so
+COPY docker/libcyusb_shared.so /opt/scos-sensor/drivers/libcyusb_shared.so
 
 RUN mkdir -p /etc/udev/rules.d/
 RUN touch /etc/udev/rules.d/Tektronix.rules
