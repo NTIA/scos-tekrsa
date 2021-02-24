@@ -81,8 +81,7 @@ class RSA306BRadio(RadioInterface):
                 self.rsa = self.rsa_api.RSA306B()
                 # Connect to device using API wrapper
                 self.rsa.DEVICE_SearchAndConnect()
-                # Alignment related API not currently supported for Ubuntu
-                #self.align()
+                self.align()
                 self.get_constraints()
             except Exception as e:
                 logger.exception(e)
@@ -96,10 +95,6 @@ class RSA306BRadio(RadioInterface):
 
     def align(self, retries=3):
         """Check if device alignment is needed, and if so, run it."""
-        # Currently unused due to known issue in RSA API for Linux v1.0.0014:
-        # Alignment related API is not supported on Ubuntu
-        # If this changes in the future, this method can/should be called before
-        # get_constraints in the connect method above.
         while True:
             try:
                 if self.rsa.ALIGN_GetWarmupStatus(): # Must be warmed up first
