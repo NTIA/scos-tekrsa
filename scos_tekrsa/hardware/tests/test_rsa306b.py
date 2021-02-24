@@ -39,7 +39,7 @@ class TestRSA306B:
 
         try:
             # Uses default of 5 retries
-            self.rx.acquire_time_domain_samples(1000)
+            self.rx.acquire_time_domain_samples(1000, retries=5)
         except RuntimeError:
             msg = "Acquisition failing with {} retries \n"
             msg += "requested should NOT have raised an error."
