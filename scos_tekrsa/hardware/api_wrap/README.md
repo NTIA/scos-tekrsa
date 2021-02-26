@@ -44,9 +44,13 @@ Requires python>=3.6, numpy, and ctypes.
 
 ### Running Tests
 
-A testing file, `test_rsa_api.py` is included, which uses unittest to test `rsa_api.py`. Running tests requires a connected RSA 306B device. Run the test, with segmentation fault handling, by running `python3 -q -X faulthandler test_rsa_api.py`. This testing code was adapted from the Tektronix
+A testing file, `rsa306b_api_test.py` is included, which uses unittest to test `rsa306b_api.py`. Running tests requires a connected RSA 306B device. It also requires adding the path to the two shared objects, `libRSA_API.so` and `libcyusb_shared.so`, in the top of the `rsa306b_api_test.py` file, where it is stored as a variable called `TEST_SO_DIR`. There is a placeholder value in place by default, which will need to be replaced with the correct path.
 
-This testing code was been adapted from the [Tektronix Cython RSA API testing code for the 306B](https://github.com/tektronix/RSA_API/blob/master/Python/Cython%20Version/test_rsa306b.py), which was written by Morgan Allison. Alhough much of the code and structure is reused, many changes have been made to account for the differences present in this API wrapper compared to the Tektronix Cython versions. Additional tests were also added which were not present in the original code.
+Run the test, with segmentation fault handling, by running:
+
+`python3 -q -X faulthandler rsa306b_api_test.py`
+
+This testing code was been adapted from the [Tektronix Cython RSA API testing code for the 306B](https://github.com/tektronix/RSA_API/blob/master/Python/Cython%20Version/test_rsa306b.py). In addition to adapting this code to work with this API wrapper, various tests were also added which were not present in the original version.
 
 ## 5. Contact
 

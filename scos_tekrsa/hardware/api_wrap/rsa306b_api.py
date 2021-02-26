@@ -5,17 +5,22 @@ from enum import Enum
 from os.path import dirname, realpath
 from time import sleep
 
+class RSA_Error(Exception):
+    def __init__(self, err_txt=""):
+        self.err_txt = err_txt
+        err = "RSA Error:\r\n{}".format(self.err_txt)
+        super(RSA_Error, self).__init__(err)
 
 class RSA306B:
 
-    def __init__(self):
+    def __init__(self, so_dir='/opt/scos-sensor/drivers/'):
         """ Load the RSA USB Driver """
-        # References the scos-sensor drivers directory
-        SO_DIR = '/opt/scos-sensor/drivers/'
+        # Param. 'so_dir' is the directory containing libRSA_API.so and
+        # libcyusb_shared.so. Default is scos-sensor drivers directory.
         RTLD_LAZY = 0x0001
         LAZYLOAD = RTLD_LAZY | RTLD_GLOBAL
-        self.rsa = CDLL(SO_DIR + 'libRSA_API.so', LAZYLOAD)
-        self.usbapi = CDLL(SO_DIR + 'libcyusb_shared.so', LAZYLOAD)
+        self.rsa = CDLL(so_dir + 'libRSA_API.so', LAZYLOAD)
+        self.usbapi = CDLL(so_dir + 'libcyusb_shared.so', LAZYLOAD)
 
     """ GLOBAL CONSTANTS """
 
@@ -90,12 +95,6 @@ class RSA306B:
                     ('filenames', c_wchar_p)]
 
     """ ERROR HANDLING """
-
-    class RSA_Error(Exception):
-        def __init__(self, err_txt=""):
-            self.err_txt = err_txt
-            err = "RSA Error:\r\n{}".format(self.err_txt)
-            super(RSA306B.RSA_Error, self).__init__(err)
 
     class ReturnStatus(Enum):
         noError = 0
@@ -254,7 +253,7 @@ class RSA306B:
     def err_check(rs):
         """Obtain internal API ErrorStatus and pass to RSA_Error."""
         if RSA306B.ReturnStatus(rs) != RSA306B.ReturnStatus.noError:
-            raise RSA306B.RSA_Error(RSA306B.ReturnStatus(rs).name)
+            raise RSA_Error(RSA306B.ReturnStatus(rs).name)
 
     def check_range(input, min, max, incl=True):
         """Check if input is in valid range, inclusive or exclusive"""
@@ -388,7 +387,7 @@ class RSA306B:
         """
         src = self.CONFIG_GetFrequencyReferenceSource()
         if src == RSA306B.FREQREF_SOURCE[0]:
-            raise RSA306B.RSA_Error("External frequency reference not in use.")
+            raise RSA_Error("External frequency reference not in use.")
         else:
             extFreq = c_double()
             RSA306B.err_check(self.rsa.CONFIG_GetExternalRefFrequency(byref(extFreq)))
@@ -527,12 +526,12 @@ class RSA306B:
         src = RSA306B.check_string(src)
         if src in RSA306B.FREQREF_SOURCE:
             if src is 'GNSS':
-                raise RSA306B.RSA_Error("RSA 306B does not support GNSS reference.")
+                raise RSA_Error("RSA 306B does not support GNSS reference.")
             else:
                 value = c_int(RSA306B.FREQREF_SOURCE.index(src))
                 RSA306B.err_check(self.rsa.CONFIG_SetFrequencyReferenceSource(value))
         else:
-            raise RSA306B.RSA_Error("Input does not match a valid setting.")
+            raise RSA_Error("Input does not match a valid setting.")
 
     def CONFIG_SetReferenceLevel(self, refLevel):
         """
@@ -782,7 +781,7 @@ class RSA306B:
         if numFound == 1:
             deviceID = 0
         elif numFound > 1 and deviceID == -1:
-            raise RSA306B.RSA_Error("Multiple devices found, but no ID specified.")
+            raise RSA_Error("Multiple devices found, but no ID specified.")
         deviceID = RSA306B.check_int(deviceID)
         RSA306B.err_check(self.rsa.DEVICE_Reset(c_int(deviceID)))   
 
@@ -830,7 +829,7 @@ class RSA306B:
         # If there are no devices, there is still a dict returned
         # with a device ID, but the other elements are empty.
         if foundDevices[0] == ('',''):
-            raise RSA306B.RSA_Error("Could not find a matching Tektronix RSA device.")
+            raise RSA_Error("Could not find a matching Tektronix RSA device.")
         else:
             return foundDevices
 
@@ -914,7 +913,7 @@ class RSA306B:
         if eventID in RSA306B.DEVEVENT:
             value = c_int(RSA306B.DEVEVENT.index(eventID))
         else:
-            raise RSA306B.RSA_Error("Input string does not match one of the valid settings.")
+            raise RSA_Error("Input string does not match one of the valid settings.")
         RSA306B.err_check(self.rsa.DEVICE_GetEventStatus(value, byref(occurred),
             byref(timestamp)))
         return occurred.value, timestamp.value
@@ -1584,14 +1583,14 @@ class RSA306B:
         dtype = RSA306B.check_string(dtype)
         if dest in RSA306B.IQSOUTDEST and dtype in RSA306B.IQSOUTDTYPE:
             if dest == "FILE_TIQ" and "SINGLE" in dtype:
-                raise RSA306B.RSA_Error("Invalid selection of TIQ file with"
+                raise RSA_Error("Invalid selection of TIQ file with"
                     + " single precision data type.")
             else:
                 val1 = c_int(RSA306B.IQSOUTDEST.index(dest))
                 val2 = c_int(RSA306B.IQSOUTDTYPE.index(dtype))
                 RSA306B.err_check(self.rsa.IQSTREAM_SetOutputConfiguration(val1, val2))
         else:
-            raise RSA306B.RSA_Error("Input data type or destination string invalid.")
+            raise RSA_Error("Input data type or destination string invalid.")
 
     def IQSTREAM_Start(self):
         """
@@ -1793,7 +1792,7 @@ class RSA306B:
         if trace in RSA306B.SPECTRUM_TRACES:
             traceVal = c_int(RSA306B.SPECTRUM_TRACES.index(trace))
         else:
-            raise RSA306B.RSA_Error("Invalid trace input.")
+            raise RSA_Error("Invalid trace input.")
         traceData = (c_float * maxTracePoints)()
         outTracePoints = c_int()
         RSA306B.err_check(self.rsa.SPECTRUM_GetTrace(traceVal, c_int(maxTracePoints),
@@ -1845,7 +1844,7 @@ class RSA306B:
         if trace in RSA306B.SPECTRUM_TRACES:
             traceVal = c_int(RSA306B.SPECTRUM_TRACES.index(trace))
         else:
-            raise RSA306B.RSA_Error("Invalid trace input.")
+            raise RSA_Error("Invalid trace input.")
         enable = c_bool()
         detector = c_int()
         RSA306B.err_check(self.rsa.SPECTRUM_GetTraceType(traceVal, byref(enable), byref(detector)))
@@ -1926,7 +1925,7 @@ class RSA306B:
             settings.verticalUnit = RSA306B.SPECTRUM_VERTICAL_UNITS.index(vertUnit)
             RSA306B.err_check(self.rsa.SPECTRUM_SetSettings(settings))
         else:
-            raise RSA306B.RSA_Error("Window or vertical unit input invalid.")
+            raise RSA_Error("Window or vertical unit input invalid.")
 
     def SPECTRUM_SetTraceType(self, trace="Trace1", enable=True, detector='AverageVRMS'):
         """
@@ -1955,7 +1954,7 @@ class RSA306B:
             detVal = c_int(RSA306B.SPECTRUM_DETECTORS.index(detector))
             RSA306B.err_check(self.rsa.SPECTRUM_SetTraceType(traceVal, c_bool(enable), detVal))
         else:
-            raise RSA306B.RSA_Error("Trace or detectory type input invalid.")
+            raise RSA_Error("Trace or detectory type input invalid.")
 
     def SPECTRUM_WaitForTraceReady(self, timeoutMsec):
         """
@@ -2104,7 +2103,7 @@ class RSA306B:
             modeValue = RSA306B.TRIGGER_MODE.index(mode)
             RSA306B.err_check(self.rsa.TRIG_SetTriggerMode(c_int(modeValue)))
         else:
-            raise RSA306B.RSA_Error("Invalid trigger mode input string.")
+            raise RSA_Error("Invalid trigger mode input string.")
 
     def TRIG_SetTriggerPositionPercent(self, trigPosPercent):
         """
@@ -2147,7 +2146,7 @@ class RSA306B:
             sourceValue = RSA306B.TRIGGER_SOURCE.index(source)
             RSA306B.err_check(self.rsa.TRIG_SetTriggerSource(c_int(sourceValue)))
         else:
-            raise RSA306B.RSA_Error("Invalid trigger source input string.")
+            raise RSA_Error("Invalid trigger source input string.")
 
     def TRIG_SetTriggerTransition(self, transition):
         """
@@ -2171,7 +2170,7 @@ class RSA306B:
             transValue = RSA306B.TRIGGER_TRANSITION.index(transition)
             RSA306B.err_check(self.rsa.TRIG_SetTriggerTransition(c_int(transValue)))
         else:
-            raise RSA306B.RSA_Error("Invalid trigger transition mode input string.")
+            raise RSA_Error("Invalid trigger transition mode input string.")
 
     """ HELPER METHODS """
 
@@ -2215,7 +2214,7 @@ class RSA306B:
         # Zero devices found case handled within DEVICE_Search()
         # Multiple devices found case:
         if numFound > 1:
-            raise RSA306B.RSA_Error("Found {} devices, need exactly 1.".format(numFound))
+            raise RSA_Error("Found {} devices, need exactly 1.".format(numFound))
         else:
             if verbose:
                 print("Connecting to device...")
@@ -2320,16 +2319,16 @@ class RSA306B:
         if status == 0:
             pass
         elif bool(status & 0x10000):  # mask bit 16
-            raise RSA306B.RSA_Error('Input overrange.')
+            raise RSA_Error('Input overrange.')
         elif bool(status & 0x40000):  # mask bit 18
-            raise RSA306B.RSA_Error('Input buffer > 75{} full.'.format('%'))
+            raise RSA_Error('Input buffer > 75{} full.'.format('%'))
         elif bool(status & 0x80000):  # mask bit 19
-            raise RSA306B.RSA_Error('Input buffer overflow. IQStream processing too'
+            raise RSA_Error('Input buffer overflow. IQStream processing too'
                   + ' slow, data loss has occurred.')
         elif bool(status & 0x100000):  # mask bit 20
-            raise RSA306B.RSA_Error('Output buffer > 75{} full.'.format('%'))
+            raise RSA_Error('Output buffer > 75{} full.'.format('%'))
         elif bool(status & 0x200000):  # mask bit 21
-            raise RSA306B.RSA_Error('Output buffer overflow. File writing too slow, '
+            raise RSA_Error('Output buffer overflow. File writing too slow, '
                 + 'data loss has occurred.')       
 
     def SPECTRUM_Acquire(self, trace='Trace1', tracePoints=801, timeoutMsec=10):
@@ -2380,17 +2379,14 @@ class RSA306B:
         self.IQBLK_SetIQBandwidth(iqBw)
         self.IQBLK_SetIQRecordLength(recordLength)
 
-    def IQBLK_Acquire(self, func=IQBLK_GetIQDataDeinterleaved, recLen=1024, tOutMs=10):
+    def IQBLK_Acquire(self, recLen=1024, tOutMs=10):
         """
-        Acquire IQBLK data using selected method.
+        Acquire IQBLK data using IQBLK_GetIQDataDeinterleaved.
 
         Parameters
         ----------
-        func : method
-            Desired IQBLK acquisition method. Can be either IQBLK_GetIQData
-            or IQBLK_GetIQDataDeinterleaved, depending on desired format.
         recLen : int
-            IQBLK record length, a number of samples.
+            Requested IQBLK record length, a number of samples.
         tOutMs : int
             How long to wait for IQBLK data to be ready, in milliseconds.
 
@@ -2403,4 +2399,4 @@ class RSA306B:
         self.IQBLK_AcquireIQData()
         while not self.IQBLK_WaitForIQDataReady(tOutMs):
             pass
-        return self.func(recLen)
+        return self.IQBLK_GetIQDataDeinterleaved(reqLength=recLen)
