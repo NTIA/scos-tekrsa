@@ -1,8 +1,16 @@
-# 1. Tektronix 306B RSA API Wrapper
+# 1. Tektronix RSA 306B API Wrapper
 
-This file wraps the [Tektronix Python/Ctypes RSA API](https://github.com/tektronix/RSA_API/tree/master/Python), with the goal of masking the Ctypes dependency. It implements a majority of the RSA API functions for the 306B. Some API documentation is included in docstrings, however this is mostly for quick reference during development, and is not meant as a substitute for the [RSA API Programming Reference manual](https://www.tek.com/spectrum-analyzer/rsa306-manual/rsa306-rsa306b-and-rsa500a-600a-0) offered by Tektronix. This wrapper was primarily developed for use within the [`scos-tekrsa`](https://github.com/ntia/scos-tekrsa) plugin for NTIA/ITS's [`scos-sensor`](https://github.com/ntia/scos-sensor) platform for networked sensor operation, though it may be useful or extensible for other applications.
+The file wraps the [Tektronix Python/Ctypes RSA API](https://github.com/tektronix/RSA_API/tree/master/Python), with the goal of masking the Ctypes dependency. It implements the API functions for the RSA 306B. Some API documentation is included in docstrings, however this is mostly for quick reference during development, and is not meant as a substitute for the [RSA API Programming Reference manual](https://www.tek.com/spectrum-analyzer/rsa306-manual/rsa306-rsa306b-and-rsa500a-600a-0) offered by Tektronix. This wrapper was primarily developed for use within the [`scos-tekrsa`](https://github.com/ntia/scos-tekrsa) plugin for NTIA/ITS's [`scos-sensor`](https://github.com/ntia/scos-sensor) platform for networked sensor operation, though it may be useful or extensible for other applications.
 
-The `rsa306b_api.py` file requires the `libRSA_API.so` and `libcyusb_shared.so` shared objects from the Tektronix RSA API for Linux, and expects to find them in the drivers directory for scos-sensor. When building scos-sensor, you will need to place these two shared object files in the `drivers` directory in the scos-sensor repository root directory.
+This wrapper was developed using v1.0.0014 of the RSA API for Linux.
+
+The `rsa306b_api.py` file requires the `libRSA_API.so` and `libcyusb_shared.so` shared objects from the Tektronix RSA API for Linux, and by default expects to find them in the drivers directory for scos-sensor. If you are running without scos-sensor, you will need to specify your drivers directory when instantiating the API wrapper:
+
+```python
+from rsa306b_api import *
+rsa = RSA306B(so_dir='/path/to/shared_objects/')
+rsa.DEVICE_Connect(0) # Example usage
+```
 
 Some helper methods have been included, which aim to make some common tasks a bit easier to perform. These are included at the very bottom of the `rsa306b_api.py` file.
 
