@@ -1,8 +1,10 @@
+import logging
 import sys
 from os import path
 
 from django.conf import settings
 from environs import Env
+from scos_actions.settings import *
 
 env = Env()
 
@@ -22,10 +24,20 @@ __cmd = path.split(sys.argv[0])[-1]
 RUNNING_TESTS = "test" in __cmd
 
 if not settings.configured or not hasattr(settings, "MOCK_RADIO"):
-    MOCK_RADIO = env.bool("MOCK_RADIO", default=False)
+    MOCK_RADIO = env.bool("MOCK_RADIO", default=False) or RUNNING_TESTS
 else:
     MOCK_RADIO = settings.MOCK_RADIO
 if not settings.configured or not hasattr(settings, "MOCK_RADIO_RANDOM"):
     MOCK_RADIO_RANDOM = env.bool("MOCK_RADIO_RANDOM", default=False)
 else:
     MOCK_RADIO_RANDOM = settings.MOCK_RADIO_RANDOM
+
+if settings.configured:
+    LOGGING = settings.LOGGING
+    LOGLEVEL = settings.LOGLEVEL
+    LOGGING["loggers"]["scos_tekrsa"] = {
+        "handlers": ["console"],
+        "level": LOGLEVEL,
+    }
+else:
+    logging.basicConfig(level=logging.DEBUG)
