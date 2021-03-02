@@ -65,7 +65,6 @@ class RSA306BRadio(RadioInterface):
 
         if settings.RUNNING_TESTS or settings.MOCK_RADIO:
             # Mock radio if desired
-            logger.warning("Using mock Tektronix RSA.")
             random = settings.MOCK_RADIO_RANDOM
             self.rsa = MockRSA(randomize_values=random)
         else:
