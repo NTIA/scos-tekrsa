@@ -316,14 +316,14 @@ class RSA306BRadio(RadioInterface):
 
         # Determine correct time length for num_samples based on current SR
         durationMsec = int((1000*nsamps)/self.sample_rate)
+        nsamps_original = nsamps
         
         if durationMsec == 0:
             # Num. samples requested is less than minimum duration for IQ stream.
             # Handle by skipping samples:
             durationMsec = 1
-            nsamps_original = nsamps
             need_to_skip = int((self.sample_rate/1000) - nsamps_original)
-            nsamps = need_to_skip + nsamps
+            nsamps = need_to_skip + nsamps_original
             fix_flag = True
         else:
             fix_flag = False
