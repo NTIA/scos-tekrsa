@@ -2298,7 +2298,7 @@ class RSA306B:
         q = np.append(d[1:-1:2], d[-1])
         # Re-interleave as numpy complex64)
         iqData = i + 1j*q
-        assert iqData.type == np.complex64
+        assert iqData.dtype == np.complex64
 
         return iqData
 
