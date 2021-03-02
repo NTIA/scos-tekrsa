@@ -325,6 +325,8 @@ class RSA306BRadio(RadioInterface):
             need_to_skip = int((self.sample_rate/1000) - nsamps_original)
             nsamps = need_to_skip + nsamps
             fix_flag = True
+        else:
+            fix_flag = False
 
         logger.debug(f"acquire_time_domain_samples starting, num_samples = {nsamps}")
         logger.debug(f"Number of retries = {retries}")
