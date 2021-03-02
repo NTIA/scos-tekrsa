@@ -50,6 +50,7 @@ class RSA306BRadio(RadioInterface):
         self.sigan_calibration_data = None
         self.sensor_calibration = None
         self.sigan_calibration = None
+        self._capture_time = None
 
         self.connect()
         self.get_calibration(sensor_cal_file, sigan_cal_file)
@@ -298,45 +299,66 @@ class RSA306BRadio(RadioInterface):
         
         return True
 
-    # Handle taking IQ samples
-    def acquire_time_domain_samples(self, num_samples, num_samples_skip=0, retries=5):
-        logger.debug(
-            f"acquire_time_domain_samples starting num_samples = {num_samples}"
-        )
-        # Determine correct time length for num_samples based on current SR
-        total_samples = num_samples + num_samples_skip
-        durationMsec = int((total_samples/self.sample_rate)*1000)
-        
-        self.recompute_calibration_data()
-        #db_gain = self.sensor_calibration_data["gain_sensor"]
-        # Placeholder db_gain:
-        db_gain = 0
-        logger.debug(f"Number of retries = {retries}")
-        
-        # Compute the linear gain
-        linear_gain = 10 ** (db_gain / 20.0)
-        
-        while True:
-            try:
-                result_data = self.rsa.IQSTREAM_Tempfile(
-                                    self.frequency, self.reference_level,
-                                    self.sr_bw_map[self.sample_rate], durationMsec
-                              )
 
-                received_samples = len(result_data)
-                if received_samples < total_samples:
-                    logger.warning(
-                        f"Only {received_samples} samples received. Expected {total_samples} samples."
-                    )
-                    if retries > 0:
-                        logger.info("Retrying time domain iq measurement.")
-                        retries = retries - 1
-                        continue
-                    else:
-                        error_message = "Max retries exceeded."
-                        logger.error(error_message)
-                        raise RuntimeError(error_message)
-                data = result_data[num_samples_skip : total_samples]
+    def acquire_time_domain_samples(self, num_samples, num_samples_skip=0, retries=5):
+        """Acquire specific number of time-domain IQ samples."""
+        self._capture_time = None
+        # Get calibration data for acquisition
+        self.recompute_calibration_data()
+        nsamps = int(num_samples)
+        nskip = int(num_samples_skip)
+        # Compute the linear gain
+        # db_gain = self.sensor_calibration_data["gain_sensor"]
+        # Use easy gain formula from testing utils:
+        db_gain = (30-self.reference_level)*(self.sample_rate/1e6)*(self.frequency/1e9)
+        linear_gain = 10 ** (db_gain / 20.0)
+        nsamps += nskip
+
+        # Determine correct time length for num_samples based on current SR
+        durationMsec = int((1000*nsamps)/self.sample_rate)
+        
+        if durationMsec == 0:
+            # Num. samples requested is less than minimum duration for IQ stream.
+            # Handle by skipping samples:
+            durationMsec = 1
+            nsamps_original = nsamps
+            need_to_skip = int((self.sample_rate/1000) - nsamps_original)
+            nsamps = need_to_skip + nsamps
+            fix_flag = True
+
+        logger.debug(f"acquire_time_domain_samples starting, num_samples = {nsamps}")
+        logger.debug(f"Number of retries = {retries}")
+
+        max_retries = retries
+
+        while True:
+            self._capture_time = utils.get_datetime_str_now()
+            data = self.rsa.IQSTREAM_Tempfile(
+                                self.frequency, self.reference_level,
+                                self.sr_bw_map[self.sample_rate], durationMsec
+                          )
+            if fix_flag:
+                # Data needs additional truncation
+                data = data[need_to_skip:]
+
+            data_len = len(data)
+
+            data = data[nskip:]
+
+            if not data_len == nsamps_original:
+                if retries > 0:
+                    msg = "RSA error: requested {} samples, but got {}."
+                    logger.warning(msg.format(nsamps_original + nskip, data_len))
+                    logger.warning("Retrying {} more times.".format(retries))
+                    retries -= 1
+                else:
+                    err = "Failed to acquire correct number of samples "
+                    err += "{} times in a row.".format(max_retries)
+                    raise RuntimeError(err)
+            else:
+                logger.debug("Successfully acquired {} samples.".format(data_len))
+            
+                # Scale data to RF power and return
                 data /= linear_gain
 
                 measurement_result = {
@@ -345,17 +367,7 @@ class RSA306BRadio(RadioInterface):
                     "frequency": self.frequency,
                     "reference_level": self.reference_level,
                     "sample_rate": self.rsa.IQSTREAM_GetAcqParameters()[1],
-                    "capture_time": durationMsec, # capture duration in milliseconds
+                    "capture_time": self._capture_time,
                     "calibration_annotation": self.create_calibration_annotation()
                 }
                 return measurement_result
-            except Exception as e:
-                logger.error(e)
-                if retries > 0:
-                    logger.info("Retrying time domain iq measurement.")
-                    retries = retries - 1
-                    continue
-                else:
-                    error_message = "Max retries exceeded."
-                    logger.error(error_message)
-                    raise RuntimeError(error_message)

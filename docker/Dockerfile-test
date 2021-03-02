@@ -14,6 +14,7 @@ COPY ./ /src
 
 ARG DOCKER_GIT_CREDENTIALS
 RUN python3 -m pip install --upgrade pip
-RUN pip3 install --no-cache-dir -r requirements-dev.txt
+RUN pip3 install --no-cache-dir -r requirements-dev.txt --use-deprecated=legacy-resolver
 
-ENTRYPOINT ["pytest"]
+# Ignore API Wrapper test (should be run separately, requires connected RSA 306B)
+ENTRYPOINT pytest --ignore=/src/scos_tekrsa/hardware/api_wrap/rsa306b_api_test.py

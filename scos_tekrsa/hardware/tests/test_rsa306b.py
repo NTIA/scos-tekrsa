@@ -1,14 +1,12 @@
 """Test aspects of RadioInterface with mocked RSA306B."""
-
 import pytest
 
 from scos_tekrsa.hardware import radio
 from scos_tekrsa.hardware.tests.resources.utils import (
     create_dummy_calibration,
     easy_gain,
-    is_close,
+    is_close
 )
-
 
 class TestRSA306B:
     # Ensure we write the test cal file and use mocks
@@ -37,14 +35,19 @@ class TestRSA306B:
         # Check that the setup was completed
         assert self.setup_complete, "Setup was not completed"
 
+        max_retries = 5
+        times_to_fail = 3
+        self.rx.rsa.set_times_to_fail(times_to_fail)
+
         try:
-            # Uses default of 5 retries
-            self.rx.acquire_time_domain_samples(1000, retries=5)
+            self.rx.acquire_time_domain_samples(1000, retries=max_retries)
         except RuntimeError:
-            msg = "Acquisition failing with {} retries \n"
-            msg += "requested should NOT have raised an error."
-            msg = msg.format(max_retries)
+            msg = "Acquisition failing {} times sequentially with {}\n"
+            msg += "retries requested should NOT have raised an error."
+            msg = msg.format(times_to_fail, max_retries)
             pytest.fail(msg)
+
+        self.rx.rsa.set_times_to_fail(0)
 
     def test_acquire_samples_fails_when_over_max_retries(self):
         """After `max_retries`, an error should be thrown."""
@@ -53,13 +56,17 @@ class TestRSA306B:
         assert self.setup_complete, "Setup was not completed"
 
         max_retries = 5
+        times_to_fail = 7
+        self.rx.rsa.set_times_to_fail(times_to_fail)
 
-        msg = "Acquisition failing with {} retries\n"
-        msg += "requested SHOULD have raised an error."
-        msg = msg.format(max_retries)
+        msg = "Acquisition failing {} times sequentially with {}\n"
+        msg += "retries requested SHOULD have raised an error."
+        msg = msg.format(times_to_fail, max_retries)
         with pytest.raises(RuntimeError):
-            self.rx.acquire_time_domain_samples(1000, 1000, max_retries)
+            self.rx.acquire_time_domain_samples(1000, 1000, retries=max_retries)
             pytest.fail(msg)
+
+        self.rx.rsa.set_times_to_fail(0)
 
     def test_scaled_data_acquisition(self):
         """Check that the samples are properly scaled"""
@@ -74,7 +81,7 @@ class TestRSA306B:
         data = measurement_result["data"]
 
         # The true value should be the 1 / linear gain
-        true_val = easy_gain(int(10e6), 1e9, 20) - 10
+        true_val = easy_gain(self.rx.sample_rate, self.rx.frequency, self.rx.reference_level) - 10
         true_val = 10 ** (-1 * float(true_val) / 20)
 
         # Get the observed value

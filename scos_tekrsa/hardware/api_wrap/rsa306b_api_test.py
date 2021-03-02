@@ -10,10 +10,11 @@ This is a test for the entire API Wrapper for the Tektronix RSA306B.
 It requires a compatible RSA device to be connected.
 
 The location for libcyusb_shared.so and libRSA_API.so must also be
-specified in TEST_SO_DIR below before use.
+specified in TEST_SO_DIR below before use. By default this is set to
+the scos-sensor drivers directory.
 """
 
-TEST_SO_DIR = '/absolute/path/to/shared_objects.so'
+TEST_SO_DIR = '/opt/scos-sensor/drivers/'
 
 class rsa_api_test(unittest.TestCase):
     """Test for rsa306b_api.py"""
