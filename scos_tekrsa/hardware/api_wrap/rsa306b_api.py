@@ -13,7 +13,7 @@ class RSA_Error(Exception):
 
 class RSA306B:
 
-    def __init__(self, so_dir='/opt/scos-sensor/drivers/'):
+    def __init__(self, so_dir='/drivers/'):
         """ Load the RSA USB Driver """
         # Param. 'so_dir' is the directory containing libRSA_API.so and
         # libcyusb_shared.so. Default is scos-sensor drivers directory.
