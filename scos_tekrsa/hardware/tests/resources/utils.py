@@ -1,13 +1,10 @@
 import datetime
 from scos_tekrsa.hardware.calibration import Calibration
 
-# Notes:
-# easy_gain currently uses (30 - reference_level) as "gain"
-# dummy calibration may need to be updated / is untested
 
-def easy_gain(sr, f, rl):
-    """Create an easily interpolated value."""
-    return (30-rl)*(sr/1e6)*(f/1e9)
+def easy_gain(sample_rate, frequency, ref_level):
+    """Create an easily interpolated calibration gain value."""
+    return (30 - rl) + (sr / 1e6) + (f / 1e9)
 
 def is_close(a, b, tolerance):
     """ Handle floating point comparisons """
@@ -17,7 +14,7 @@ def create_dummy_calibration(empty_cal=False):
     """Create a dummy calibration object"""
 
     # Define the calibration file steps
-    sample_rates = [10e6, 14e6, 40e6]
+    sample_rates = [7e6, 14e6, 28e6, 56e6]
     reference_levels = [-40, -20, 0, 20]
     frequencies = [1e9, 2e9, 3e9, 4e9]
 
@@ -46,7 +43,7 @@ def create_dummy_calibration(empty_cal=False):
                     }
     else:  # Create an empty calibration file
         calibration_data = {  # Empty calibration file data
-            10e6: {1e9: {-30: {}, 0: {}}, 2e9: {-30: {}, 0: {}}}
+            28e6: {1e9: {-20: {}, 0: {}}, 2e9: {-20: {}, 0: {}}}
         }
 
     return Calibration(
