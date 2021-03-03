@@ -49,11 +49,13 @@ TEMPORARY NOTE: My testing have been done using the SMBWTB475_refactor_radio_int
 
 7. Download the [RSA API for Linux](https://www.tek.com/spectrum-analyzer/rsa306-software/rsa-application-programming-interface--api-for-64bit-linux--v100014) from Tektronix. Place the two driver files, `libRSA_API.so` and `libcyusb_shared.so`, in the directory `scos-sensor/drivers`.
 
-8. Get environment variables: `source ./env`
+8. (Temporary) Add `- ${REPO_ROOT}:/drivers` as a volume in the `api` section of scos-sensor's `docker-compose.yml`. This will not be necessary in the future (relevant PR for scos-sensor [here](https://github.com/NTIA/scos-sensor/pull/189))
 
-9. Build and start containers: `docker-compose up -d --build --force-recreate`
+9. Get environment variables: `source ./env`
 
-10. Optionally, view logs: `docker-compose logs -f`
+10. Build and start containers: `docker-compose up -d --build --force-recreate`
+
+11. Optionally, view logs: `docker-compose logs -f`
 
 ## 5. Development
 
