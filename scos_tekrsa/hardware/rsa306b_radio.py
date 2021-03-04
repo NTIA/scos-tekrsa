@@ -303,30 +303,26 @@ class RSA306BRadio(RadioInterface):
     def acquire_time_domain_samples(self, num_samples, num_samples_skip=0, retries=5):
         """Acquire specific number of time-domain IQ samples."""
         self._capture_time = None
+        nsamps_req = int(num_samples) # Requested number of samples
+        nskip = int(num_samples_skip) # Requested number of samples to skip
+        nsamps = nsamps_req + nskip # Total number of samples to collect
+
         # Get calibration data for acquisition
         self.recompute_calibration_data()
-        nsamps = int(num_samples)
-        nskip = int(num_samples_skip)
-        # Compute the linear gain
-        # db_gain = self.sensor_calibration_data["gain_sensor"]
-        # Use easy gain formula from testing utils:
-        db_gain = (30-self.reference_level)*(self.sample_rate/1e6)*(self.frequency/1e9)
-        linear_gain = 10 ** (db_gain / 20.0)
-        nsamps += nskip
 
+        # Compute the linear gain
+        db_gain = self.sensor_calibration_data["gain_sensor"]
+        linear_gain = 10 ** (db_gain / 20.0)
+        
         # Determine correct time length for num_samples based on current SR
-        durationMsec = int((1000*nsamps)/self.sample_rate)
-        nsamps_original = nsamps
+        durationMsec = int(1000*(nsamps/self.sample_rate))
         
         if durationMsec == 0:
             # Num. samples requested is less than minimum duration for IQ stream.
-            # Handle by skipping samples:
-            durationMsec = 1
-            need_to_skip = int((self.sample_rate/1000) - nsamps_original)
-            nsamps = need_to_skip + nsamps_original
-            fix_flag = True
-        else:
-            fix_flag = False
+            # Handle this by skipping more samples than requested
+            durationMsec = 1 # Minimum allowed IQ stream duration
+            nskip = int((self.sample_rate/1000) - nsamps_req)
+            nsamps = nskip + nsamps_req
 
         logger.debug(f"acquire_time_domain_samples starting, num_samples = {nsamps}")
         logger.debug(f"Number of retries = {retries}")
@@ -339,18 +335,14 @@ class RSA306BRadio(RadioInterface):
                                 self.frequency, self.reference_level,
                                 self.sr_bw_map[self.sample_rate], durationMsec
                           )
-            if fix_flag:
-                # Data needs additional truncation
-                data = data[need_to_skip:]
-
+   
+            data = data[nskip:]
             data_len = len(data)
 
-            data = data[nskip:]
-
-            if not data_len == nsamps_original:
+            if not data_len == nsamps_req:
                 if retries > 0:
                     msg = "RSA error: requested {} samples, but got {}."
-                    logger.warning(msg.format(nsamps_original + nskip, data_len))
+                    logger.warning(msg.format(nsamps_req + nskip, data_len))
                     logger.warning("Retrying {} more times.".format(retries))
                     retries -= 1
                 else:
