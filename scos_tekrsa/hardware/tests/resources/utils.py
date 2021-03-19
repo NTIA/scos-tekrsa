@@ -4,7 +4,7 @@ from scos_tekrsa.hardware.calibration import Calibration
 
 def easy_gain(sample_rate, frequency, ref_level):
     """Create an easily interpolated calibration gain value."""
-    return (30 - rl) + (sr / 1e6) + (f / 1e9)
+    return (30 - ref_level) + (sample_rate / 1e6) + (frequency / 1e9)
 
 def is_close(a, b, tolerance):
     """ Handle floating point comparisons """
