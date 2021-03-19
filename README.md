@@ -36,7 +36,7 @@ TEMPORARY NOTE: Use the SMBWTB475_refactor_radio_interface branch of scos-sensor
 
 3. While in the scos-sensor root directory, create the `env` file by copying the template file: `cp env.template ./env`
 
-4. In the `env` file, set `BASE_IMAGE` to `BASE_IMAGE=docker.pkg.github.com/ntia/scos-tekrsa/tekrsa_usb:0.1.2`
+4. In the `env` file, set `BASE_IMAGE` to `BASE_IMAGE=docker.pkg.github.com/ntia/scos-tekrsa/tekrsa_usb:0.1.4`
 
 	- While this repository is private, [authentication with GitHub packages](https://docs.github.com/en/free-pro-team@latest/packages/using-github-packages-with-your-projects-ecosystem/configuring-docker-for-use-with-github-packages#authenticating-to-github-packages) using a [GitHub personal access token](https://docs.github.com/en/free-pro-team@latest/packages/publishing-and-managing-packages/about-github-packages#about-tokens) is required.
 	- If your personal access token is stored at `~/token.txt`, this can be done by running: `cat ~/token.txt | docker login https://docker.pkg.github.com -u <GITHUB_USERNAME> --password-stdin`
