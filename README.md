@@ -28,7 +28,7 @@ Requires pip>=18.1 (upgrade using `python3 -m pip install --upgrade pip`).
 
 Below are the steps to run scos-sensor with the scos-tekrsa plugin:
 
-TEMPORARY NOTE: Use the SMBWTB475_refactor_radio_interface branch of scos-sensor
+TEMPORARY NOTE: Use the copy_driver_files branch of scos-sensor
 
 1. Clone scos-sensor: `git clone https://github.com/NTIA/scos-sensor.git`. 
 
@@ -41,13 +41,13 @@ TEMPORARY NOTE: Use the SMBWTB475_refactor_radio_interface branch of scos-sensor
 	- While this repository is private, [authentication with GitHub packages](https://docs.github.com/en/free-pro-team@latest/packages/using-github-packages-with-your-projects-ecosystem/configuring-docker-for-use-with-github-packages#authenticating-to-github-packages) using a [GitHub personal access token](https://docs.github.com/en/free-pro-team@latest/packages/publishing-and-managing-packages/about-github-packages#about-tokens) is required.
 	- If your personal access token is stored at `~/token.txt`, this can be done by running: `cat ~/token.txt | docker login https://docker.pkg.github.com -u <GITHUB_USERNAME> --password-stdin`
 
+TEMPORARY NOTE: While this repository is private, add `DOCKER_GIT_CREDENTIALS="$(cat ~/.git-credentials)"` to the `env` file, assuming your git credentials are stored at `~/.git-credentials)"`
+
 5. In `scos-sensor/src/requirements.txt`, remove or comment any unnecessary dependencies (such as scos-usrp), then add the scos_tekrsa dependency: `scos_tekrsa @ git+${DOCKER_GIT_CREDENTIALS}/NTIA/scos-tekrsa@master#egg=scos_tekrsa`
 
-6. TEMPORARY: Add `--use-deprecated=legacy-resolver` to the `pip3` command (line 24) in `scos-sensor/docker/Dockerfile-api`. This should be resolved in a future update to scos-sensor.
+6. Download the [RSA API for Linux](https://www.tek.com/spectrum-analyzer/rsa306-software/rsa-application-programming-interface--api-for-64bit-linux--v100014) from Tektronix. Place the three files `libRSA_API.so`, `libcyusb_shared.so`, and `cyusb.conf` in the directory `scos-sensor/drivers`.
 
-7. Download the [RSA API for Linux](https://www.tek.com/spectrum-analyzer/rsa306-software/rsa-application-programming-interface--api-for-64bit-linux--v100014) from Tektronix. Place the three files `libRSA_API.so`, `libcyusb_shared.so`, and `cyusb.conf` in the directory `scos-sensor/drivers`.
-
-8. Create a JSON file in `scos-sensor/drivers` containing:
+7. Create a JSON file in `scos-sensor/drivers` containing:
 
 ```json
 {
