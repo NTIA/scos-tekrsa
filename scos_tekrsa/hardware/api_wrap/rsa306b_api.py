@@ -2,7 +2,7 @@ import tempfile
 import numpy as np
 from ctypes import *
 from enum import Enum
-from os.path import dirname, realpath
+from os.path import abspath, join
 from time import sleep
 
 class RSA_Error(Exception):
@@ -19,8 +19,8 @@ class RSA306B:
         # libcyusb_shared.so. Default is scos-sensor drivers directory.
         RTLD_LAZY = 0x0001
         LAZYLOAD = RTLD_LAZY | RTLD_GLOBAL
-        self.rsa = CDLL(so_dir + 'libRSA_API.so', LAZYLOAD)
-        self.usbapi = CDLL(so_dir + 'libcyusb_shared.so', LAZYLOAD)
+        self.rsa = CDLL(join(abspath(so_dir), 'libRSA_API.so'), LAZYLOAD)
+        self.usbapi = CDLL(join(abspath(so_dir), 'libcyusb_shared.so'), LAZYLOAD)
 
     """ GLOBAL CONSTANTS """
 
