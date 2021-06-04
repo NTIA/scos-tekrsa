@@ -37,8 +37,7 @@ class RSA306BRadio(RadioInterface):
         
         # Use values defined above to create SR/BW mapping dict,
         # with SR as keys and BW as values.
-        self.sr_bw_map = {self.ALLOWED_SR[i] : self.ALLOWED_BW[i]
-                          for i in range(len(self.ALLOWED_SR))}
+        self.sr_bw_map = dict(zip(self.ALLOWED_SR, self.ALLOWED_BW))
 
         self.max_sample_rate = self.ALLOWED_SR[0]
         self.max_reference_level = 30 # dBm, constant
