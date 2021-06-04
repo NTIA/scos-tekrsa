@@ -29,11 +29,11 @@ class RSA306BRadio(RadioInterface):
 
         # Allowed sample rates and bandwidth settings for RSA306B,
         # ordered from greatest to least. SR in samples/sec, BW in Hz.
-        self.ALLOWED_SR = [56.0e6, 28000000.0, 14000000.0, 7000000.0,
-                           3500000.0, 750000.0, 875000.0, 437500.0, 218750.0,
-                           109375.0, 54687.5, 27343.75, 13671.875]
-        self.ALLOWED_BW = [40.0e6, 20.0e6, 10.0e6, 5.0e6, 2.5e6, 1.25e6, 6.25e5,
-                           3.125e5, 156250.0, 78125.0, 39062.5, 19531.25, 9765.625]
+        self.ALLOWED_SR = [56.0e6, 28.0e6, 14.0e6, 7.0e6, 3.5e6, 1.75e6, 875.e3,
+                           437.5e3, 218.75e3, 109.375e3, 54687.5, 24373.75, 13671.875]
+
+        self.ALLOWED_BW = [40.0e6, 20.0e6, 10.0e6, 5.0e6, 2.5e6, 1.25e6, 625.e3,
+                           312.5e3, 156.25e3, 78125., 39062.5, 19531.25, 9765.625]
         
         # Use values defined above to create SR/BW mapping dict,
         # with SR as keys and BW as values.
