@@ -1,9 +1,9 @@
-import numpy as np
 import unittest
-from os.path import isdir, abspath
+from os.path import isdir
 from os import mkdir
-from rsa306b_api import *
+import rsa_api
 from time import sleep
+import numpy as np
 
 """
 This is a test for the entire API Wrapper for the Tektronix RSA306B.
@@ -14,7 +14,7 @@ specified in TEST_SO_DIR below before use. By default this is set to
 the scos-sensor drivers directory.
 """
 
-TEST_SO_DIR = '/opt/scos-sensor/drivers/'
+TEST_SO_DIR = './drivers/'
 
 class rsa_api_test(unittest.TestCase):
     """Test for rsa306b_api.py"""
@@ -50,12 +50,12 @@ class rsa_api_test(unittest.TestCase):
         extRefFreq = 10e6
         self.assertEqual(CONFIG_GetExternalRefFrequency(), extRefFreq)
         CONFIG_SetExternalRefEnable(exRefEn=False)
-        self.assertRaises(RSA_Error, CONFIG_GetExternalRefFrequency)
+        self.assertRaises(rsa_api.RSAError, CONFIG_GetExternalRefFrequency)
     """
 
     def test_CONFIG_FrequencyReferenceSource(self):
-        self.assertRaises(RSA_Error, rsa.CONFIG_SetFrequencyReferenceSource, 'GNSS')
-        self.assertRaises(RSA_Error, rsa.CONFIG_SetFrequencyReferenceSource, 'abc')
+        self.assertRaises(rsa_api.RSAError, rsa.CONFIG_SetFrequencyReferenceSource, 'GNSS')
+        self.assertRaises(rsa_api.RSAError, rsa.CONFIG_SetFrequencyReferenceSource, 'abc')
         self.assertRaises(TypeError, rsa.CONFIG_SetFrequencyReferenceSource, 0)
         self.assertIsNone(rsa.CONFIG_SetFrequencyReferenceSource('INTERNAL'))
         self.assertIsInstance(rsa.CONFIG_GetFrequencyReferenceSource(), str)
@@ -112,7 +112,7 @@ class rsa_api_test(unittest.TestCase):
             self.assertFalse(event)
             self.assertEqual(timestamp, 0)
         self.assertRaises(TypeError, rsa.DEVICE_GetEventStatus, 0)
-        self.assertRaises(RSA_Error, rsa.DEVICE_GetEventStatus, 'abc')
+        self.assertRaises(rsa_api.RSAError, rsa.DEVICE_GetEventStatus, 'abc')
     
     def test_DEVICE_GetEventStatus_trig_event(self):
         rsa.DEVICE_Run()
@@ -200,9 +200,9 @@ class rsa_api_test(unittest.TestCase):
         self.assertEqual(len(i), rl)
         self.assertEqual(len(q), rl)
         
-        self.assertRaises(ValueError, rsa.IQBLK_Acquire, recLen=neg)
-        self.assertRaises(ValueError, rsa.IQBLK_Acquire, recLen=200000000)
-        self.assertRaises(TypeError, rsa.IQBLK_Acquire, recLen='abc')
+        self.assertRaises(ValueError, rsa.IQBLK_Acquire, rec_len=neg)
+        self.assertRaises(ValueError, rsa.IQBLK_Acquire, rec_len=200000000)
+        self.assertRaises(TypeError, rsa.IQBLK_Acquire, rec_len='abc')
 
     """IQSTREAM Command Testing"""
     
@@ -238,8 +238,8 @@ class rsa_api_test(unittest.TestCase):
         
         for d in dest:
             for t in dtype:
-                if d is 'FILE_TIQ' and 'SINGLE' in t:
-                    self.assertRaises(RSA_Error,
+                if d == 'FILE_TIQ' and 'SINGLE' in t:
+                    self.assertRaises(rsa_api.RSAError,
                                       rsa.IQSTREAM_SetOutputConfiguration, d, t)
                 else:
                     self.assertIsNone(rsa.IQSTREAM_SetOutputConfiguration(d, t))
@@ -248,8 +248,8 @@ class rsa_api_test(unittest.TestCase):
                           num, dtype[0])
         self.assertRaises(TypeError, rsa.IQSTREAM_SetOutputConfiguration,
                           dest[0], num)
-        self.assertRaises(RSA_Error, rsa.IQSTREAM_SetOutputConfiguration, 'a', 'SINGLE')
-        self.assertRaises(RSA_Error, rsa.IQSTREAM_SetOutputConfiguration, 'CLIENT', 'a')
+        self.assertRaises(rsa_api.RSAError, rsa.IQSTREAM_SetOutputConfiguration, 'a', 'SINGLE')
+        self.assertRaises(rsa_api.RSAError, rsa.IQSTREAM_SetOutputConfiguration, 'CLIENT', 'a')
 
     def test_IQSTREAM_SetDiskFilenameBase(self):
         path = '/tmp/rsa_api_unittest'
@@ -380,9 +380,9 @@ class rsa_api_test(unittest.TestCase):
         self.assertEqual(enable, o_enable)
         self.assertEqual(detector, o_detector)
         
-        self.assertRaises(RSA_Error, rsa.SPECTRUM_SetTraceType, trace='abc')
+        self.assertRaises(rsa_api.RSAError, rsa.SPECTRUM_SetTraceType, trace='abc')
         self.assertRaises(TypeError, rsa.SPECTRUM_SetTraceType, trace=40e5)
-        self.assertRaises(RSA_Error, rsa.SPECTRUM_SetTraceType,
+        self.assertRaises(rsa_api.RSAError, rsa.SPECTRUM_SetTraceType,
                           detector='abc')
         self.assertRaises(TypeError, rsa.SPECTRUM_SetTraceType, detector=40e5)
     
@@ -411,7 +411,7 @@ class rsa_api_test(unittest.TestCase):
         rsa.SPECTRUM_SetSettings(span, rbw, enableVBW, vbw, traceLength, window,
                                 verticalUnit)
         spectrum, outTracePoints = rsa.SPECTRUM_Acquire(trace='Trace1',
-                                       tracePoints=traceLength)
+                                       trace_points=traceLength)
         self.assertEqual(len(spectrum), traceLength)
         self.assertIsInstance(spectrum, np.ndarray)
         self.assertRaises(TypeError, rsa.SPECTRUM_Acquire, trace=1)
@@ -422,7 +422,7 @@ class rsa_api_test(unittest.TestCase):
 
 if __name__ == '__main__':
     """There must be a connected RSA 306B in order to test."""
-    rsa = RSA306B(so_dir=TEST_SO_DIR)
+    rsa = rsa_api.RSA(so_dir=TEST_SO_DIR)
     rsa.DEVICE_Connect(0)
     if rsa.DEVICE_GetNomenclature() != 'RSA306B':
         raise Exception('Incorrect RSA model, please connect RSA306B')

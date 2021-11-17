@@ -43,8 +43,8 @@ class _SpectrumLimits(Structure):
                 ('minRBW', c_double),
                 ('maxVBW', c_double),
                 ('minVBW', c_double),
-                ('maxTraceLength', c_double),
-                ('minTraceLength', c_double)]
+                ('maxTraceLength', c_int),  # Incorrectly documented as a double
+                ('minTraceLength', c_int)]  # Incorrectly documented as a double
 
 
 class _SpectrumSettings(Structure):
