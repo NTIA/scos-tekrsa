@@ -662,7 +662,7 @@ class RSA:
 
         If auto-attenuation is enabled, the returned value is the
         current RF attenuator hardware configuration. If it is disabled,
-        the returned value is th elast value set by CONFIG_SetRFAttenuator(),
+        the returned value is the last value set by CONFIG_SetRFAttenuator(),
         regardless of whether it has been applied to the hardware.
 
         Returns
@@ -706,6 +706,7 @@ class RSA:
             rounded to the nearest integer, in the range -51 dB to 0 dB.
         """
         value = RSA.check_num(value)
+        value = RSA.check_range(value, -51, 0)
         self.err_check(self.rsa.CONFIG_SetRFAttenuator(c_double(value)))
 
     """ DEVICE METHODS """
