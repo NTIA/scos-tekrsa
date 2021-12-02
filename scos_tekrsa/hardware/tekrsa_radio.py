@@ -16,14 +16,13 @@ from scos_tekrsa.hardware.calibration import (
 
 logger = logging.getLogger(__name__)
 
-class RSA306BRadio(RadioInterface):
+class TekRSARadio(RadioInterface):
 
     def __init__(
         self,
         sensor_cal_file=settings.SENSOR_CALIBRATION_FILE,
         sigan_cal_file=settings.SIGAN_CALIBRATION_FILE
     ):
-        self.rsa_api = None
         self.rsa = None
         self._is_available = False
 
@@ -42,8 +41,11 @@ class RSA306BRadio(RadioInterface):
         self.max_sample_rate = self.ALLOWED_SR[0]
         self.max_reference_level = 30 # dBm, constant
         self.min_reference_level = -130 # dBm, constant
+        self.max_attenuation = 51
+        self.min_attenuation = 0
         self.max_frequency = None
         self.min_frequency = None
+        self.device_name = None
         
         self.sensor_calibration_data = None
         self.sigan_calibration_data = None
@@ -53,6 +55,7 @@ class RSA306BRadio(RadioInterface):
 
         self.connect()
         self.get_calibration(sensor_cal_file, sigan_cal_file)
+
 
     def get_constraints(self):
         self.min_frequency = self.rsa.CONFIG_GetMinCenterFreq()
@@ -67,19 +70,20 @@ class RSA306BRadio(RadioInterface):
             # Mock radio if desired
             random = settings.MOCK_RADIO_RANDOM
             self.rsa = MockRSA(randomize_values=random)
+            self.device_name = 'RSA306B'  # Mock radio pretends to be a 306B
         else:
             try:
                 # Load API wrapper
-                import rsa_api as api_wrap
-                self.rsa_api = api_wrap
+                import rsa_api
             except ImportError:
                 logger.warning("API Wrapper not loaded - disabling radio.")
                 self._is_available = False
                 return
             try:
-                self.rsa = self.rsa_api.RSA()
+                self.rsa = rsa_api.RSA()
                 # Connect to device using API wrapper
                 self.rsa.DEVICE_SearchAndConnect()
+                self.device_name = self.rsa.DEVICE_GetNomenclature()
                 self.align()
                 self.get_constraints()
             except Exception as e:
@@ -87,7 +91,9 @@ class RSA306BRadio(RadioInterface):
                 return
 
         logger.debug("Using the following Tektronix RSA device:")
-        logger.debug(self.rsa.DEVICE_GetNomenclature())
+        logger.debug(self.device)
+        if settings.RUNNING_TESTS or settings.MOCK_RADIO:
+            logger.debug('(Mock device in use, not an actual RSA!)')
 
         self._is_available = True
         
@@ -171,7 +177,7 @@ class RSA306BRadio(RadioInterface):
         # The IQ Bandwidth determines the RSA sample rate.
         bw = self.sr_bw_map.get(sample_rate)
         self.rsa.IQSTREAM_SetAcqBandwidth(bw)
-        msg = "set Tektronix RSA 306B sample rate: {:.1f} samples/sec"
+        msg = "set Tektronix RSA sample rate: {:.1f} samples/sec"
         logger.debug(msg.format(self.rsa.IQSTREAM_GetAcqParameters()[1]))
 
     @property
@@ -182,7 +188,7 @@ class RSA306BRadio(RadioInterface):
     def frequency(self, freq):
         """Set the device center frequency."""
         self.rsa.CONFIG_SetCenterFreq(freq)
-        msg = "Set Tektronix RSA 306B center frequency: {:.1f} Hz"
+        msg = "Set Tektronix RSA center frequency: {:.1f} Hz"
         logger.debug(msg.format(self.rsa.CONFIG_GetCenterFreq()))
 
     @property
@@ -193,8 +199,48 @@ class RSA306BRadio(RadioInterface):
     def reference_level(self, reference_level):
         """Set the device reference level."""
         self.rsa.CONFIG_SetReferenceLevel(reference_level)
-        msg = "Set Tektronix RSA 306B reference level: {:.1f} dB"
+        msg = "Set Tektronix RSA reference level: {:.1f} dBm"
         logger.debug(msg.format(self.rsa.CONFIG_GetReferenceLevel()))
+
+    @property
+    def attenuation(self):
+        if self.device_name not in ['RSA306B', 'RSA306']:
+            return self.rsa.CONFIG_GetRFAttenuator()
+        else:
+            logger.debug("Tektronix RSA 300 series device has no attenuator.")
+            return None
+
+    @attenuation.setter
+    def attenuation(self, attenuation):
+        """Set device attenuation, in dB, for RSA 500/600 series devices"""
+        if self.device_name not in ['RSA306B', 'RSA306']:
+            self.rsa.DEVICE_Stop()
+            self.rsa.CONFIG_SetAutoAttenuationEnable(False)
+            self.rsa.CONFIG_SetRFAttenuator(-1*attenuation)  # rounded to nearest integer
+            self.rsa.DEVICE_Run()
+            msg = "Set Tektronix RSA attenuation: {:.1} dB"
+            logger.debug(msg.format(self.rsa.CONFIG_GetRFAttenuator()))
+        else:
+            logger.debug("Tektronix RSA 300 series device has no attenuator.")
+
+    @property
+    def preamp_enable(self):
+        if self.device_name not in ['RSA306B', 'RSA306']:
+            return self.rsa.CONFIG_GetRFPreampEnable()
+        else:
+            logger.debug("Tektronix RSA 300 series device has no built-in preamp.")
+            return None
+
+    @preamp_enable.setter
+    def preamp_enable(self, preamp_enable):
+        if self.device_name not in ['RSA306B', 'RSA306']:
+            self.rsa.DEVICE_Stop()
+            self.rsa.CONFIG_SetRFPreampEnable(preamp_enable)
+            self.rsa.DEVICE_Run()
+            msg = "Set Tektronix RSA preamp enable status: {}"
+            logger.debug(msg.format(self.rsa.CONFIG_GetRFPreampEnable()))
+        else:
+            logger.debug("Tektronix RSA 300 series device has no built-in preamp.")
 
     @property
     def last_calibration_time(self):
@@ -283,7 +329,7 @@ class RSA306BRadio(RadioInterface):
     @property
     def healthy(self, num_samples=100000):
         """Perform health check by collecting IQ samples."""
-        logger.debug("Performing Tektronix RSA 306B health check.")
+        logger.debug("Performing Tektronix RSA health check.")
 
         try:
             measurement_result = self.acquire_time_domain_samples(num_samples)
@@ -363,4 +409,7 @@ class RSA306BRadio(RadioInterface):
                     "capture_time": self._capture_time,
                     "calibration_annotation": self.create_calibration_annotation()
                 }
+                if self.device_name not in ['RSA306B', 'RSA306']:
+                    measurement_result['attenuation'] = self.attenuation
+                    measurement_result['preamp_enable'] = self.preamp_enable
                 return measurement_result

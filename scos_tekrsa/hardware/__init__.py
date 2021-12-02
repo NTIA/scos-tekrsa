@@ -1,3 +1,3 @@
-from scos_tekrsa.hardware.rsa306b_radio import RSA306BRadio
+from scos_tekrsa.hardware.tekrsa_radio import TekRSARadio
 
-radio = RSA306BRadio()
+radio = TekRSARadio()
