@@ -91,7 +91,7 @@ class TekRSARadio(RadioInterface):
                 return
 
         logger.debug("Using the following Tektronix RSA device:")
-        logger.debug(self.device)
+        logger.debug(self.device_name)
         if settings.RUNNING_TESTS or settings.MOCK_RADIO:
             logger.debug('(Mock device in use, not an actual RSA!)')
 
