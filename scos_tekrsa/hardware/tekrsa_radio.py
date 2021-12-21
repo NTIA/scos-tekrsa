@@ -360,7 +360,9 @@ class TekRSARadio(RadioInterface):
         linear_gain = 10 ** (db_gain / 20.0)
         
         # Determine correct time length for num_samples based on current SR
-        durationMsec = int(1000*(nsamps/self.sample_rate))
+        durationMsec = int(1000*(nsamps/self.sample_rate)) + (1000*nsamps % self.sample_rate > 0)
+        # Line above rounds up to nearest integer value in ms
+
         
         if durationMsec == 0:
             # Num. samples requested is less than minimum duration for IQ stream.
@@ -381,7 +383,7 @@ class TekRSARadio(RadioInterface):
                                 self.sr_bw_map[self.sample_rate], durationMsec
                           )
    
-            data = data[nskip:]
+            data = data[nskip:nsamps+1]  # Remove extra samples, if any
             data_len = len(data)
 
             if not data_len == nsamps_req:
