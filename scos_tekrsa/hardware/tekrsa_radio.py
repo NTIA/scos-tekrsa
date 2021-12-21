@@ -353,6 +353,8 @@ class TekRSARadio(RadioInterface):
         nsamps = nsamps_req + nskip # Total number of samples to collect
 
         # Get calibration data for acquisition
+        logger.debug(f"\n\n REQUESTED SAMPLES {num_samples}")
+        logger.debug(f"\n\n REQUESTED SR: {self.frequency}")
         self.recompute_calibration_data()
 
         # Compute the linear gain
