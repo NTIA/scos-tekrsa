@@ -327,7 +327,7 @@ class TekRSARadio(RadioInterface):
         return annotation_md
 
     @property
-    def healthy(self, num_samples=100000):
+    def healthy(self, num_samples=56000):
         """Perform health check by collecting IQ samples."""
         logger.debug("Performing Tektronix RSA health check.")
 
@@ -353,8 +353,6 @@ class TekRSARadio(RadioInterface):
         nsamps = nsamps_req + nskip # Total number of samples to collect
 
         # Get calibration data for acquisition
-        logger.debug(f"\n\n REQUESTED SAMPLES {num_samples}")
-        logger.debug(f"\n\n REQUESTED SR: {self.sample_rate}")
         self.recompute_calibration_data()
 
         # Compute the linear gain
