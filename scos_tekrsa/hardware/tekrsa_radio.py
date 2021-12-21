@@ -354,7 +354,7 @@ class TekRSARadio(RadioInterface):
 
         # Get calibration data for acquisition
         logger.debug(f"\n\n REQUESTED SAMPLES {num_samples}")
-        logger.debug(f"\n\n REQUESTED SR: {self.frequency}")
+        logger.debug(f"\n\n REQUESTED SR: {self.sample_rate}")
         self.recompute_calibration_data()
 
         # Compute the linear gain
