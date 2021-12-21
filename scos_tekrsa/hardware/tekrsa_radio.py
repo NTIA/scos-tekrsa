@@ -383,7 +383,7 @@ class TekRSARadio(RadioInterface):
                                 self.sr_bw_map[self.sample_rate], durationMsec
                           )
    
-            data = data[nskip:nsamps+1]  # Remove extra samples, if any
+            data = data[nskip:nsamps]  # Remove extra samples, if any
             data_len = len(data)
 
             if not data_len == nsamps_req:
