@@ -177,8 +177,9 @@ class TekRSARadio(RadioInterface):
         # The IQ Bandwidth determines the RSA sample rate.
         bw = self.sr_bw_map.get(sample_rate)
         self.rsa.IQSTREAM_SetAcqBandwidth(bw)
-        msg = "set Tektronix RSA sample rate: {:.1f} samples/sec"
-        logger.debug(msg.format(self.rsa.IQSTREAM_GetAcqParameters()[1]))
+        msg = "Set Tektronix RSA sample rate: "\
+              + f"{self.rsa.IQSTREAM_GetAcqParameters()[1]:.1f} samples/sec"
+        logger.debug(msg)
 
     @property
     def frequency(self):
@@ -188,8 +189,9 @@ class TekRSARadio(RadioInterface):
     def frequency(self, freq):
         """Set the device center frequency."""
         self.rsa.CONFIG_SetCenterFreq(freq)
-        msg = "Set Tektronix RSA center frequency: {:.1f} Hz"
-        logger.debug(msg.format(self.rsa.CONFIG_GetCenterFreq()))
+        msg = "Set Tektronix RSA center frequency: "\
+              + f"{self.rsa.CONFIG_GetCenterFreq():.1f} Hz"
+        logger.debug(msg)
 
     @property
     def reference_level(self):
@@ -199,8 +201,9 @@ class TekRSARadio(RadioInterface):
     def reference_level(self, reference_level):
         """Set the device reference level."""
         self.rsa.CONFIG_SetReferenceLevel(reference_level)
-        msg = "Set Tektronix RSA reference level: {:.1f} dBm"
-        logger.debug(msg.format(self.rsa.CONFIG_GetReferenceLevel()))
+        msg = "Set Tektronix RSA reference level: "\
+              + f"{self.rsa.CONFIG_GetReferenceLevel():.1f} dBm"
+        logger.debug(msg)
 
     @property
     def attenuation(self):
@@ -218,8 +221,9 @@ class TekRSARadio(RadioInterface):
             self.rsa.CONFIG_SetAutoAttenuationEnable(False)
             self.rsa.CONFIG_SetRFAttenuator(-1*attenuation)  # rounded to nearest integer
             self.rsa.DEVICE_Run()
-            msg = "Set Tektronix RSA attenuation: {:.1} dB"
-            logger.debug(msg.format(self.rsa.CONFIG_GetRFAttenuator()))
+            msg = "Set Tektronix RSA attenuation: "\
+                    + f"{self.rsa.CONFIG_GetRFAttenuator():.1} dB"
+            logger.debug(msg)
         else:
             logger.debug("Tektronix RSA 300 series device has no attenuator.")
 
@@ -237,8 +241,9 @@ class TekRSARadio(RadioInterface):
             self.rsa.DEVICE_Stop()
             self.rsa.CONFIG_SetRFPreampEnable(preamp_enable)
             self.rsa.DEVICE_Run()
-            msg = "Set Tektronix RSA preamp enable status: {}"
-            logger.debug(msg.format(self.rsa.CONFIG_GetRFPreampEnable()))
+            msg = "Set Tektronix RSA preamp enable status: "\
+                    f"{self.rsa.CONFIG_GetRFPreampEnable()}"
+            logger.debug(msg)
         else:
             logger.debug("Tektronix RSA 300 series device has no built-in preamp.")
 
@@ -378,33 +383,62 @@ class TekRSARadio(RadioInterface):
 
         while True:
             self._capture_time = utils.get_datetime_str_now()
-            data = self.rsa.IQSTREAM_Tempfile(
-                                self.frequency, self.reference_level,
-                                self.sr_bw_map[self.sample_rate], durationMsec
-                          )
+            data, status = self.rsa.IQSTREAM_Tempfile(self.frequency,
+                                                      self.reference_level,
+                                                      self.sr_bw_map[self.sample_rate],
+                                                      durationMsec, True)
    
             data = data[nskip:nsamps]  # Remove extra samples, if any
             data_len = len(data)
 
+            # Parse returned status indicator
+            iq_warn = 'RSA IQ Streaming warning: '
+            overload = False
+            if status == 1:
+                overload = True
+                iq_warn += 'Input overrange.'
+            elif status == 2:
+                iq_warn += 'Input buffer > 75% full.'
+            elif status == 3:
+                iq_warn += 'Input buffer overflow. IQ Stream processing'\
+                           + ' too slow. Data loss has occurred.'
+            elif status == 4:
+                iq_warn += 'Output buffer > 75% full.'
+            elif status == 5:
+                iq_warn += 'Output buffer overflow. File writing too slow.'\
+                           + 'Data loss has occurred.'
+
+            # Print warning from status indicator
+            if status != 0:
+                logger.warning(iq_warn)
+
             if not data_len == nsamps_req:
                 if retries > 0:
-                    msg = "RSA error: requested {} samples, but got {}."
-                    logger.warning(msg.format(nsamps_req + nskip, data_len))
-                    logger.warning("Retrying {} more times.".format(retries))
+                    msg = f"RSA error: requested {nsamps_req + nskip} samples, but got {data_len}."
+                    logger.warning(msg)
+                    logger.warning(f"Retrying {retries} more times.")
                     retries -= 1
                 else:
                     err = "Failed to acquire correct number of samples "
-                    err += "{} times in a row.".format(max_retries)
+                    err += f"{max_retries} times in a row."
+                    raise RuntimeError(err)
+            if status == 3 or status == 5:
+                if retries > 0:
+                    logger.warning(f'Retrying {retries} more times.')
+                    retries -= 1
+                else:
+                    err = 'RSA overflow occurred with no retries remaining.'
+                    err += f' (tried {retries} times.)'
                     raise RuntimeError(err)
             else:
-                logger.debug("Successfully acquired {} samples.".format(data_len))
+                logger.debug(f"Successfully acquired {data_len} samples.")
             
                 # Scale data to RF power and return
                 data /= linear_gain
 
                 measurement_result = {
                     "data": data,
-                    "overload": False, # overload check occurs automatically after measurement
+                    "overload": overload,
                     "frequency": self.frequency,
                     "reference_level": self.reference_level,
                     "sample_rate": self.rsa.IQSTREAM_GetAcqParameters()[1],
