@@ -39,7 +39,9 @@ Below are the steps to run scos-sensor with the scos-tekrsa plugin:
     - While this repository is private, authentication with the GitHub Container Registry using a GitHub personal access token is required.
     - If your personal access token is stored at `~/token.txt`, this can be done by running `cat ~/token.txt | docker login ghcr.io -u <GITHUB_USERNAME> --password-stdin`
 
-5. In `scos-sensor/src/requirements.txt`, remove or comment any unnecessary dependencies (such as scos-usrp), then add the scos_tekrsa dependency: `git+https://github.com/NTIA/scos-tekrsa@master#egg=scos_tekrsa`
+5. In `scos-sensor/src/requirements.txt`, remove or comment any unnecessary dependencies (such as scos-usrp), then add the scos_tekrsa dependency:
+
+`scos_tekrsa @ git+https://github.com/NTIA/scos-tekrsa@master#egg=scos_tekrsa`
 
 6. Download the [RSA API for Linux](https://www.tek.com/spectrum-analyzer/rsa306-software/rsa-application-programming-interface--api-for-64bit-linux--v100014) from Tektronix. Place the three files `libRSA_API.so`, `libcyusb_shared.so`, and `cyusb.conf` in the directory `scos-sensor/drivers`.
 
