@@ -1,7 +1,7 @@
 import logging
 from os import path
 
-from scos_actions.actions.monitor_radio import RadioMonitor
+from scos_actions.actions.monitor_sigan import MonitorSignalAnalyzer
 from scos_actions.actions.sync_gps import SyncGps
 from scos_actions.discover import init
 
@@ -17,7 +17,7 @@ elif radio.device_name in ['RSA503A', 'RSA507A', 'RSA513A', 'RSA518A', 'RSA603A'
 logger = logging.getLogger(__name__)
 
 actions = {
-    "monitor_tekrsa": RadioMonitor(radio)
+    "monitor_tekrsa": MonitorSignalAnalyzer(radio)
 }
 
 # Pass new radio to existing action classes with new SDR specific yaml files
