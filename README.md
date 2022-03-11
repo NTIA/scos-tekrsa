@@ -69,17 +69,41 @@ Requires pip>=18.1 (upgrade using `python3 -m pip install --upgrade pip`) and py
 
 It is highly recommended that you first initialize a virtual development environment using a tool such as conda or venv. The following commands create a virtual environment using venv and install the required dependencies for development and testing.
 
-```
+```bash
 python3 -m venv ./venv
 source venv/bin/activate
 python3 -m pip install --upgrade pip # upgrade to pip>=18.1
 python3 -m pip install -r requirements.txt
 ```
 
+The requirements.txt file is intended for dependencies needed for installation into scos-sensor. It does not include dependencies already in scos-sensor.
+
+#### Using pip-tools
+
+It is recommended to keep direct dependencies in a separate file. The direct dependencies are in the requirements.in and requirements-dev.in files. Then pip-tools can be used to generate files with all the dependencies and transitive dependencies (sub-dependencies). The files containing all the dependencies are in requirements.txt and requirements-dev.txt. Run the following in the virtual environment to install pip-tools:
+
+```bash
+python -m pip install pip-tools
+```
+
+To update requirements.txt after modifying requirements.in:
+
+`pip-compile requirements.in`
+
+To update requirements-dev.txt after modifying requirements-dev.in:
+
+`pip-compile requirements-dev.in`
+
+Use pip-sync to match virtual environment to requirements-dev.txt:
+
+`pip-sync requirements.txt requirements-dev.txt`
+
+For more information about pip-tools, see [https://pip-tools.readthedocs.io/en/latest/#](https://pip-tools.readthedocs.io/en/latest/#)
+
 ### Running Tests
 A docker container is used for testing. [Install Docker](https://docs.docker.com/get-docker/) in order to run tests.
 
-```
+```bash
 docker build -f docker/Dockerfile -t tekrsa_usb .
 docker build -f docker/Dockerfile-test -t rsa_test .
 docker run rsa_test
