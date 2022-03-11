@@ -66,17 +66,17 @@ class TekRSASigan(SignalAnalyzerInterface):
         if self._is_available:
             return
 
-        if settings.RUNNING_TESTS or settings.MOCK_RADIO:
-            # Mock radio if desired
-            random = settings.MOCK_RADIO_RANDOM
+        if settings.RUNNING_TESTS or settings.MOCK_SIGAN:
+            # Mock signal analyzer if desired
+            random = settings.MOCK_SIGAN_RANDOM
             self.rsa = MockRSA(randomize_values=random)
-            self.device_name = 'RSA306B'  # Mock radio pretends to be a 306B
+            self.device_name = 'RSA306B'  # Mock sigan pretends to be a 306B
         else:
             try:
                 # Load API wrapper
                 import rsa_api
             except ImportError:
-                logger.warning("API Wrapper not loaded - disabling radio.")
+                logger.warning("API Wrapper not loaded - disabling signal analyzer.")
                 self._is_available = False
                 return
             try:
@@ -92,7 +92,7 @@ class TekRSASigan(SignalAnalyzerInterface):
 
         logger.debug("Using the following Tektronix RSA device:")
         logger.debug(self.device_name)
-        if settings.RUNNING_TESTS or settings.MOCK_RADIO:
+        if settings.RUNNING_TESTS or settings.MOCK_SIGAN:
             logger.debug('(Mock device in use, not an actual RSA!)')
 
         self._is_available = True
@@ -135,7 +135,7 @@ class TekRSASigan(SignalAnalyzerInterface):
         self.sigan_calibration_data = DEFAULT_SIGAN_CALIBRATION.copy()
 
         # Try and load sensor/sigan calibration data
-        if not settings.RUNNING_TESTS and not settings.MOCK_RADIO:
+        if not settings.RUNNING_TESTS and not settings.MOCK_SIGAN:
             try:
                 self.sensor_calibration = calibration.load_from_json(sensor_cal_file)
             except Exception as e:

@@ -4,7 +4,7 @@ This repository is a plugin to add support for the Tektronix RSA306, RSA306B, RS
 
 This plugin makes use of the [RSA API by Tektronix](https://github.com/tektronix/RSA_API/). A custom [Python wrapper for this API](https://github.com/NTIA/tekrsa-api-wrap/) is also used to mask Ctypes syntax, handle error-checking, and implement helper methods.
 
-This repository also includes many 700MHz band actions in `scos_tekrsa/configs/actions-300` and `scos_tekrsa/configs/actions-500-600`. The actions are defined separately for RSA300- and RSA500/600-series devices, allowing for preamp and attenuation control of the RSA500/600-series devices. Action classes, RadioInterface, and signals are used from [scos_actions](https://github.com/NTIA/scos-actions/).
+This repository also includes many 700MHz band actions in `scos_tekrsa/configs/actions-300` and `scos_tekrsa/configs/actions-500-600`. The actions are defined separately for RSA300- and RSA500/600-series devices, allowing for preamp and attenuation control of the RSA500/600-series devices. Action classes, SignalAnalyzerInterface, and signals are used from [scos_actions](https://github.com/NTIA/scos-actions/).
 
 For information on adding actions, see the [scos_actions documentation](https://github.com/NTIA/scos-actions/blob/master/README.md#adding-actions).
 
@@ -20,7 +20,7 @@ For information on adding actions, see the [scos_actions documentation](https://
 
 - `scos_tekrsa/configs`: This folder contains the YAML files with the parameters used to initialize the Tektronix RSA supported actions and sample calibration files.
 - `scos_tekrsa/discover`: This includes the code to read YAML files and make actions available to scos-sensor.
-- `scos_tekrsa/hardware`: This includes the Tektronix RSA implementation of the radio interface. It also includes supporting calibration and test code.
+- `scos_tekrsa/hardware`: This includes the Tektronix RSA implementation of the signal analyzer interface. It also includes supporting calibration and test code.
 
 ## 4. Running in scos-sensor
 

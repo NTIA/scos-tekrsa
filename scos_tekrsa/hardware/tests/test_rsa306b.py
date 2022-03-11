@@ -1,7 +1,7 @@
-"""Test aspects of RadioInterface with mocked RSA306B."""
+"""Test aspects of SignalAnalyzerInterface with mocked RSA306B."""
 import pytest
 
-from scos_tekrsa.hardware import radio
+from scos_tekrsa.hardware import sigan
 from scos_tekrsa.hardware.tests.resources.utils import (
     create_dummy_calibration,
     easy_gain,
@@ -20,10 +20,10 @@ class TestRSA306B:
         if self.setup_complete:
             return
 
-        # Create the RadioInterface and get the radio
-        if not radio.is_available:
+        # Create the SignalAnalyzerInterface and get the sigan
+        if not sigan.is_available:
             raise RuntimeError("Receiver is not available.")
-        self.rx = radio
+        self.rx = sigan
 
         # Alert that the setup was complete
         self.setup_complete = True
