@@ -16,7 +16,7 @@ from scos_tekrsa.hardware.calibration import (
 
 logger = logging.getLogger(__name__)
 
-class TekRSARadio(SignalAnalyzerInterface):
+class TekRSASigan(SignalAnalyzerInterface):
 
     def __init__(
         self,
