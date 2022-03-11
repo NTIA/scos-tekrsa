@@ -1,3 +1,3 @@
-from scos_tekrsa.hardware.tekrsa_sigan import TekRSASignalAnalyzer
+from scos_tekrsa.hardware.tekrsa_sigan import TekRSASigan
 
-sigan = TekRSASignalAnalyzer()
+sigan = TekRSASigan()
