@@ -36,7 +36,11 @@ Below are the steps to run scos-sensor with the scos-tekrsa plugin:
 
 4. In the `env` file, set `BASE_IMAGE` to `BASE_IMAGE=ghcr.io/ntia/scos-tekrsa/tekrsa_usb:0.1.4`
 
-5. In `scos-sensor/src/requirements.in`, remove or comment any unnecessary dependencies (such as scos-usrp), then add the scos_tekrsa dependency:
+    - While this repository is private, authentication with the GitHub Container Registry is required.
+    - If using a personal access token, ensure the scope includes `read:packages`
+    - If your personal access token is stored at `~/token.txt`, authenticate by running `cat ~/token.txt | docker login ghcr.io -u <GITHUB_USERNAME> --password-stdin`
+
+5. In `scos-sensor/src/requirements.in`, remove or comment any unnecessary dependencies (such as scos_usrp), then add the scos_tekrsa dependency:
 
 `scos_tekrsa @ git+https://github.com/NTIA/scos-tekrsa@main#egg=scos_tekrsa`
 
@@ -55,11 +59,26 @@ Below are the steps to run scos-sensor with the scos-tekrsa plugin:
 }
 ```
 
-8. Get environment variables: `source ./env`
+8. (While this repository is private) Edit `docker/Dockerfile-api` by commenting or removing the following lines:
 
-9. Build and start containers: `docker-compose up -d --build --force-recreate`
+```
+ARG DOCKER_GIT_CREDENTIALS
+RUN git config --global credential.helper store && echo "${DOCKER_GIT_CREDENTIALS}" > ~/.git-credentials
+```
 
-10. Optionally, view logs: `docker-compose logs -f`
+and adding the following line:
+
+```
+RUN git config --global url."https://<GITHUB_PAT>:@github.com/".insteadOf "https://github.com/"
+```
+
+In which `<GITHUB_PAT>` is replaced by your GitHub personal access token.
+
+10. Get environment variables: `source ./env`
+
+10. Build and start containers: `docker-compose up -d --build --force-recreate`
+
+11. Optionally, view logs: `docker-compose logs -f`
 
 ## 5. Development
 
