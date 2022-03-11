@@ -36,7 +36,7 @@ Below are the steps to run scos-sensor with the scos-tekrsa plugin:
 
 4. In the `env` file, set `BASE_IMAGE` to `BASE_IMAGE=ghcr.io/ntia/scos-tekrsa/tekrsa_usb:0.1.4`
 
-5. In `scos-sensor/src/requirements.txt`, remove or comment any unnecessary dependencies (such as scos-usrp), then add the scos_tekrsa dependency:
+5. In `scos-sensor/src/requirements.in`, remove or comment any unnecessary dependencies (such as scos-usrp), then add the scos_tekrsa dependency:
 
 `scos_tekrsa @ git+https://github.com/NTIA/scos-tekrsa@main#egg=scos_tekrsa`
 
