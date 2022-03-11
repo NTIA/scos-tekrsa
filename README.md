@@ -31,6 +31,7 @@ Below are the steps to run scos-sensor with the scos-tekrsa plugin:
 1. Clone scos-sensor: `git clone https://github.com/NTIA/scos-sensor.git`. 
 
 2. Navigate to scos-sensor: `cd scos-sensor`
+    - While testing locally, run: `cd scripts && ./create_localhost_cert.sh` to generate the necessary SSL certificates.
 
 3. While in the scos-sensor root directory, create the `env` file by copying the template file: `cp env.template ./env`
 
