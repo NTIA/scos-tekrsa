@@ -3,7 +3,7 @@ import time
 
 import numpy as np
 from scos_actions import utils
-from scos_actions.hardware.radio_iface import RadioInterface
+from scos_actions.hardware.sigan_iface import SignalAnalyzerInterface
 
 from scos_tekrsa import settings
 from scos_tekrsa.hardware import calibration
@@ -16,7 +16,7 @@ from scos_tekrsa.hardware.calibration import (
 
 logger = logging.getLogger(__name__)
 
-class TekRSARadio(RadioInterface):
+class TekRSARadio(SignalAnalyzerInterface):
 
     def __init__(
         self,
