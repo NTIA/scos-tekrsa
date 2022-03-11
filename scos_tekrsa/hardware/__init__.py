@@ -1,3 +1,3 @@
-from scos_tekrsa.hardware.tekrsa_radio import TekRSARadio
+from scos_tekrsa.hardware.tekrsa_radio import TekRSASigan
 
-radio = TekRSARadio()
+sigan = TekRSASigan()
