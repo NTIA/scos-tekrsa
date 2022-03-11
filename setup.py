@@ -18,7 +18,7 @@ setup(
     version="0.0.0",
     author="The Institute for Telecommunication Sciences",
     # author_email="author@example.com",
-    description="Tektronix RSA 306B support for scos-sensor",
+    description="Tektronix RSA support for scos-sensor",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/NTIA/scos-tekrsa",
