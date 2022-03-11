@@ -65,7 +65,7 @@ Below are the steps to run scos-sensor with the scos-tekrsa plugin:
 
 ### Requirements and Configuration
 
-Requires pip>=18.1 (upgrade using `python3 -m pip install --upgrade pip`) and python>=3.6.
+Requires pip>=18.1 (upgrade using `python3 -m pip install --upgrade pip`) and python>=3.7.
 
 It is highly recommended that you first initialize a virtual development environment using a tool such as conda or venv. The following commands create a virtual environment using venv and install the required dependencies for development and testing.
 
