@@ -24,6 +24,8 @@ class TekRSASigan(SignalAnalyzerInterface):
         sigan_cal_file=settings.SIGAN_CALIBRATION_FILE
     ):
         try:
+            logger.info("Initializing TekRSA SIGAN")
+
             self.rsa = None
             self._is_available = False
 
@@ -53,8 +55,8 @@ class TekRSASigan(SignalAnalyzerInterface):
             self.sensor_calibration = None
             self.sigan_calibration = None
             self._capture_time = None
-
             self.connect()
+            logger.info("")
             self.get_calibration(sensor_cal_file, sigan_cal_file)
         except Exception as error:
             logger.error("unable to initialize sigan" + error)
@@ -66,6 +68,7 @@ class TekRSASigan(SignalAnalyzerInterface):
 
     def connect(self):
         # Device already connected
+        logger.info("Connecting to TEKRSA")
         if self._is_available:
             return
 
@@ -90,7 +93,7 @@ class TekRSASigan(SignalAnalyzerInterface):
                 self.align()
                 self.get_constraints()
             except Exception as e:
-                logger.exception(e)
+                logger.exception("unable to connect to TEKRSA: " + e)
                 return
 
         logger.debug("Using the following Tektronix RSA device:")
