@@ -8,13 +8,18 @@ from scos_actions.discover import init
 from scos_tekrsa.hardware import sigan
 from scos_tekrsa.settings import ACTION_DEFINITIONS_DIR
 
+logger = logging.getLogger(__name__)
+
 # Adjust ACTION_DEFINITIONS_DIR for specific Tektronix analyzer in use
 if sigan.device_name in ['RSA306B', 'RSA306']:
     ACTION_DEFINITIONS_DIR += '-300'
 elif sigan.device_name in ['RSA503A', 'RSA507A', 'RSA513A', 'RSA518A', 'RSA603A', 'RSA607A']:
     ACTION_DEFINITIONS_DIR += '-500-600'
+else:
+    logger.error("Unable to determine RSA model")
+    ACTION_DEFINITIONS_DIR += '-500-600'
 
-logger = logging.getLogger(__name__)
+
 
 actions = {
     "monitor_tekrsa": MonitorSignalAnalyzer(sigan)
