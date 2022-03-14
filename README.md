@@ -82,6 +82,16 @@ In which `<GITHUB_PAT>` is replaced by your GitHub personal access token.
 
 ## 5. Development
 
+### Updating the `tekrsa_usb` package
+
+To build, tag the version as X.X.X, and push the updated image to the GitHub Container Registry, run:
+
+```bash
+docker build -f docker/Dockerfile -t tekrsa_usb .
+docker tag takrsa_usb ghcr.io/ntia/scos-tekrsa/tekrsa_usb:X.X.X
+docker push ghcr.io/ntia/scos-tekrsa/tekrsa_usb:X.X.X
+```
+
 ### Requirements and Configuration
 
 Requires pip>=18.1 (upgrade using `python3 -m pip install --upgrade pip`) and python>=3.7.
