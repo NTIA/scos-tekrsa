@@ -48,7 +48,7 @@ class TekRSASigan(SignalAnalyzerInterface):
             self.min_attenuation = 0
             self.max_frequency = None
             self.min_frequency = None
-            self.device_name = None
+            self.device_name = 'RSA306B'
 
             self.sensor_calibration_data = None
             self.sigan_calibration_data = None
@@ -56,7 +56,6 @@ class TekRSASigan(SignalAnalyzerInterface):
             self.sigan_calibration = None
             self._capture_time = None
             self.connect()
-            logger.info("")
             self.get_calibration(sensor_cal_file, sigan_cal_file)
         except Exception as error:
             logger.error("unable to initialize sigan" + error)
