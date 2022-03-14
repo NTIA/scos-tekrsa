@@ -27,5 +27,5 @@ six==1.16.0
     # via
     #   python-dateutil
     #   sigmf
-tekrsa-api-wrap @ git+https://github.com/NTIA/tekrsa-api-wrap@PublicRelease
+tekrsa-api-wrap @ git+https://github.com/NTIA/tekrsa-api-wrap@main
     # via -r requirements.in
