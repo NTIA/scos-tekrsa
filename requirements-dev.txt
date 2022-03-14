@@ -77,7 +77,7 @@ six==1.16.0
     #   python-dateutil
 sqlparse==0.4.2
     # via django
-tekrsa-api-wrap @ git+https://github.com/NTIA/tekrsa-api-wrap@PublicRelease
+tekrsa-api-wrap @ git+https://github.com/NTIA/tekrsa-api-wrap@main
     # via -r requirements.txt
 typing-extensions==4.1.1
     # via
