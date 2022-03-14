@@ -4,10 +4,14 @@
 #
 #    pip-compile requirements-dev.in
 #
+asgiref==3.5.0
+    # via django
 attrs==21.4.0
     # via pytest
 coverage==6.3.2
     # via pytest-cov
+django==3.2.12
+    # via -r requirements-dev.in
 environs==7.3.1
     # via -r requirements-dev.in
 importlib-metadata==4.11.2
@@ -46,6 +50,8 @@ python-dateutil==2.8.2
     #   scos-actions
 python-dotenv==0.19.2
     # via environs
+pytz==2021.3
+    # via django
 ruamel-yaml==0.16.13
     # via
     #   -r requirements.txt
@@ -69,10 +75,14 @@ six==1.16.0
     # via
     #   -r requirements.txt
     #   python-dateutil
-tekrsa-api-wrap @ git+https://github.com/NTIA/tekrsa-api-wrap@main
+sqlparse==0.4.2
+    # via django
+tekrsa-api-wrap @ git+https://github.com/NTIA/tekrsa-api-wrap@PublicRelease
     # via -r requirements.txt
 typing-extensions==4.1.1
-    # via importlib-metadata
+    # via
+    #   asgiref
+    #   importlib-metadata
 wcwidth==0.2.5
     # via pytest
 zipp==3.7.0
