@@ -59,7 +59,7 @@ scipy==1.7.3
     # via
     #   -r requirements.txt
     #   scos-actions
-scos_actions @ git+https://github.com/NTIA/scos-actions@bug_fix
+scos-actions @ git+https://github.com/NTIA/scos-actions@bug_fix
     # via -r requirements.txt
 sigmf @ git+https://github.com/NTIA/SigMF.git@multi-recording-archive
     # via
@@ -69,7 +69,7 @@ six==1.16.0
     # via
     #   -r requirements.txt
     #   python-dateutil
-tekrsa_api_wrap @ git+https://github.com/NTIA/tekrsa-api-wrap@numpy_version
+tekrsa-api-wrap @ git+https://github.com/NTIA/tekrsa-api-wrap@main
     # via -r requirements.txt
 typing-extensions==4.1.1
     # via importlib-metadata
