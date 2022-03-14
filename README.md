@@ -34,7 +34,7 @@ Below are the steps to run scos-sensor with the scos-tekrsa plugin:
 
 3. While in the scos-sensor root directory, create the `env` file by copying the template file: `cp env.template ./env`
 
-4. In the `env` file, set `BASE_IMAGE` to `BASE_IMAGE=ghcr.io/ntia/scos-tekrsa/tekrsa_usb:0.1.4`
+4. In the `env` file, set `BASE_IMAGE` to `BASE_IMAGE=ghcr.io/ntia/scos-tekrsa/tekrsa_usb:0.1.5`
 
     - While this repository is private, authentication with the GitHub Container Registry is required.
     - If using a personal access token, ensure the scope includes `read:packages`
