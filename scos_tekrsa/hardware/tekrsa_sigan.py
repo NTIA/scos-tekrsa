@@ -92,7 +92,7 @@ class TekRSASigan(SignalAnalyzerInterface):
                 self.align()
                 self.get_constraints()
             except Exception as e:
-                logger.exception("unable to connect to TEKRSA: " + e)
+                logger.exception("unable to connect to TEKRSA")
                 return
 
         logger.debug("Using the following Tektronix RSA device:")
