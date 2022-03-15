@@ -1,6 +1,6 @@
 import logging
 import time
-
+import traceback
 import numpy as np
 from scos_actions import utils
 from scos_actions.hardware.sigan_iface import SignalAnalyzerInterface
@@ -58,7 +58,8 @@ class TekRSASigan(SignalAnalyzerInterface):
             self.connect()
             self.get_calibration(sensor_cal_file, sigan_cal_file)
         except Exception as error:
-            logger.error("unable to initialize sigan" + error)
+            logger.error("unable to initialize sigan")
+            traceback.print_exc()
 
 
     def get_constraints(self):
