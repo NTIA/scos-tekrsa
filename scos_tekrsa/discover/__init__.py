@@ -11,7 +11,7 @@ from scos_tekrsa.settings import ACTION_DEFINITIONS_DIR
 logger = logging.getLogger(__name__)
 
 actions = {}
-logger.info('scos-tekrsa: discovering actions')
+logger.exception('scos-tekrsa: discovering actions')
 # Adjust ACTION_DEFINITIONS_DIR for specific Tektronix analyzer in use
 if sigan:
     if sigan.device_name in ['RSA306B', 'RSA306']:
