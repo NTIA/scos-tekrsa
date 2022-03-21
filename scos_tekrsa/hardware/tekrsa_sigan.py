@@ -95,7 +95,7 @@ class TekRSASigan(SignalAnalyzerInterface):
                 logger.debug("aligned")
                 self.get_constraints()
                 logger.info("Using the following Tektronix RSA device:")
-                logger.info(self.device_name + " " + self.min_frequency + '-' + self.max_frequency)
+                logger.info(self.device_name + " " + str(self.min_frequency) + '-' + str(self.max_frequency))
             except Exception as e:
                 logger.exception("Unable to connect to TEKRSA")
                 return
