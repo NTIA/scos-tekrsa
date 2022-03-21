@@ -28,7 +28,7 @@ if sigan:
     # Pass new radio to existing action classes with new SDR specific yaml files
     logger.debug("Initializing yaml actions")
     yaml_actions, yaml_test_actions = init(sigan=sigan, yaml_dir=ACTION_DEFINITIONS_DIR)
-    logger.debug('Created' + str(len(yaml_actions)) + ' actions')
+    logger.debug('Created ' + str(len(yaml_actions)) + ' actions')
     actions.update(yaml_actions)
 else:
     logger.warning('Sigan is null')
