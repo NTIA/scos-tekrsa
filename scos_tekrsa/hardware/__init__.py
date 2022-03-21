@@ -8,3 +8,4 @@ try:
     sigan = TekRSASigan()
 except:
     logger.error('Unable to create TekRSASigan')
+    sigan = None
