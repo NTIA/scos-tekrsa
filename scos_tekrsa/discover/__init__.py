@@ -28,7 +28,7 @@ if sigan:
     yaml_actions, yaml_test_actions = init(sigan=sigan, yaml_dir=ACTION_DEFINITIONS_DIR)
     actions.update(yaml_actions)
 else:
-    logger.error('Sigan is null')
+    logger.info('Sigan is null')
 
 
 
