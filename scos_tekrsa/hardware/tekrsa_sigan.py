@@ -16,12 +16,13 @@ from scos_tekrsa.hardware.calibration import (
 
 logger = logging.getLogger(__name__)
 
+
 class TekRSASigan(SignalAnalyzerInterface):
 
     def __init__(
-        self,
-        sensor_cal_file=settings.SENSOR_CALIBRATION_FILE,
-        sigan_cal_file=settings.SIGAN_CALIBRATION_FILE
+            self,
+            sensor_cal_file=settings.SENSOR_CALIBRATION_FILE,
+            sigan_cal_file=settings.SIGAN_CALIBRATION_FILE
     ):
         try:
             logger.info("Initializing TekRSA SIGAN")
@@ -32,10 +33,10 @@ class TekRSASigan(SignalAnalyzerInterface):
             # Allowed sample rates and bandwidth settings for RSA306B,
             # ordered from greatest to least. SR in samples/sec, BW in Hz.
             self.ALLOWED_SR = [56.0e6, 28.0e6, 14.0e6, 7.0e6, 3.5e6, 1.75e6, 875.e3,
-                           437.5e3, 218.75e3, 109.375e3, 54687.5, 24373.75, 13671.875]
+                               437.5e3, 218.75e3, 109.375e3, 54687.5, 24373.75, 13671.875]
 
             self.ALLOWED_BW = [40.0e6, 20.0e6, 10.0e6, 5.0e6, 2.5e6, 1.25e6, 625.e3,
-                           312.5e3, 156.25e3, 78125., 39062.5, 19531.25, 9765.625]
+                               312.5e3, 156.25e3, 78125., 39062.5, 19531.25, 9765.625]
 
             # Use values defined above to create SR/BW mapping dict,
             # with SR as keys and BW as values.
@@ -60,7 +61,6 @@ class TekRSASigan(SignalAnalyzerInterface):
         except Exception as error:
             logger.error("unable to initialize sigan")
             traceback.print_exc()
-
 
     def get_constraints(self):
         self.min_frequency = self.rsa.CONFIG_GetMinCenterFreq()
@@ -92,12 +92,13 @@ class TekRSASigan(SignalAnalyzerInterface):
                 self.device_name = self.rsa.DEVICE_GetNomenclature()
                 self.align()
                 self.get_constraints()
+                logger.info("Using the following Tektronix RSA device:")
+                logger.info(self.device_name)
             except Exception as e:
                 logger.exception("Unable to connect to TEKRSA")
                 return
 
-        logger.debug("Using the following Tektronix RSA device:")
-        logger.debug(self.device_name)
+
         if settings.RUNNING_TESTS or settings.MOCK_SIGAN:
             logger.debug('(Mock device in use, not an actual RSA!)')
 
