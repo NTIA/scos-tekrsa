@@ -90,10 +90,12 @@ class TekRSASigan(SignalAnalyzerInterface):
                 # Connect to device using API wrapper
                 self.rsa.DEVICE_SearchAndConnect()
                 self.device_name = self.rsa.DEVICE_GetNomenclature()
+                logger.debug("Device Name: " + self.device_name)
                 self.align()
+                logger.debug("aligned")
                 self.get_constraints()
                 logger.info("Using the following Tektronix RSA device:")
-                logger.info(self.device_name)
+                logger.info(self.device_name + " " + self.min_frequency + '-' + self.max_frequency)
             except Exception as e:
                 logger.exception("Unable to connect to TEKRSA")
                 return
