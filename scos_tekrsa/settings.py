@@ -32,12 +32,12 @@ if not settings.configured or not hasattr(settings, "MOCK_SIGAN_RANDOM"):
 else:
     MOCK_SIGAN_RANDOM = settings.MOCK_SIGAN_RANDOM
 
-if settings.configured:
-    LOGGING = settings.LOGGING
-    LOGLEVEL = settings.LOGLEVEL
-    LOGGING["loggers"]["scos_tekrsa"] = {
-        "handlers": ["console"],
-        "level": LOGLEVEL,
-    }
-else:
-    logging.basicConfig(level=logging.DEBUG)
+#if settings.configured:
+#    LOGGING = settings.LOGGING
+#    LOGLEVEL = settings.LOGLEVEL
+#    LOGGING["loggers"]["scos_tekrsa"] = {
+#        "handlers": ["console"],
+#        "level": LOGLEVEL,
+#    }
+#else:
+ #   logging.basicConfig(level=logging.DEBUG)
