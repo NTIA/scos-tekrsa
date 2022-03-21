@@ -10,7 +10,7 @@ from scos_tekrsa.settings import ACTION_DEFINITIONS_DIR
 
 logger = logging.getLogger(__name__)
 
-
+actions = {}
 logger.info('scos-tekrsa: discovering actions')
 # Adjust ACTION_DEFINITIONS_DIR for specific Tektronix analyzer in use
 if sigan:
@@ -21,9 +21,8 @@ if sigan:
     else:
         logger.error("Unable to determine RSA model")
         ACTION_DEFINITIONS_DIR += '-500-600'
-    actions = {
-        "monitor_tekrsa": MonitorSignalAnalyzer(sigan)
-    }
+    actions["monitor_tekrsa"] = MonitorSignalAnalyzer(sigan)
+
     # Pass new radio to existing action classes with new SDR specific yaml files
     logger.debug("scos_tekrsa: ACTION_DEFINITIONS_DIR =  " + ACTION_DEFINITIONS_DIR)
     yaml_actions, yaml_test_actions = init(sigan=sigan, yaml_dir=ACTION_DEFINITIONS_DIR)
