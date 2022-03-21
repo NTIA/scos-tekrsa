@@ -31,7 +31,7 @@ if sigan:
     logger.debug('Created' + str(len(yaml_actions)) + ' actions')
     actions.update(yaml_actions)
 else:
-    logger.info('Sigan is null')
+    logger.warning('Sigan is null')
 
 
 
