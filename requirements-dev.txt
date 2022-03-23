@@ -71,7 +71,7 @@ scipy==1.7.3
     # via
     #   -r requirements.txt
     #   scos-actions
-scos-actions @ git+https://github.com/NTIA/scos-actions@0.1.0
+scos_actions @ git+https://github.com/NTIA/scos-actions@0.1.0
     # via -r requirements.txt
 sigmf @ git+https://github.com/NTIA/SigMF.git@multi-recording-archive
     # via
@@ -85,7 +85,7 @@ sqlparse==0.4.2
     # via
     #   -r requirements.txt
     #   django
-tekrsa-api-wrap @ git+https://github.com/NTIA/tekrsa-api-wrap@main
+tekrsa_api_wrap @ git+https://github.com/NTIA/tekrsa-api-wrap@main
     # via -r requirements.txt
 typing-extensions==4.1.1
     # via
