@@ -5,13 +5,17 @@
 #    pip-compile requirements-dev.in
 #
 asgiref==3.5.0
-    # via django
+    # via
+    #   -r requirements.txt
+    #   django
 attrs==21.4.0
     # via pytest
 coverage==6.3.2
     # via pytest-cov
 django==3.2.12
-    # via -r requirements-dev.in
+    # via
+    #   -r requirements.txt
+    #   scos-actions
 environs==7.3.1
     # via -r requirements-dev.in
 importlib-metadata==4.11.2
@@ -26,6 +30,7 @@ numpy==1.21.5
     # via
     #   -r requirements.txt
     #   scipy
+    #   scos-actions
     #   tekrsa-api-wrap
 packaging==21.3
     # via pytest
@@ -50,8 +55,10 @@ python-dateutil==2.8.2
     #   scos-actions
 python-dotenv==0.19.2
     # via environs
-pytz==2021.3
-    # via django
+pytz==2022.1
+    # via
+    #   -r requirements.txt
+    #   django
 ruamel-yaml==0.16.13
     # via
     #   -r requirements.txt
@@ -60,12 +67,11 @@ ruamel-yaml-clib==0.2.6
     # via
     #   -r requirements.txt
     #   ruamel-yaml
-    #   scos-actions
 scipy==1.7.3
     # via
     #   -r requirements.txt
     #   scos-actions
-scos-actions @ git+https://github.com/NTIA/scos-actions@bug_fix
+scos-actions @ git+https://github.com/NTIA/scos-actions@0.1.0
     # via -r requirements.txt
 sigmf @ git+https://github.com/NTIA/SigMF.git@multi-recording-archive
     # via
@@ -76,11 +82,14 @@ six==1.16.0
     #   -r requirements.txt
     #   python-dateutil
 sqlparse==0.4.2
-    # via django
+    # via
+    #   -r requirements.txt
+    #   django
 tekrsa-api-wrap @ git+https://github.com/NTIA/tekrsa-api-wrap@main
     # via -r requirements.txt
 typing-extensions==4.1.1
     # via
+    #   -r requirements.txt
     #   asgiref
     #   importlib-metadata
 wcwidth==0.2.5

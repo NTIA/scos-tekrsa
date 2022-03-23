@@ -4,22 +4,27 @@
 #
 #    pip-compile requirements.in
 #
+asgiref==3.5.0
+    # via django
+django==3.2.12
+    # via scos-actions
 numpy==1.21.5
     # via
     #   scipy
+    #   scos-actions
     #   sigmf
     #   tekrsa-api-wrap
 python-dateutil==2.8.2
     # via scos-actions
+pytz==2022.1
+    # via django
 ruamel-yaml==0.16.13
     # via scos-actions
 ruamel-yaml-clib==0.2.6
-    # via
-    #   ruamel-yaml
-    #   scos-actions
+    # via ruamel-yaml
 scipy==1.7.3
     # via scos-actions
-scos-actions @ git+https://github.com/NTIA/scos-actions@bug_fix
+scos-actions @ git+https://github.com/NTIA/scos-actions@0.1.0
     # via -r requirements.in
 sigmf @ git+https://github.com/NTIA/SigMF.git@multi-recording-archive
     # via scos-actions
@@ -27,5 +32,9 @@ six==1.16.0
     # via
     #   python-dateutil
     #   sigmf
+sqlparse==0.4.2
+    # via django
 tekrsa-api-wrap @ git+https://github.com/NTIA/tekrsa-api-wrap@main
     # via -r requirements.in
+typing-extensions==4.1.1
+    # via asgiref
