@@ -35,7 +35,7 @@ Below are the steps to run scos-sensor with the scos-tekrsa plugin:
 
 3. While in the scos-sensor root directory, create the `env` file by copying the template file: `cp env.template ./env`
 
-4. In the `env` file, set `BASE_IMAGE` to `BASE_IMAGE=ghcr.io/ntia/scos-tekrsa/tekrsa_usb:0.1.4`
+4. In the `env` file, set `BASE_IMAGE` to `BASE_IMAGE=ghcr.io/ntia/scos-tekrsa/tekrsa_usb:0.1.5`
 
     - While this repository is private, authentication with the GitHub Container Registry is required.
     - If using a personal access token, ensure the scope includes `read:packages`
@@ -82,6 +82,16 @@ In which `<GITHUB_PAT>` is replaced by your GitHub personal access token.
 11. Optionally, view logs: `docker-compose logs -f`
 
 ## 5. Development
+
+### Updating the `tekrsa_usb` package
+
+To build, tag the version as X.X.X, and push the updated image to the GitHub Container Registry, run:
+
+```bash
+docker build -f docker/Dockerfile -t tekrsa_usb .
+docker tag takrsa_usb ghcr.io/ntia/scos-tekrsa/tekrsa_usb:X.X.X
+docker push ghcr.io/ntia/scos-tekrsa/tekrsa_usb:X.X.X
+```
 
 ### Requirements and Configuration
 

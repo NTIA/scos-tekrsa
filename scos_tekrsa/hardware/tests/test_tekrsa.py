@@ -1,4 +1,4 @@
-"""Test aspects of SignalAnalyzerInterface with mocked RSA306B."""
+"""Test aspects of SignalAnalyzerInterface with mocked Tektronix RSA."""
 import pytest
 
 from scos_tekrsa.hardware import sigan
