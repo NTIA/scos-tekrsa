@@ -18,61 +18,48 @@ logger = logging.getLogger(__name__)
 
 
 class TekRSASigan(SignalAnalyzerInterface):
-    @property
-    def last_calibration_time(self):
-        """Return the last calibration time from calibration data."""
-        if self.sensor_calibration:
-            return utils.convert_string_to_millisecond_iso_format(
-                self.sensor_calibration.calibration_datetime
-            )
-        return None
-
-    @property
-    def overload(self):
-        """Returns True if overload occurred, otherwise returns False."""
-        return self._sigan_overload or self._sensor_overload
-
-    # Allowed sample rates and bandwidth settings, ordered from 
-    # greatest to least. SR in samples/sec, BW in Hz.
-    ALLOWED_SR = [56.0e6, 28.0e6, 14.0e6, 7.0e6, 3.5e6, 1.75e6, 875.e3, 437.5e3,
-                  218.75e3, 109.375e3, 54687.5, 24373.75, 13671.875]
-
-    ALLOWED_BW = [40.0e6, 20.0e6, 10.0e6, 5.0e6, 2.5e6, 1.25e6, 625.e3, 312.5e3,
-                  156.25e3, 78125., 39062.5, 19531.25, 9765.625]
-
-    # Use values defined above to create SR/BW mapping dict,
-    # with SR as keys and BW as values.
-    SR_BW_MAP = dict(zip(ALLOWED_SR, ALLOWED_BW))
-
     def __init__(
         self,
         sensor_cal_file=settings.SENSOR_CALIBRATION_FILE,
         sigan_cal_file=settings.SIGAN_CALIBRATION_FILE
     ):
-        logger.info("Initializing Tektronix RSA Signal Analyzer")
+        try:
+            logger.info("Initializing Tektronix RSA Signal Analyzer")
 
-        self.rsa = None
-        self._is_available = False
+            self.rsa = None
+            self._is_available = False
 
-        self.max_sample_rate = ALLOWED_SR[0]
-        self.max_reference_level = 30  # dBm, constant
-        self.min_reference_level = -130  # dBm, constant
-        self.max_attenuation = 51
-        self.min_attenuation = 0
-        self.max_frequency = None
-        self.min_frequency = None
+            # Allowed sample rates and bandwidth settings, ordered from 
+            # greatest to least. SR in samples/sec, BW in Hz.
+            self.ALLOWED_SR = [56.0e6, 28.0e6, 14.0e6, 7.0e6, 3.5e6, 1.75e6, 875.e3,
+                            437.5e3, 218.75e3, 109.375e3, 54687.5, 24373.75, 13671.875]
 
-        self.sensor_calibration_data = None
-        self.sigan_calibration_data = None
-        self.sensor_calibration = None
-        self.sigan_calibration = None
+            self.ALLOWED_BW = [40.0e6, 20.0e6, 10.0e6, 5.0e6, 2.5e6, 1.25e6, 625.e3,
+                            312.5e3, 156.25e3, 78125., 39062.5, 19531.25, 9765.625]
 
-        self._sigan_overload = None
-        self._sensor_overload = None
-        self._capture_time = None
+            # Use values defined above to create SR/BW mapping dict,
+            # with SR as keys and BW as values.
+            self.SR_BW_MAP = dict(zip(self.ALLOWED_SR, self.ALLOWED_BW))
 
-        self.connect()
-        self.get_calibration(sensor_cal_file, sigan_cal_file)
+            self.max_sample_rate = self.ALLOWED_SR[0]
+            self.max_reference_level = 30  # dBm, constant
+            self.min_reference_level = -130  # dBm, constant
+            self.max_attenuation = 51
+            self.min_attenuation = 0
+            self.max_frequency = None
+            self.min_frequency = None
+
+            self.sensor_calibration_data = None
+            self.sigan_calibration_data = None
+            self.sensor_calibration = None
+            self.sigan_calibration = None
+            self._capture_time = None
+
+            self.connect()
+            self.get_calibration(sensor_cal_file, sigan_cal_file)
+        except Exception as error:
+            logger.error("unable to initialize sigan")
+            traceback.print_exc()
 
     def get_constraints(self):
         self.min_frequency = self.rsa.CONFIG_GetMinCenterFreq()
@@ -139,6 +126,15 @@ class TekRSASigan(SignalAnalyzerInterface):
                     error_message = "Max retries exceeded."
                     logger.error(error_message)
                     raise RuntimeError(error_message)
+
+    @property
+    def last_calibration_time(self):
+        """Return the last calibration time from calibration data."""
+        if self.sensor_calibration:
+            return utils.convert_string_to_millisecond_iso_format(
+                self.sensor_calibration.calibration_datetime
+            )
+        return None
 
     @property
     def is_available(self):
@@ -360,7 +356,6 @@ class TekRSASigan(SignalAnalyzerInterface):
 
     def acquire_time_domain_samples(self, num_samples, num_samples_skip=0, retries=5):
         """Acquire specific number of time-domain IQ samples."""
-        self._sigan_overload = False
         self._capture_time = None
 
         # Get calibration data for acquisition
@@ -397,9 +392,9 @@ class TekRSASigan(SignalAnalyzerInterface):
 
             # Parse returned status indicator
             iq_warn = 'RSA IQ Streaming warning: '
-            overload = False
+            self.overload = False
             if status == 1:
-                overload = True
+                self.overload = True
                 iq_warn += 'Input overrange.'
             elif status == 2:
                 iq_warn += 'Input buffer > 75% full.'
@@ -442,7 +437,7 @@ class TekRSASigan(SignalAnalyzerInterface):
 
                 measurement_result = {
                     "data": data,
-                    "overload": overload,
+                    "overload": self.overload,
                     "frequency": self.frequency,
                     "reference_level": self.reference_level,
                     "sample_rate": self.rsa.IQSTREAM_GetAcqParameters()[1],
