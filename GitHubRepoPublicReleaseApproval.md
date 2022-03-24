@@ -6,7 +6,7 @@
 The project identified above, which is contained within the repository this document is stored in, has met the following criteria for public release:
 
 1. [X] The project, including the test criteria, meets the requirements defined in the ITS Software Development Publication Policy for making a repository public. The major pre-established criteria for publication are listed below, and the check mark next to each attests that the criterion has been met.
-    * [X] The software has been tested withing the SCOS Sensor software.
+    * [X] The software has been tested within the SCOS Sensor software.
     * [X] The repository contains unit tests and the software has been tested against the unit tests.
 2. [X] Any test data necessary for the code to function is included in this GitHub repository.
 3. [X] The README.md file is complete.
