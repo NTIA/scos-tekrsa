@@ -134,7 +134,6 @@ For more information about pip-tools, see [https://pip-tools.readthedocs.io/en/l
 A docker container is used for testing. [Install Docker](https://docs.docker.com/get-docker/) in order to run tests.
 
 ```bash
-docker build -f docker/Dockerfile -t tekrsa_usb .
 docker build -f docker/Dockerfile-test -t rsa_test .
 docker run rsa_test
 ```

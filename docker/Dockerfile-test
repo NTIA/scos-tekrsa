@@ -1,4 +1,4 @@
-FROM tekrsa_usb
+FROM ghcr.io/ntia/scos-tekrsa/tekrsa_usb:0.1.5
 
 RUN apt-get update -q && \
     DEBIAN_FRONTEND=noninteractive \
@@ -12,8 +12,9 @@ RUN mkdir -p /src
 WORKDIR /src
 COPY ./ /src
 
-ARG DOCKER_GIT_CREDENTIALS
+# ARG DOCKER_GIT_CREDENTIALS
+RUN git config --global url."https://04999be87bd8654cc58aaacdd9cbb7037b0a4925:@github.com/".insteadOf "https://github.com/"
 RUN python3.7 -m pip install --upgrade pip
 RUN python3.7 -m pip install --no-cache-dir -r requirements-dev.txt
 
-ENTRYPOINT pytest
+ENTRYPOINT ["pytest"]

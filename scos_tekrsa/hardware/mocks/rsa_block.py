@@ -31,7 +31,7 @@ class MockRSA:
 		return None
 
 	def DEVICE_GetNomenclature(self):
-		return "MOCK RSA306B"
+		return "MOCK RSA507A"
 
 	def ALIGN_GetWarmupStatus(self):
 		return True
@@ -48,7 +48,7 @@ class MockRSA:
 	def IQSTREAM_SetAcqBandwidth(self, bw):
 		return None
 
-	def IQSTREAM_Tempfile(self, cf, refLev, bw, dur_msec):
+	def IQSTREAM_Tempfile_NoConfig(self, dur_msec):
 		# Get n_samp from dur_msec (assuming 56e6 SR)
 		n_samp = int((dur_msec/1000)*56e6)
 
