@@ -80,12 +80,14 @@ class TekRSASigan(SignalAnalyzerInterface):
         else:
             try:
                 # Load API wrapper
+                logger.debug("Loading RSA API wrapper")
                 import rsa_api
             except ImportError:
                 logger.warning("API Wrapper not loaded - disabling signal analyzer.")
                 self._is_available = False
                 return
             try:
+                logger.debug("Initializing ")
                 self.rsa = rsa_api.RSA()
                 # Connect to device using API wrapper
                 self.rsa.DEVICE_SearchAndConnect()

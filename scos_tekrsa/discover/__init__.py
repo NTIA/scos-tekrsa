@@ -14,7 +14,7 @@ actions = {}
 logger.info('scos-tekrsa: discovering actions')
 # Adjust ACTION_DEFINITIONS_DIR for specific Tektronix analyzer in use
 if sigan:
-    logger.debug("Devine Name: "  + sigan.device_name)
+    logger.debug("Device Name: "  + sigan.device_name)
     if sigan.device_name in ['RSA306B', 'RSA306']:
         ACTION_DEFINITIONS_DIR += '-300'
     elif sigan.device_name in ['RSA503A', 'RSA507A', 'RSA513A', 'RSA518A', 'RSA603A', 'RSA607A']:
