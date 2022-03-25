@@ -1,0 +1,10 @@
+single_frequency_fft:
+  name: acquire_m4s_700MHz_ATT_UL
+  frequency: 709e6
+  reference_level: -10
+  attenuation: 0
+  preamp_enable: False
+  sample_rate: 56e6
+  fft_size: 2048
+  nffts: 300
+  nskip: 0

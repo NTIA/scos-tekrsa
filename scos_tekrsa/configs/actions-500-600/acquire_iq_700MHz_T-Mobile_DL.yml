@@ -1,0 +1,9 @@
+single_frequency_time_domain_iq:
+  name: acquire_iq_700MHz_T-Mobile_DL
+  frequency: 731.5e6
+  reference_level: -10
+  attenuation: 0
+  preamp_enable: False
+  sample_rate: 56e6
+  duration_ms: 714
+  nskip: 0
