@@ -1,4 +1,4 @@
-# 1. NTIA/ITS SCOS Tektronix RSA Plugin
+# NTIA/ITS SCOS Tektronix® RSA Plugin
 
 This repository is a plugin to add support for the Tektronix RSA306, RSA306B, RSA503A, RSA507A, RSA513A, RSA518A, RSA603A, and RSA607A real-time spectrum analyzers to scos-sensor. See the [scos-sensor documentation](https://github.com/NTIA/scos-sensor/blob/master/README.md) for more information about scos-sensor, especially the section about [Actions and Hardware Support](https://github.com/NTIA/scos-sensor/blob/master/README.md#actions-and-hardware-support).
 
@@ -8,21 +8,21 @@ This repository also includes many 700MHz band actions in `scos_tekrsa/configs/a
 
 For information on adding actions, see the [scos_actions documentation](https://github.com/NTIA/scos-actions/blob/master/README.md#adding-actions).
 
-## 2. Table of Contents
+## Table of Contents
 
-- [Overview of Repo Structure](#3-overview-of-repo-structure)
-- [Running in scos-sensor](#4-running-in-scos-sensor)
-- [Development](#5-development)
-- [License](#6-license)
-- [Contact](#7-contact)
+- [Overview of Repo Structure](#overview-of-repo-structure)
+- [Running in scos-sensor](#running-in-scos-sensor)
+- [Development](#development)
+- [License](#license)
+- [Contact](#contact)
 
-## 3. Overview of Repo Structure
+## Overview of Repo Structure
 
 - `scos_tekrsa/configs`: This folder contains the YAML files with the parameters used to initialize the Tektronix RSA supported actions and sample calibration files.
 - `scos_tekrsa/discover`: This includes the code to read YAML files and make actions available to scos-sensor.
 - `scos_tekrsa/hardware`: This includes the Tektronix RSA implementation of the signal analyzer interface. It also includes supporting calibration and test code.
 
-## 4. Running in scos-sensor
+## Running in scos-sensor
 
 Requires pip>=18.1 (upgrade using `python3 -m pip install --upgrade pip`).
 
@@ -81,7 +81,7 @@ In which `<GITHUB_PAT>` is replaced by your GitHub personal access token.
 
 11. Optionally, view logs: `docker-compose logs -f`
 
-## 5. Development
+## Development
 
 ### Updating the `tekrsa_usb` package
 
@@ -138,10 +138,10 @@ docker build -f docker/Dockerfile-test -t rsa_test .
 docker run rsa_test
 ```
 
-## 6. License
+## License
 
 See [LICENSE](LICENSE.md)
 
-## 7. Contact
+## Contact
 
 For technical questions about scos-tekrsa, contact Anthony Romaniello, aromaniello@ntia.gov
