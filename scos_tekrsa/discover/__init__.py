@@ -4,17 +4,20 @@ from os import path
 from scos_actions.actions.monitor_sigan import MonitorSignalAnalyzer
 from scos_actions.actions.sync_gps import SyncGps
 from scos_actions.discover import init
-
+from scos_tekrsa.actions.enable_antenna import EnableAntenna
+from scos_tekrsa.actions.enable_noise_diode_on import EnableNoiseDiodeOn
+from scos_tekrsa.actions.enable_noise_diode_off import EnableNoiseDiodeOff
 from scos_tekrsa.hardware import sigan
 from scos_tekrsa.settings import ACTION_DEFINITIONS_DIR
 
 logger = logging.getLogger(__name__)
 
-actions = {}
+actions = {"enable_antenna": EnableAntenna(sigan=sigan), 'enable_noise_diode_on': EnableNoiseDiodeOn(sigan=sigan),
+           'enable_noise_diode_off': EnableNoiseDiodeOff(sigan=sigan)}
 logger.info('scos-tekrsa: discovering actions')
 # Adjust ACTION_DEFINITIONS_DIR for specific Tektronix analyzer in use
 if sigan:
-    logger.debug("Devine Name: "  + sigan.device_name)
+    logger.debug("Devine Name: " + sigan.device_name)
     if sigan.device_name in ['RSA306B', 'RSA306']:
         ACTION_DEFINITIONS_DIR += '-300'
     elif sigan.device_name in ['RSA503A', 'RSA507A', 'RSA513A', 'RSA518A', 'RSA603A', 'RSA607A']:
@@ -32,8 +35,6 @@ if sigan:
     actions.update(yaml_actions)
 else:
     logger.warning('Sigan is null')
-
-
 
 
 # Support status endpoint
