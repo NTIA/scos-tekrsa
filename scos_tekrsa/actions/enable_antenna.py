@@ -4,6 +4,7 @@ import logging
 
 from scos_actions.actions.interfaces.action import Action
 from scos_tekrsa.hardware import sigan
+from scos_actions.hardware import preselector
 
 logger = logging.getLogger(__name__)
 
