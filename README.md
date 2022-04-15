@@ -142,6 +142,8 @@ docker run rsa_test
 
 See [LICENSE](LICENSE.md)
 
+TEKTRONIX and TEK are registered trademarks of Tektronix, Inc.
+
 ## Contact
 
 For technical questions about scos-tekrsa, contact Anthony Romaniello, aromaniello@ntia.gov
