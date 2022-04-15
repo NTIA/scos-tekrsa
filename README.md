@@ -1,4 +1,4 @@
-# 1. NTIA/ITS SCOS Tektronix RSA Plugin
+# NTIA/ITS SCOS Tektronix® RSA Plugin
 
 This repository is a plugin to add support for the Tektronix RSA306, RSA306B, RSA503A, RSA507A, RSA513A, RSA518A, RSA603A, and RSA607A real-time spectrum analyzers to scos-sensor. See the [scos-sensor documentation](https://github.com/NTIA/scos-sensor/blob/master/README.md) for more information about scos-sensor, especially the section about [Actions and Hardware Support](https://github.com/NTIA/scos-sensor/blob/master/README.md#actions-and-hardware-support).
 
@@ -8,21 +8,21 @@ This repository also includes many 700MHz band actions in `scos_tekrsa/configs/a
 
 For information on adding actions, see the [scos_actions documentation](https://github.com/NTIA/scos-actions/blob/master/README.md#adding-actions).
 
-## 2. Table of Contents
+## Table of Contents
 
-- [Overview of Repo Structure](#3-overview-of-repo-structure)
-- [Running in scos-sensor](#4-running-in-scos-sensor)
-- [Development](#5-development)
-- [License](#6-license)
-- [Contact](#7-contact)
+- [Overview of Repo Structure](#overview-of-repo-structure)
+- [Running in scos-sensor](#running-in-scos-sensor)
+- [Development](#development)
+- [License](#license)
+- [Contact](#contact)
 
-## 3. Overview of Repo Structure
+## Overview of Repo Structure
 
 - `scos_tekrsa/configs`: This folder contains the YAML files with the parameters used to initialize the Tektronix RSA supported actions and sample calibration files.
 - `scos_tekrsa/discover`: This includes the code to read YAML files and make actions available to scos-sensor.
 - `scos_tekrsa/hardware`: This includes the Tektronix RSA implementation of the signal analyzer interface. It also includes supporting calibration and test code.
 
-## 4. Running in scos-sensor
+## Running in scos-sensor
 
 Requires pip>=18.1 (upgrade using `python3 -m pip install --upgrade pip`).
 
@@ -31,10 +31,11 @@ Below are the steps to run scos-sensor with the scos-tekrsa plugin:
 1. Clone scos-sensor: `git clone https://github.com/NTIA/scos-sensor.git`. 
 
 2. Navigate to scos-sensor: `cd scos-sensor`
+    - While testing locally, run: `cd scripts && ./create_localhost_cert.sh` to generate the necessary SSL certificates.
 
 3. While in the scos-sensor root directory, create the `env` file by copying the template file: `cp env.template ./env`
 
-4. In the `env` file, set `BASE_IMAGE` to `BASE_IMAGE=ghcr.io/ntia/scos-tekrsa/tekrsa_usb:0.1.4`
+4. In the `env` file, set `BASE_IMAGE` to `BASE_IMAGE=ghcr.io/ntia/scos-tekrsa/tekrsa_usb:0.1.5`
 
     - While this repository is private, authentication with the GitHub Container Registry is required.
     - If using a personal access token, ensure the scope includes `read:packages`
@@ -80,7 +81,17 @@ In which `<GITHUB_PAT>` is replaced by your GitHub personal access token.
 
 11. Optionally, view logs: `docker-compose logs -f`
 
-## 5. Development
+## Development
+
+### Updating the `tekrsa_usb` package
+
+To build, tag the version as X.X.X, and push the updated image to the GitHub Container Registry, run:
+
+```bash
+docker build -f docker/Dockerfile -t tekrsa_usb .
+docker tag takrsa_usb ghcr.io/ntia/scos-tekrsa/tekrsa_usb:X.X.X
+docker push ghcr.io/ntia/scos-tekrsa/tekrsa_usb:X.X.X
+```
 
 ### Requirements and Configuration
 
@@ -123,15 +134,16 @@ For more information about pip-tools, see [https://pip-tools.readthedocs.io/en/l
 A docker container is used for testing. [Install Docker](https://docs.docker.com/get-docker/) in order to run tests.
 
 ```bash
-docker build -f docker/Dockerfile -t tekrsa_usb .
 docker build -f docker/Dockerfile-test -t rsa_test .
 docker run rsa_test
 ```
 
-## 6. License
+## License
 
 See [LICENSE](LICENSE.md)
 
-## 7. Contact
+TEKTRONIX and TEK are registered trademarks of Tektronix, Inc.
+
+## Contact
 
 For technical questions about scos-tekrsa, contact Anthony Romaniello, aromaniello@ntia.gov
