@@ -18,4 +18,4 @@ class EnableNoiseDiodeOff(Action):
 
     def __call__(self, schedule_entry_json, task_id):
         logger.debug("Enabling antenna")
-        preselector.set_rf_path('noise_diode_on')
+        preselector.set_rf_path('noise_diode_off')

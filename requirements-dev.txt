@@ -10,6 +10,14 @@ asgiref==3.5.0
     #   django
 attrs==21.4.0
     # via pytest
+certifi==2021.10.8
+    # via
+    #   -r requirements.txt
+    #   requests
+charset-normalizer==2.0.12
+    # via
+    #   -r requirements.txt
+    #   requests
 coverage==6.3.2
     # via pytest-cov
 django==3.2.12
@@ -18,10 +26,18 @@ django==3.2.12
     #   scos-actions
 environs==7.3.1
     # via -r requirements-dev.in
+idna==3.3
+    # via
+    #   -r requirements.txt
+    #   requests
 importlib-metadata==4.11.2
     # via
     #   pluggy
     #   pytest
+its-preselector @ git+https://github.com/NTIA/Preselector@0.0.1
+    # via
+    #   -r requirements.txt
+    #   scos-actions
 marshmallow==3.14.1
     # via environs
 more-itertools==8.12.0
@@ -59,6 +75,8 @@ pytz==2022.1
     # via
     #   -r requirements.txt
     #   django
+requests==2.27.1
+    # via -r requirements.txt
 ruamel-yaml==0.16.13
     # via
     #   -r requirements.txt
@@ -71,7 +89,7 @@ scipy==1.7.3
     # via
     #   -r requirements.txt
     #   scos-actions
-scos_actions @ git+https://github.com/NTIA/scos-actions@0.1.0
+scos_actions @ git+https://github.com/NTIA/scos-actions@calibration
     # via -r requirements.txt
 sigmf @ git+https://github.com/NTIA/SigMF.git@multi-recording-archive
     # via
@@ -92,6 +110,10 @@ typing-extensions==4.1.1
     #   -r requirements.txt
     #   asgiref
     #   importlib-metadata
+urllib3==1.26.9
+    # via
+    #   -r requirements.txt
+    #   requests
 wcwidth==0.2.5
     # via pytest
 zipp==3.7.0

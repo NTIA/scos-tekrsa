@@ -3,11 +3,7 @@
 import pytest
 
 from scos_tekrsa.hardware import sigan
-from scos_tekrsa.hardware.tests.resources.utils import (
-    create_dummy_calibration,
-    easy_gain,
-    is_close
-)
+
 
 class TestTekRSA:
     # Ensure we write the test cal file and use mocks

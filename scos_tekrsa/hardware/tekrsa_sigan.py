@@ -1,28 +1,17 @@
 import logging
 import time
 import traceback
-import numpy as np
 from scos_actions import utils
 from scos_actions.hardware.sigan_iface import SignalAnalyzerInterface
 
 from scos_tekrsa import settings
-from scos_tekrsa.hardware import calibration
 from scos_tekrsa.hardware.mocks.rsa_block import MockRSA
-from scos_tekrsa.hardware.tests.resources.utils import create_dummy_calibration
-from scos_tekrsa.hardware.calibration import (
-    DEFAULT_SENSOR_CALIBRATION,
-    DEFAULT_SIGAN_CALIBRATION
-)
 
 logger = logging.getLogger(__name__)
 
 
 class TekRSASigan(SignalAnalyzerInterface):
-    def __init__(
-        self,
-        sensor_cal_file=settings.SENSOR_CALIBRATION_FILE,
-        sigan_cal_file=settings.SIGAN_CALIBRATION_FILE
-    ):
+    def __init__(self):
         try:
             logger.info("Initializing Tektronix RSA Signal Analyzer")
 
@@ -51,12 +40,9 @@ class TekRSASigan(SignalAnalyzerInterface):
 
             self.sensor_calibration_data = None
             self.sigan_calibration_data = None
-            self.sensor_calibration = None
-            self.sigan_calibration = None
             self._capture_time = None
-
             self.connect()
-            self.get_calibration(sensor_cal_file, sigan_cal_file)
+
         except Exception as error:
             logger.error("unable to initialize sigan")
             traceback.print_exc()
@@ -129,46 +115,12 @@ class TekRSASigan(SignalAnalyzerInterface):
                     logger.error(error_message)
                     raise RuntimeError(error_message)
 
-    @property
-    def last_calibration_time(self):
-        """Return the last calibration time from calibration data."""
-        if self.sensor_calibration:
-            return utils.convert_string_to_millisecond_iso_format(
-                self.sensor_calibration.calibration_datetime
-            )
-        return None
 
     @property
     def is_available(self):
         """Returns True if initialized and ready for measurements"""
         return self._is_available
 
-    def get_calibration(self, sensor_cal_file, sigan_cal_file):
-        """Get calibration data from sensor_cal_file and sigan_cal_file."""
-        # Set the default calibration values
-        self.sensor_calibration_data = DEFAULT_SENSOR_CALIBRATION.copy()
-        self.sigan_calibration_data = DEFAULT_SIGAN_CALIBRATION.copy()
-
-        # Try and load sensor/sigan calibration data
-        if not settings.RUNNING_TESTS and not settings.MOCK_SIGAN:
-            try:
-                self.sensor_calibration = calibration.load_from_json(sensor_cal_file)
-            except Exception as e:
-                logger.error(
-                    "Unable to load sensor calibration data, reverting to none."
-                )
-                logger.exception(e)
-                self.sensor_calibration = None
-            try:
-                self.sigan_calibration = calibration.load_from_json(sigan_cal_file)
-            except Exception as e:
-                logger.error("Unable to load sigan calibration data, reverting to none.")
-                logger.exception(e)
-                self.sigan_calibration = None
-        else:  # If in testing, create our own test files
-            dummy_calibration = create_dummy_calibration()
-            self.sensor_calibration = dummy_calibration
-            self.sigan_calibration = dummy_calibration
 
     @property
     def sample_rate(self):
@@ -181,16 +133,16 @@ class TekRSASigan(SignalAnalyzerInterface):
             err_msg = f"Sample rate {sample_rate} too high. Max sample rate is {self.max_sample_rate}."
             logger.error(err_msg)
             raise Exception(err_msg)
-        if sample_rate not in ALLOWED_SR:
+        if sample_rate not in self.ALLOWED_SR:
             # If requested sample rate is not an allowed value
-            allowed_sample_rates_str = ", ".join(map(str, ALLOWED_SR))
+            allowed_sample_rates_str = ", ".join(map(str, self.ALLOWED_SR))
             err_msg = (f"Requested sample rate {sample_rate} not in allowed sample rates."
                        + f" Allowed sample rates are {allowed_sample_rates_str}")
             logger.error(err_msg)
             raise ValueError(err_msg)
         # Set RSA IQ Bandwidth based on sample_rate
         # The IQ Bandwidth determines the RSA sample rate.
-        bw = SR_BW_MAP.get(sample_rate)
+        bw = self.SR_BW_MAP.get(sample_rate)
         self.rsa.IQSTREAM_SetAcqBandwidth(bw)
         msg = "Set Tektronix RSA sample rate: " \
               + f"{self.rsa.IQSTREAM_GetAcqParameters()[1]:.1f} samples/sec"
@@ -262,57 +214,6 @@ class TekRSASigan(SignalAnalyzerInterface):
         else:
             logger.debug("Tektronix RSA 300 series device has no built-in preamp.")
 
-
-    def recompute_calibration_data(self):
-        """Set the calibration data based on the currently tuning"""
-
-        # Try and get the sensor calibration data
-        self.sensor_calibration_data = DEFAULT_SENSOR_CALIBRATION.copy()
-        if self.sensor_calibration is not None:
-            self.sensor_calibration_data.update(
-                self.sensor_calibration.get_calibration_dict(
-                    sample_rate=self.sample_rate,
-                    lo_frequency=self.frequency,
-                    reference_level=self.reference_level,
-                )
-            )
-
-        # Try and get the sigan calibration data
-        self.sigan_calibration_data = DEFAULT_SIGAN_CALIBRATION.copy()
-        if self.sigan_calibration is not None:
-            self.sigan_calibration_data.update(
-                self.sigan_calibration.get_calibration_dict(
-                    sample_rate=self.sample_rate,
-                    lo_frequency=self.frequency,
-                    reference_level=self.reference_level,
-                )
-            )
-
-        # Catch any defaulting calibration values for the sigan
-        if self.sigan_calibration_data["gain_sigan"] is None:
-            self.sigan_calibration_data["gain_sigan"] = 0
-        if self.sigan_calibration_data["enbw_sigan"] is None:
-            self.sigan_calibration_data["enbw_sigan"] = self.sample_rate
-
-        # Catch any defaulting calibration values for the sensor
-        if self.sensor_calibration_data["gain_sensor"] is None:
-            self.sensor_calibration_data["gain_sensor"] = self.sigan_calibration_data[
-                "gain_sigan"
-            ]
-        if self.sensor_calibration_data["enbw_sensor"] is None:
-            self.sensor_calibration_data["enbw_sensor"] = self.sigan_calibration_data[
-                "enbw_sigan"
-            ]
-        if self.sensor_calibration_data["noise_figure_sensor"] is None:
-            self.sensor_calibration_data[
-                "noise_figure_sensor"
-            ] = self.sigan_calibration_data["noise_figure_sigan"]
-        if self.sensor_calibration_data["1db_compression_sensor"] is None:
-            self.sensor_calibration_data["1db_compression_sensor"] = (
-                    self.sensor_calibration_data["gain_preselector"]
-                    + self.sigan_calibration_data["1db_compression_sigan"]
-            )
-
     def create_calibration_annotation(self):
         """Create the SigMF calibration annotation."""
         annotation_md = {
@@ -361,7 +262,7 @@ class TekRSASigan(SignalAnalyzerInterface):
         self._capture_time = None
 
         # Get calibration data for acquisition
-        self.recompute_calibration_data()
+        self.recompute_calibration_data(self.reference_level)
         nsamps_req = int(num_samples)  # Requested number of samples
         nskip = int(num_samples_skip)  # Requested number of samples to skip
         nsamps = nsamps_req + nskip  # Total number of samples to collect
