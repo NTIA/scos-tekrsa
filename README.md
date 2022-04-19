@@ -1,4 +1,4 @@
-# NTIA/ITS SCOS Tektronix® RSA Plugin
+# NTIA/ITS SCOS Tektronix® RSA Plugin[^disclaimer]
 
 This repository is a plugin to add support for the Tektronix RSA306, RSA306B, RSA503A, RSA507A, RSA513A, RSA518A, RSA603A, and RSA607A real-time spectrum analyzers to scos-sensor. See the [scos-sensor documentation](https://github.com/NTIA/scos-sensor/blob/master/README.md) for more information about scos-sensor, especially the section about [Actions and Hardware Support](https://github.com/NTIA/scos-sensor/blob/master/README.md#actions-and-hardware-support).
 
@@ -14,7 +14,6 @@ For information on adding actions, see the [scos_actions documentation](https://
 - [Running in scos-sensor](#running-in-scos-sensor)
 - [Development](#development)
 - [License](#license)
-- [Disclaimers](#disclaimers)
 - [Contact](#contact)
 
 ## Overview of Repo Structure
@@ -143,12 +142,12 @@ docker run rsa_test
 
 See [LICENSE](LICENSE.md)
 
-## Disclaimers
-
 TEKTRONIX and TEK are registered trademarks of Tektronix, Inc.
-
-Certain commercial equipment, instruments, or materials are identified in this project were used for the convenience of the developers. In no case does such identification imply recommendation or endorsement by the National Telecommunications and Information Administration, nor does it imply that the material or equipment identified is necessarily the best available for the purpose.
 
 ## Contact
 
 For technical questions about scos-tekrsa, contact Anthony Romaniello, aromaniello@ntia.gov
+
+### Disclaimer
+
+[^disclaimer]: Certain commercial equipment, instruments, or materials are identified in this project were used for the convenience of the developers. In no case does such identification imply recommendation or endorsement by the National Telecommunications and Information Administration, nor does it imply that the material or equipment identified is necessarily the best available for the purpose.
