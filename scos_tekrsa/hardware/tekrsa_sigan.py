@@ -1,3 +1,4 @@
+import json
 import logging
 import time
 import traceback
@@ -6,6 +7,8 @@ from scos_actions.hardware.sigan_iface import SignalAnalyzerInterface
 
 from scos_tekrsa import settings
 from scos_tekrsa.hardware.mocks.rsa_block import MockRSA
+from scos_actions.settings import sensor_calibration
+from scos_actions.settings import SENSOR_CALIBRATION_FILE
 
 logger = logging.getLogger(__name__)
 
@@ -21,10 +24,10 @@ class TekRSASigan(SignalAnalyzerInterface):
             # Allowed sample rates and bandwidth settings, ordered from 
             # greatest to least. SR in samples/sec, BW in Hz.
             self.ALLOWED_SR = [56.0e6, 28.0e6, 14.0e6, 7.0e6, 3.5e6, 1.75e6, 875.e3,
-                            437.5e3, 218.75e3, 109.375e3, 54687.5, 24373.75, 13671.875]
+                               437.5e3, 218.75e3, 109.375e3, 54687.5, 24373.75, 13671.875]
 
             self.ALLOWED_BW = [40.0e6, 20.0e6, 10.0e6, 5.0e6, 2.5e6, 1.25e6, 625.e3,
-                            312.5e3, 156.25e3, 78125., 39062.5, 19531.25, 9765.625]
+                               312.5e3, 156.25e3, 78125., 39062.5, 19531.25, 9765.625]
 
             # Use values defined above to create SR/BW mapping dict,
             # with SR as keys and BW as values.
@@ -115,12 +118,10 @@ class TekRSASigan(SignalAnalyzerInterface):
                     logger.error(error_message)
                     raise RuntimeError(error_message)
 
-
     @property
     def is_available(self):
         """Returns True if initialized and ready for measurements"""
         return self._is_available
-
 
     @property
     def sample_rate(self):
@@ -351,3 +352,27 @@ class TekRSASigan(SignalAnalyzerInterface):
                     measurement_result['attenuation'] = self.attenuation
                     measurement_result['preamp_enable'] = self.preamp_enable
                 return measurement_result
+
+    def update_calibration(self, params, gain, noise_figure):
+        sample_rates = sensor_calibration.calibration_data['sample_rates']
+        updated = False
+        for sr_cal in sample_rates:
+            if sr_cal['sample_rate'] == params['sample_rate']:
+                cal_data = sr_cal['calibration_data']
+                frequencies = cal_data['frequencies']
+                for freq_cal in frequencies:
+                    if freq_cal['frequency'] == params['frequency']:
+                        cal_data = freq_cal['calibration_data']
+                        setting_values = freq_cal['setting_values']
+                        for setting_cal in setting_values:
+                            if setting_cal['setting_value'] == params['reference_level']:
+                                updated = True
+                                cal = setting_cal['calibration_data']
+                                cal['gain_sensor'] = gain
+                                cal['noise_figure_sensor'] = noise_figure
+        if not updated:
+            raise Exception('Sensor calibration file does not contain parameters to update.')
+
+        else:
+            with open(SENSOR_CALIBRATION_FILE, 'w') as outfile:
+                json.dump(sensor_calibration, outfile)
