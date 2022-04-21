@@ -258,20 +258,23 @@ class TekRSASigan(SignalAnalyzerInterface):
 
         return True
 
-    def acquire_time_domain_samples(self, num_samples, num_samples_skip=0, retries=5):
+    def acquire_time_domain_samples(self, num_samples, num_samples_skip=0, retries=5, gain_adjust=True):
         """Acquire specific number of time-domain IQ samples."""
         self._capture_time = None
 
-        # Get calibration data for acquisition
-        self.recompute_calibration_data(self.reference_level)
+
         nsamps_req = int(num_samples)  # Requested number of samples
         nskip = int(num_samples_skip)  # Requested number of samples to skip
         nsamps = nsamps_req + nskip  # Total number of samples to collect
+        # Get calibration data for acquisition
 
+        self.recompute_calibration_data(self.reference_level)
         # Compute the linear gain
         db_gain = self.sensor_calibration_data["gain_sensor"]
-        linear_gain = 10 ** (db_gain / 20.0)
-
+        if gain_adjust:
+            linear_gain = 10 ** (db_gain / 20.0)
+        else:
+            linear_gain= 1
         # Determine correct time length (round up, integer ms)
         durationMsec = int(1000 * (nsamps / self.sample_rate)) + (1000 * nsamps % self.sample_rate > 0)
 
