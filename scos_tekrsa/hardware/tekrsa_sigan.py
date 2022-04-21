@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 class TekRSASigan(SignalAnalyzerInterface):
     def __init__(self):
         try:
+            super.__init__()
             logger.info("Initializing Tektronix RSA Signal Analyzer")
 
             self.rsa = None
