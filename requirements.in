@@ -1,2 +1,2 @@
-scos_actions @ git+https://github.com/NTIA/scos-actions@calibration#egg=scos_actions
+scos_actions @ git+https://github.com/NTIA/scos-actions@yfactor_cal#egg=scos_actions
 tekrsa_api_wrap @ git+https://github.com/NTIA/tekrsa-api-wrap@main#egg=tekrsa_api_wrap
