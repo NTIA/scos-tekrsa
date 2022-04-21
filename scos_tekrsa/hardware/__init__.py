@@ -5,6 +5,6 @@ logger = logging.getLogger(__name__)
 try:
     logger.debug('*********************Creating TekRSASigan******************************')
     sigan = TekRSASigan()
-except:
-    logger.error('Unable to create TekRSASigan')
+except Exception as err:
+    logger.error('Unable to create TekRSASigan: ' + err)
     sigan = None
