@@ -6,5 +6,5 @@ y_factor_cal:
   preamp_enable: False
   sample_rate: 56e6
   fft_size: 2048
-  nffts: 300
+  nffts: 600
   nskip: 0
