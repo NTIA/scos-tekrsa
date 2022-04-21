@@ -6,5 +6,5 @@ try:
     logger.debug('*********************Creating TekRSASigan******************************')
     sigan = TekRSASigan()
 except Exception as err:
-    logger.error('Unable to create TekRSASigan: ' + err)
+    logger.error('Unable to create TekRSASigan: ', err)
     sigan = None
