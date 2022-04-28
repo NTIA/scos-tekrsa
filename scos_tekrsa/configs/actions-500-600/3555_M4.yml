@@ -6,5 +6,5 @@ single_frequency_fft:
   preamp_enable: True
   sample_rate: 14e6
   fft_size: 1400
-  nffts: 40000
+  nffts: 1000
   nskip: 0
