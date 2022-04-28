@@ -45,9 +45,11 @@ Below are the steps to run scos-sensor with the scos-tekrsa plugin:
 
 `scos_tekrsa @ git+https://github.com/NTIA/scos-tekrsa@main#egg=scos_tekrsa`
 
-6. Download the [RSA API for Linux](https://www.tek.com/spectrum-analyzer/rsa306-software/rsa-application-programming-interface--api-for-64bit-linux--v100014) from Tektronix. Place the three files `libRSA_API.so`, `libcyusb_shared.so`, and `cyusb.conf` in the directory `scos-sensor/drivers`.
+6. Compile `requirements.txt` by running: `pip-compile requirements.in`
 
-7. Create a `files.json` file in `scos-sensor/drivers` containing:
+7. Download the [RSA API for Linux](https://www.tek.com/spectrum-analyzer/rsa306-software/rsa-application-programming-interface--api-for-64bit-linux--v100014) from Tektronix. Place the three files `libRSA_API.so`, `libcyusb_shared.so`, and `cyusb.conf` in the directory `scos-sensor/drivers`.
+
+8. Create a `files.json` file in `scos-sensor/drivers` containing:
 
 ```json
 {
@@ -60,7 +62,7 @@ Below are the steps to run scos-sensor with the scos-tekrsa plugin:
 }
 ```
 
-8. (While this repository is private) Edit `docker/Dockerfile-api` by commenting or removing the following lines:
+9. (While this repository is private) Edit `docker/Dockerfile-api` by commenting or removing the following lines:
 
 ```
 ARG DOCKER_GIT_CREDENTIALS
@@ -77,9 +79,9 @@ In which `<GITHUB_PAT>` is replaced by your GitHub personal access token.
 
 10. Get environment variables: `source ./env`
 
-10. Build and start containers: `docker-compose up -d --build --force-recreate`
+11. Build and start containers: `docker-compose up -d --build --force-recreate`
 
-11. Optionally, view logs: `docker-compose logs -f`
+12. Optionally, view logs: `docker-compose logs -f`
 
 ## Development
 
