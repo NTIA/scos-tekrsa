@@ -1,6 +1,6 @@
 single_frequency_fft:
-  name: 3555_M4
-  frequency: 3555e6
+  name: 3675_M4
+  frequency: 3675e6
   reference_level: -25
   attenuation: 0
   preamp_enable: True
