@@ -356,27 +356,3 @@ class TekRSASigan(SignalAnalyzerInterface):
                     measurement_result['attenuation'] = self.attenuation
                     measurement_result['preamp_enable'] = self.preamp_enable
                 return measurement_result
-
-    def update_calibration(self, params, gain, noise_figure):
-        sample_rates = sensor_calibration.calibration_data['sample_rates']
-        updated = False
-        for sr_cal in sample_rates:
-            if sr_cal['sample_rate'] == params['sample_rate']:
-                cal_data = sr_cal['calibration_data']
-                frequencies = cal_data['frequencies']
-                for freq_cal in frequencies:
-                    if freq_cal['frequency'] == params['frequency']:
-                        cal_data = freq_cal['calibration_data']
-                        setting_values = freq_cal['setting_values']
-                        for setting_cal in setting_values:
-                            if setting_cal['setting_value'] == params['reference_level']:
-                                updated = True
-                                cal = setting_cal['calibration_data']
-                                cal['gain_sensor'] = gain
-                                cal['noise_figure_sensor'] = noise_figure
-        if not updated:
-            raise Exception('Sensor calibration file does not contain parameters to update.')
-
-        else:
-            with open(SENSOR_CALIBRATION_FILE, 'w') as outfile:
-                json.dump(sensor_calibration, outfile)
