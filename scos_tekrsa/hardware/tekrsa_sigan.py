@@ -268,8 +268,8 @@ class TekRSASigan(SignalAnalyzerInterface):
         nskip = int(num_samples_skip)  # Requested number of samples to skip
         nsamps = nsamps_req + nskip  # Total number of samples to collect
         # Get calibration data for acquisition
-
-        self.recompute_calibration_data(self.reference_level)
+        calibration_args = [self.sample_rate, self.frequency, self.reference_level]
+        self.recompute_calibration_data(calibration_args)
         # Compute the linear gain
         db_gain = self.sensor_calibration_data["gain_sensor"]
         if gain_adjust:
