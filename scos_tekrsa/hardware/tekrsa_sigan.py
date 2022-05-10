@@ -221,6 +221,7 @@ class TekRSASigan(SignalAnalyzerInterface):
         annotation_md = {
             "ntia-core:annotation_type": "CalibrationAnnotation",
             "ntia-sensor:gain_sigan": self.sigan_calibration_data["gain_sigan"],
+            "ntia-sensor:gain_sensor": self.sensor_calibration_data['gain_sensor'],
             "ntia-sensor:noise_figure_sigan": self.sigan_calibration_data[
                 "noise_figure_sigan"
             ],
@@ -317,7 +318,7 @@ class TekRSASigan(SignalAnalyzerInterface):
 
             # Print warning from status indicator
             if status != 0:
-                logger.warning(iq_warn)
+                logger.warning('Status:{}. ' + iq_warn.format(status))
 
             if not data_len == nsamps_req:
                 if retries > 0:
