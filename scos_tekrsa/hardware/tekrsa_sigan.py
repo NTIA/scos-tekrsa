@@ -98,14 +98,21 @@ class TekRSASigan(SignalAnalyzerInterface):
         """Check if device alignment is needed, and if so, run it."""
         while True:
             try:
+                running_alignment = False
                 if self.rsa.ALIGN_GetWarmupStatus():  # Must be warmed up first
-                    if self.rsa.ALIGN_GetAlignmentNeeded():
+                    logger.info('Device is warmed up')
+                    if self.rsa.ALIGN_GetAlignmentNeeded() and not running_alignment:
+                        logger.info('Running alignment')
                         self.rsa.ALIGN_RunAlignment()
-                        return
+                        running_alignment = True
+                    elif self.rsa.ALIGN_GetAlignmentNeeded() and running_alignment:
+                        logger.info('Waiting on alignment.')
+                        time.sleep(1)
                     else:
-                        logger.debug("Device already aligned.")
+                        logger.info("Device already aligned.")
+                        return
                 else:
-                    logger.debug("Device not yet warmed up.")
+                    logger.info("Device not yet warmed up.")
                 return
             except Exception as e:
                 logger.error(e)
@@ -264,7 +271,8 @@ class TekRSASigan(SignalAnalyzerInterface):
         """Acquire specific number of time-domain IQ samples."""
         self._capture_time = None
 
-
+        if self.rsa.ALIGN_GetAlignmentNeeded():
+            logger.warning('Device needs alignment')
         nsamps_req = int(num_samples)  # Requested number of samples
         nskip = int(num_samples_skip)  # Requested number of samples to skip
         nsamps = nsamps_req + nskip  # Total number of samples to collect
