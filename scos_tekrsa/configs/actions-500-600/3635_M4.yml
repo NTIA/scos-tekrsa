@@ -1,0 +1,10 @@
+single_frequency_fft:
+  name: 3635_M4
+  frequency: 3635e6
+  reference_level: -25
+  attenuation: 0
+  preamp_enable: True
+  sample_rate: 14e6
+  fft_size: 1400
+  nffts: 4000
+  nskip: 0

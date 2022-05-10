@@ -1,10 +1,10 @@
 single_frequency_fft:
-  name: 3555_M4
-  frequency: 3555e6
+  name: 3665_M4
+  frequency: 3665e6
   reference_level: -25
   attenuation: 0
-  preamp_enable: False
+  preamp_enable: True
   sample_rate: 14e6
   fft_size: 1400
-  nffts: 40000
+  nffts: 4000
   nskip: 0
