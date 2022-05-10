@@ -273,6 +273,7 @@ class TekRSASigan(SignalAnalyzerInterface):
 
         if self.rsa.ALIGN_GetAlignmentNeeded():
             logger.warning('Device needs alignment')
+            self.align()
         nsamps_req = int(num_samples)  # Requested number of samples
         nskip = int(num_samples_skip)  # Requested number of samples to skip
         nsamps = nsamps_req + nskip  # Total number of samples to collect
