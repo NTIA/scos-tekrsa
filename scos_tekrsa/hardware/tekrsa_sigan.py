@@ -113,7 +113,9 @@ class TekRSASigan(SignalAnalyzerInterface):
                         return
                 else:
                     logger.info("Device not yet warmed up.")
-                return
+                    time.sleep(1)
+
+
             except Exception as e:
                 logger.error(e)
                 if retries > 0:
