@@ -83,8 +83,6 @@ class TekRSASigan(SignalAnalyzerInterface):
                 self.rsa.DEVICE_SearchAndConnect()
                 self.device_name = self.rsa.DEVICE_GetNomenclature()
                 logger.debug("Device Name: " + self.device_name)
-                self.align()
-                logger.debug("aligned")
                 self.get_constraints()
                 logger.info("Using the following Tektronix RSA device:")
                 logger.info(self.device_name + " " + str(self.min_frequency) + '-' + str(self.max_frequency))
@@ -114,7 +112,6 @@ class TekRSASigan(SignalAnalyzerInterface):
                 else:
                     logger.info("Device not yet warmed up.")
                     time.sleep(1)
-
 
             except Exception as e:
                 logger.error(e)
@@ -311,7 +308,7 @@ class TekRSASigan(SignalAnalyzerInterface):
             data_len = len(data)
 
             # Parse returned status indicator
-            iq_warn = 'RSA IQ Streaming warning: '
+            iq_warn = 'Status:{}. RSA IQ Streaming warning: '
             self.overload = False
             if status == 1:
                 self.overload = True
@@ -329,7 +326,7 @@ class TekRSASigan(SignalAnalyzerInterface):
 
             # Print warning from status indicator
             if status != 0:
-                logger.warning('Status:{}. ' + iq_warn.format(status))
+                logger.warning(iq_warn.format(status))
 
             if not data_len == nsamps_req:
                 if retries > 0:
