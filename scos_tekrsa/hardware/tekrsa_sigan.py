@@ -84,6 +84,11 @@ class TekRSASigan(SignalAnalyzerInterface):
                 self.device_name = self.rsa.DEVICE_GetNomenclature()
                 logger.debug("Device Name: " + self.device_name)
                 self.get_constraints()
+                self.sample_rate = self.max_sample_rate
+                self.reference_level = self.max_reference_level
+                self.preamp_enable = False
+                self.attenuation = 0
+                self.acquire_time_domain_samples(self.sample_rate * 2)
                 logger.info("Using the following Tektronix RSA device:")
                 logger.info(self.device_name + " " + str(self.min_frequency) + '-' + str(self.max_frequency))
             except Exception as e:
@@ -344,7 +349,6 @@ class TekRSASigan(SignalAnalyzerInterface):
                     raise RuntimeError(err)
             else:
                 logger.debug(f"Successfully acquired {data_len} samples.")
-
                 # Scale data to RF power and return
                 logger.info('Applying gain of {}'.format(linear_gain))
                 data /= linear_gain
