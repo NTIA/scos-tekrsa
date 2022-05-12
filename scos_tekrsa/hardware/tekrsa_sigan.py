@@ -308,27 +308,24 @@ class TekRSASigan(SignalAnalyzerInterface):
             data = data[nskip:]  # Remove extra samples, if any
             data_len = len(data)
 
-            # Parse returned status indicator
-            iq_warn = 'Status:{}. RSA IQ Streaming warning: '
-            self.overload = False
-            if status == 1:
-                self.overload = True
-                iq_warn += 'Input overrange.'
-            elif status == 2:
-                iq_warn += 'Input buffer > 75% full.'
-            elif status == 3:
-                iq_warn += 'Input buffer overflow. IQ Stream processing' \
-                           + ' too slow. Data loss has occurred.'
-            elif status == 4:
-                iq_warn += 'Output buffer > 75% full.'
-            elif status == 5:
-                iq_warn += 'Output buffer overflow. File writing too slow.' \
-                           + 'Data loss has occurred.'
-
             # Print warning from status indicator
-            if status != 0:
+            if status != 'No error.':
+                iq_warn = 'IQ Stream Status:\n{}'
                 logger.warning(iq_warn.format(status))
 
+            # Check status string for overload / data loss
+            self.overload = False
+            if 'Input overrange' in status:
+                self.overload = True
+            if 'data loss' in status or 'discontinuity' in status:
+                if retries > 0:
+                    logger.warning(f'Retrying {retries} more times.')
+                    retries -= 1
+                else:
+                    err = 'Data loss occurred with no retries remaining.'
+                    err += f' (tried {retries} times.)'
+                    raise RuntimeError(err)
+            
             if not data_len == nsamps_req:
                 if retries > 0:
                     msg = f"RSA error: requested {nsamps_req + nskip} samples, but got {data_len}."
@@ -338,14 +335,6 @@ class TekRSASigan(SignalAnalyzerInterface):
                 else:
                     err = "Failed to acquire correct number of samples "
                     err += f"{max_retries} times in a row."
-                    raise RuntimeError(err)
-            if status == 3 or status == 5:
-                if retries > 0:
-                    logger.warning(f'Retrying {retries} more times.')
-                    retries -= 1
-                else:
-                    err = 'RSA overflow occurred with no retries remaining.'
-                    err += f' (tried {retries} times.)'
                     raise RuntimeError(err)
             else:
                 logger.debug(f"Successfully acquired {data_len} samples.")
