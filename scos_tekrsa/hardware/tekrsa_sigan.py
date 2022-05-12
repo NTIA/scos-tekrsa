@@ -84,6 +84,7 @@ class TekRSASigan(SignalAnalyzerInterface):
                 self.device_name = self.rsa.DEVICE_GetNomenclature()
                 logger.debug("Device Name: " + self.device_name)
                 self.get_constraints()
+                self.frequency = 3555e6
                 self.sample_rate = 14.0e6
                 self.reference_level = -25
                 self.preamp_enable = False
