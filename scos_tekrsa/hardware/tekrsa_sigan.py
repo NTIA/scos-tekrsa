@@ -84,8 +84,8 @@ class TekRSASigan(SignalAnalyzerInterface):
                 self.device_name = self.rsa.DEVICE_GetNomenclature()
                 logger.debug("Device Name: " + self.device_name)
                 self.get_constraints()
-                self.sample_rate = self.max_sample_rate
-                self.reference_level = self.max_reference_level
+                self.sample_rate = 14.0e6
+                self.reference_level = -25
                 self.preamp_enable = False
                 self.attenuation = 0
                 self.acquire_time_domain_samples(self.sample_rate * 2)
