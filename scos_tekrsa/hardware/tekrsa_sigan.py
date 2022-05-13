@@ -206,9 +206,9 @@ class TekRSASigan(SignalAnalyzerInterface):
     def attenuation(self, attenuation):
         """Set device attenuation, in dB, for RSA 500/600 series devices"""
         if self.device_name not in ['RSA306B', 'RSA306']:
-            self.rsa.DEVICE_Stop()
             self.rsa.CONFIG_SetAutoAttenuationEnable(False)
             self.rsa.CONFIG_SetRFAttenuator(-1 * attenuation)  # rounded to nearest integer
+            self.rsa.DEVICE_Stop()
             self.rsa.DEVICE_Run()
             msg = "Set Tektronix RSA attenuation: " \
                   + f"{self.rsa.CONFIG_GetRFAttenuator():.1} dB"
@@ -227,8 +227,8 @@ class TekRSASigan(SignalAnalyzerInterface):
     @preamp_enable.setter
     def preamp_enable(self, preamp_enable):
         if self.device_name not in ['RSA306B', 'RSA306']:
-            self.rsa.DEVICE_Stop()
             self.rsa.CONFIG_SetRFPreampEnable(preamp_enable)
+            self.rsa.DEVICE_Stop()
             self.rsa.DEVICE_Run()
             msg = "Set Tektronix RSA preamp enable status: " \
                   f"{self.rsa.CONFIG_GetRFPreampEnable()}"
