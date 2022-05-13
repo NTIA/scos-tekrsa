@@ -4,11 +4,12 @@ import time
 import traceback
 from scos_actions import utils
 from scos_actions.hardware.sigan_iface import SignalAnalyzerInterface
-
+from scos_actions.hardware import preselector
 from scos_tekrsa import settings
 from scos_tekrsa.hardware.mocks.rsa_block import MockRSA
 from scos_actions.settings import sensor_calibration
 from scos_actions.settings import SENSOR_CALIBRATION_FILE
+
 
 logger = logging.getLogger(__name__)
 
@@ -93,12 +94,15 @@ class TekRSASigan(SignalAnalyzerInterface):
         self._is_available = True
 
     def warmup(self):
-        self.frequency = 3555e6
-        self.sample_rate = 14.0e6
-        self.reference_level = -25
-        self.preamp_enable = False
-        self.attenuation = 0
-        self.acquire_time_domain_samples(self.sample_rate * 4)
+        while not self.rsa.ALIGN_GetWarmupStatus():
+            logger.info('Not warmed up, acquiring data')
+            preselector.set_state("antenna")
+            self.frequency = 3555e6
+            self.sample_rate = 14.0e6
+            self.reference_level = -25
+            self.preamp_enable = False
+            self.attenuation = 0
+            self.acquire_time_domain_samples(self.sample_rate * 4)
 
 
     def align(self, retries=3):
