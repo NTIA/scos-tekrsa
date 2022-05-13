@@ -94,17 +94,18 @@ class TekRSASigan(SignalAnalyzerInterface):
         self._is_available = True
 
     def warmup(self):
-        logger.info('Not warmed up, acquiring data')
-        preselector.set_state("noise_diode_on")
-        self.frequency = 3555e6
-        self.sample_rate = 14.0e6
-        self.reference_level = -25
+        logger.info('Initializing preamp')
+       # preselector.set_state("noise_diode_on")
+       # self.frequency = 3555e6
+       # self.sample_rate = 14.0e6
+       # self.reference_level = -25
         self.preamp_enable = True
-        self.attenuation = 0
-        self.acquire_time_domain_samples(self.sample_rate * 1)
-        preselector.set_state("noise_diode_off")
-        self.acquire_time_domain_samples(self.sample_rate * 1)
-        preselector.set_state('antenna')
+        time.sleep(2)
+       # self.attenuation = 0
+       # self.acquire_time_domain_samples(self.sample_rate * 1)
+       # preselector.set_state("noise_diode_off")
+       # self.acquire_time_domain_samples(self.sample_rate * 1)
+       # preselector.set_state('antenna')
 
     def align(self, retries=3):
         """Check if device alignment is needed, and if so, run it."""
@@ -227,12 +228,13 @@ class TekRSASigan(SignalAnalyzerInterface):
     @preamp_enable.setter
     def preamp_enable(self, preamp_enable):
         if self.device_name not in ['RSA306B', 'RSA306']:
-            self.rsa.CONFIG_SetRFPreampEnable(preamp_enable)
-            self.rsa.DEVICE_Stop()
-            self.rsa.DEVICE_Run()
-            msg = "Set Tektronix RSA preamp enable status: " \
-                  f"{self.rsa.CONFIG_GetRFPreampEnable()}"
-            logger.debug(msg)
+            if self.preamp_enable != preamp_enable:
+                self.rsa.CONFIG_SetRFPreampEnable(preamp_enable)
+                self.rsa.DEVICE_Stop()
+                self.rsa.DEVICE_Run()
+                msg = "Set Tektronix RSA preamp enable status: " \
+                    f"{self.rsa.CONFIG_GetRFPreampEnable()}"
+                logger.debug(msg)
         else:
             logger.debug("Tektronix RSA 300 series device has no built-in preamp.")
 
