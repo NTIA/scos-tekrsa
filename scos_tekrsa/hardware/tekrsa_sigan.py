@@ -70,7 +70,7 @@ class TekRSASigan(SignalAnalyzerInterface):
         else:
             try:
                 # Load API wrapper
-                logger.debug("Loading RSA API wrapper")
+                logger.info("Loading RSA API wrapper")
                 import rsa_api
             except ImportError:
                 logger.warning("API Wrapper not loaded - disabling signal analyzer.")
@@ -82,7 +82,7 @@ class TekRSASigan(SignalAnalyzerInterface):
                 # Connect to device using API wrapper
                 self.rsa.DEVICE_SearchAndConnect()
                 self.device_name = self.rsa.DEVICE_GetNomenclature()
-                logger.debug("Device Name: " + self.device_name)
+                logger.info("Device Name: " + self.device_name)
                 self.get_constraints()
                 self.frequency = 3555e6
                 self.sample_rate = 14.0e6
