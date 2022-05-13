@@ -84,12 +84,7 @@ class TekRSASigan(SignalAnalyzerInterface):
                 self.device_name = self.rsa.DEVICE_GetNomenclature()
                 logger.info("Device Name: " + self.device_name)
                 self.get_constraints()
-                self.frequency = 3555e6
-                self.sample_rate = 14.0e6
-                self.reference_level = -25
-                self.preamp_enable = False
-                self.attenuation = 0
-                self.acquire_time_domain_samples(self.sample_rate * 3)
+                self.warmup()
                 logger.info("Using the following Tektronix RSA device:")
                 logger.info(self.device_name + " " + str(self.min_frequency) + '-' + str(self.max_frequency))
             except Exception as e:
@@ -97,6 +92,17 @@ class TekRSASigan(SignalAnalyzerInterface):
                 return
 
         self._is_available = True
+
+    def warmup(self):
+        self.frequency = 3555e6
+        self.sample_rate = 14.0e6
+        self.reference_level = -25
+        self.preamp_enable = False
+        self.attenuation = 0
+        self.acquire_time_domain_samples(self.sample_rate * 1)
+        self.acquire_time_domain_samples(self.sample_rate * 1)
+        self.acquire_time_domain_samples(self.sample_rate * 1)
+        self.acquire_time_domain_samples(self.sample_rate * 1)
 
     def align(self, retries=3):
         """Check if device alignment is needed, and if so, run it."""
