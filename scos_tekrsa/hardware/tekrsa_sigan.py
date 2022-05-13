@@ -236,7 +236,7 @@ class TekRSASigan(SignalAnalyzerInterface):
                 msg = "Set Tektronix RSA preamp enable status: " \
                     f"{self.rsa.CONFIG_GetRFPreampEnable()}"
                 logger.debug(msg)
-                time.sleep(1)
+                time.sleep(2)
         else:
             logger.debug("Tektronix RSA 300 series device has no built-in preamp.")
 
