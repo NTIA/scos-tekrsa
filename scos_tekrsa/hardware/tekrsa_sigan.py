@@ -84,7 +84,6 @@ class TekRSASigan(SignalAnalyzerInterface):
                 self.device_name = self.rsa.DEVICE_GetNomenclature()
                 logger.info("Device Name: " + self.device_name)
                 self.get_constraints()
-                self.warmup()
                 logger.info("Using the following Tektronix RSA device:")
                 logger.info(self.device_name + " " + str(self.min_frequency) + '-' + str(self.max_frequency))
             except Exception as e:
