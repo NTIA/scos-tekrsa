@@ -310,9 +310,9 @@ class TekRSASigan(SignalAnalyzerInterface):
             data_len = len(data)
 
             # Print warning from status indicator
-            if status != 'No error.':
-                iq_warn = 'IQ Stream Status:\n{}'
-                logger.warning(iq_warn.format(status))
+           # if status != 'No error.':
+            iq_warn = 'IQ Stream Status:\n{}'
+            logger.warning(iq_warn.format(status))
 
             # Check status string for overload / data loss
             self.overload = False
