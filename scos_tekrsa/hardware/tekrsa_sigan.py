@@ -98,10 +98,8 @@ class TekRSASigan(SignalAnalyzerInterface):
         self.reference_level = -25
         self.preamp_enable = False
         self.attenuation = 0
-        self.acquire_time_domain_samples(self.sample_rate * 1)
-        self.acquire_time_domain_samples(self.sample_rate * 1)
-        self.acquire_time_domain_samples(self.sample_rate * 1)
-        self.acquire_time_domain_samples(self.sample_rate * 1)
+        self.acquire_time_domain_samples(self.sample_rate * 4)
+
 
     def align(self, retries=3):
         """Check if device alignment is needed, and if so, run it."""
