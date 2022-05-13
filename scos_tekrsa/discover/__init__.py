@@ -16,7 +16,7 @@ actions = {"enable_antenna": EnableAntenna(sigan=sigan), 'enable_noise_diode_on'
 logger.info('scos-tekrsa: discovering actions')
 # Adjust ACTION_DEFINITIONS_DIR for specific Tektronix analyzer in use
 if sigan:
-    sigan.warmup()
+    #sigan.warmup()
     logger.debug("Devine Name: "  + sigan.device_name)
     if sigan.device_name in ['RSA306B', 'RSA306']:
         ACTION_DEFINITIONS_DIR += '-300'
