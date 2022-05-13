@@ -94,18 +94,17 @@ class TekRSASigan(SignalAnalyzerInterface):
         self._is_available = True
 
     def warmup(self):
-        while not self.rsa.ALIGN_GetWarmupStatus():
-            logger.info('Not warmed up, acquiring data')
-            preselector.set_state("noise_diode_on")
-            self.frequency = 3555e6
-            self.sample_rate = 14.0e6
-            self.reference_level = -25
-            self.preamp_enable = False
-            self.attenuation = 0
-            self.acquire_time_domain_samples(self.sample_rate * 1)
-            preselector.set_state("noise_diode_off")
-            self.acquire_time_domain_samples(self.sample_rate * 1)
-            preselector.set_state('antenna')
+        logger.info('Not warmed up, acquiring data')
+        preselector.set_state("noise_diode_on")
+        self.frequency = 3555e6
+        self.sample_rate = 14.0e6
+        self.reference_level = -25
+        self.preamp_enable = False
+        self.attenuation = 0
+        self.acquire_time_domain_samples(self.sample_rate * 1)
+        preselector.set_state("noise_diode_off")
+        self.acquire_time_domain_samples(self.sample_rate * 1)
+        preselector.set_state('antenna')
 
     def align(self, retries=3):
         """Check if device alignment is needed, and if so, run it."""
