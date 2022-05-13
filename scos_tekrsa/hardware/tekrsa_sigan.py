@@ -229,14 +229,15 @@ class TekRSASigan(SignalAnalyzerInterface):
     def preamp_enable(self, preamp_enable):
         if self.device_name not in ['RSA306B', 'RSA306']:
             if self.preamp_enable != preamp_enable:
-                logger.info('Switching preamp to ' + str(preamp_enable))
+                logger.info('Switching preamp to ' + str(preamp_enable) + ' of type ' + str(type(preamp_enable)))
                 self.rsa.CONFIG_SetRFPreampEnable(preamp_enable)
                 self.rsa.DEVICE_Stop()
                 self.rsa.DEVICE_Run()
                 msg = "Set Tektronix RSA preamp enable status: " \
                     f"{self.rsa.CONFIG_GetRFPreampEnable()}"
                 logger.debug(msg)
-                time.sleep(2)
+                time.sleep(5)
+                logger.info('done waiting on preamp')
         else:
             logger.debug("Tektronix RSA 300 series device has no built-in preamp.")
 
