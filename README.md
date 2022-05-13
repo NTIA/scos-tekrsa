@@ -113,7 +113,7 @@ The requirements.txt file is intended for dependencies needed for installation i
 It is recommended to keep direct dependencies in a separate file. The direct dependencies are in the requirements.in and requirements-dev.in files. Then pip-tools can be used to generate files with all the dependencies and transitive dependencies (sub-dependencies). The files containing all the dependencies are in requirements.txt and requirements-dev.txt. Run the following in the virtual environment to install pip-tools:
 
 ```bash
-python -m pip install pip-tools
+python3 -m pip install pip-tools
 ```
 
 To update requirements.txt after modifying requirements.in:
