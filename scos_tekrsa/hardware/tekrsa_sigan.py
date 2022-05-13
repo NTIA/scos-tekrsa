@@ -89,7 +89,7 @@ class TekRSASigan(SignalAnalyzerInterface):
                 self.reference_level = -25
                 self.preamp_enable = False
                 self.attenuation = 0
-                self.acquire_time_domain_samples(self.sample_rate * 2)
+                self.acquire_time_domain_samples(self.sample_rate * 3)
                 logger.info("Using the following Tektronix RSA device:")
                 logger.info(self.device_name + " " + str(self.min_frequency) + '-' + str(self.max_frequency))
             except Exception as e:
