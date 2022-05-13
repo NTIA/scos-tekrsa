@@ -99,7 +99,7 @@ class TekRSASigan(SignalAnalyzerInterface):
         self.frequency = 3555e6
         self.sample_rate = 14.0e6
         self.reference_level = -25
-        self.preamp_enable = False
+        self.preamp_enable = True
         self.attenuation = 0
         self.acquire_time_domain_samples(self.sample_rate * 1)
         preselector.set_state("noise_diode_off")
