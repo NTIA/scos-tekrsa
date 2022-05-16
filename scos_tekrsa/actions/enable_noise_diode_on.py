@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 class EnableNoiseDiodeOn(Action):
     """Set the preselector to noise diode on"""
 
-    def __init__(self, parameters={'noise': 'enable_noise_diode_on'}, sigan=sigan):
+    def __init__(self, parameters={'name': 'enable_noise_diode_on'}, sigan=sigan):
         super().__init__(parameters=parameters, sigan=sigan)
 
     def __call__(self, schedule_entry_json, task_id):
