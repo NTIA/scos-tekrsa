@@ -1,10 +1,10 @@
 y_factor_cal:
-  name: calibrate_3555
-  frequency: 3555e6
-  reference_level: -25
-  attenuation: 0
-  preamp_enable: True
-  sample_rate: 14e6
-  fft_size: 1400
-  nffts: 40000
-  nskip: 0
+  - preamp_enable: True
+  - name: calibrate_3555
+  - frequency: 3555e6
+  - reference_level: -25
+  - attenuation: 0
+  - sample_rate: 14e6
+  - fft_size: 1400
+  - nffts: 40000
+  - nskip: 0

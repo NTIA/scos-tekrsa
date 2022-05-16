@@ -1,14 +1,9 @@
-import json
 import logging
-import time
 import traceback
 from scos_actions import utils
 from scos_actions.hardware.sigan_iface import SignalAnalyzerInterface
-from scos_actions.hardware import preselector
 from scos_tekrsa import settings
 from scos_tekrsa.hardware.mocks.rsa_block import MockRSA
-from scos_actions.settings import sensor_calibration
-from scos_actions.settings import SENSOR_CALIBRATION_FILE
 
 
 logger = logging.getLogger(__name__)
@@ -92,53 +87,6 @@ class TekRSASigan(SignalAnalyzerInterface):
                 return
 
         self._is_available = True
-
-    def warmup(self):
-        logger.info('Initializing preamp')
-       # preselector.set_state("noise_diode_on")
-       # self.frequency = 3555e6
-       # self.sample_rate = 14.0e6
-       # self.reference_level = -25
-        self.preamp_enable = True
-        time.sleep(2)
-       # self.attenuation = 0
-       # self.acquire_time_domain_samples(self.sample_rate * 1)
-       # preselector.set_state("noise_diode_off")
-       # self.acquire_time_domain_samples(self.sample_rate * 1)
-       # preselector.set_state('antenna')
-
-    def align(self, retries=3):
-        """Check if device alignment is needed, and if so, run it."""
-        while True:
-            try:
-                running_alignment = False
-                if self.rsa.ALIGN_GetWarmupStatus():  # Must be warmed up first
-                    logger.info('Device is warmed up')
-                    if self.rsa.ALIGN_GetAlignmentNeeded() and not running_alignment:
-                        logger.info('Running alignment')
-                        self.rsa.ALIGN_RunAlignment()
-                        running_alignment = True
-                    elif self.rsa.ALIGN_GetAlignmentNeeded() and running_alignment:
-                        logger.info('Waiting on alignment.')
-                        time.sleep(1)
-                    else:
-                        logger.info("Device already aligned.")
-                        return
-                else:
-                    logger.info("Device not yet warmed up.")
-                    time.sleep(1)
-
-            except Exception as e:
-                logger.error(e)
-                if retries > 0:
-                    logger.info("Waiting 5 seconds before retrying device alignment...")
-                    retries = retries - 1
-                    time.sleep(5)
-                    continue
-                else:
-                    error_message = "Max retries exceeded."
-                    logger.error(error_message)
-                    raise RuntimeError(error_message)
 
     @property
     def is_available(self):
