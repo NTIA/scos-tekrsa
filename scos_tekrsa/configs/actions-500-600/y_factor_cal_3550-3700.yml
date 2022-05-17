@@ -1,0 +1,24 @@
+y_factor_cal:
+  - preamp_enable: True
+  - name: calibrate_3550-3700
+  - frequency:
+    - 3555e6
+    - 3565e6
+  - reference_level:
+    - -25
+    - -25
+  - attenuation:
+    - 0
+    - 0
+  - sample_rate:
+    - 14e6
+    - 14e6
+  - fft_size:
+    - 1400
+    - 1400
+  - nffts:
+    - 40000
+    - 40000
+  - nskip:
+    - 0
+    - 0
