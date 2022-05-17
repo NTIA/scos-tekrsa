@@ -1,5 +1,7 @@
 y_factor_cal:
-  - preamp_enable: True
+  - preamp_enable:
+    - True
+    - True
   - name: calibrate_3550-3700
   - frequency:
     - 3555e6
