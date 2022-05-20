@@ -187,31 +187,6 @@ class TekRSASigan(SignalAnalyzerInterface):
         else:
             logger.debug("Tektronix RSA 300 series device has no built-in preamp.")
 
-    def create_calibration_annotation(self):
-        """Create the SigMF calibration annotation."""
-        annotation_md = {
-            "ntia-core:annotation_type": "CalibrationAnnotation",
-            "ntia-sensor:gain_sigan": self.sigan_calibration_data["gain_sigan"],
-            "ntia-sensor:gain_sensor": self.sensor_calibration_data['gain_sensor'],
-            "ntia-sensor:noise_figure_sigan": self.sigan_calibration_data[
-                "noise_figure_sigan"
-            ],
-            "ntia-sensor:1db_compression_point_sigan": self.sigan_calibration_data[
-                "1db_compression_sigan"
-            ],
-            "ntia-sensor:enbw_sigan": self.sigan_calibration_data["enbw_sigan"],
-            "ntia-sensor:gain_preselector": self.sensor_calibration_data[
-                "gain_preselector"
-            ],
-            "ntia-sensor:noise_figure_sensor": self.sensor_calibration_data[
-                "noise_figure_sensor"
-            ],
-            "ntia-sensor:1db_compression_point_sensor": self.sensor_calibration_data[
-                "1db_compression_sensor"
-            ],
-            "ntia-sensor:enbw_sensor": self.sensor_calibration_data["enbw_sensor"],
-        }
-        return annotation_md
 
     @property
     def healthy(self, num_samples=56000):
@@ -309,7 +284,6 @@ class TekRSASigan(SignalAnalyzerInterface):
                     "reference_level": self.reference_level,
                     "sample_rate": self.rsa.IQSTREAM_GetAcqParameters()[1],
                     "capture_time": self._capture_time,
-                    "calibration_annotation": self.create_calibration_annotation()
                 }
                 if self.device_name not in ['RSA306B', 'RSA306']:
                     measurement_result['attenuation'] = self.attenuation
