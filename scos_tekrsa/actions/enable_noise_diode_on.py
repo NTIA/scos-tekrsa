@@ -20,7 +20,7 @@ class EnableNoiseDiodeOn(Action):
         logger.debug("Enabling antenna")
         preselector.set_state('noise_diode_on')
 
-    def add_metadata_decorators(self, measurement_result):
+    def add_metadata_generators(self, measurement_result):
         pass
 
     def create_metadata(self, schedule_entry, measurement_result):
