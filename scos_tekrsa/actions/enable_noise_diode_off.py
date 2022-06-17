@@ -16,7 +16,7 @@ class EnableNoiseDiodeOff(Action):
     def __init__(self, parameters={'name': 'enable_noise_diode_off'}, sigan=sigan):
         super().__init__(parameters=parameters, sigan=sigan)
 
-    def __call__(self, schedule_entry_json, task_id):
+    def execute(self, schedule_entry_json, task_id):
         logger.debug("Enabling antenna")
         preselector.set_state('noise_diode_off')
 
@@ -24,4 +24,10 @@ class EnableNoiseDiodeOff(Action):
         pass
 
     def create_metadata(self, schedule_entry, measurement_result):
+        pass
+
+    def send_signals(self, measurement_result):
+        pass
+
+    def test_required_components(self):
         pass

@@ -25,3 +25,9 @@ class EnableNoiseDiodeOn(Action):
 
     def create_metadata(self, schedule_entry, measurement_result):
         pass
+
+    def send_signals(self, measurement_result):
+        pass
+
+    def test_required_components(self):
+        pass
