@@ -16,7 +16,7 @@ class EnableNoiseDiodeOn(Action):
     def __init__(self, parameters={'name': 'enable_noise_diode_on'}, sigan=sigan):
         super().__init__(parameters=parameters, sigan=sigan)
 
-    def __call__(self, schedule_entry_json, task_id):
+    def execute(self, schedule_entry_json, task_id):
         logger.debug("Enabling antenna")
         preselector.set_state('noise_diode_on')
 
