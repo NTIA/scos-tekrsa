@@ -50,6 +50,8 @@ class TekRSASigan(SignalAnalyzerInterface):
     def get_constraints(self):
         self.min_frequency = self.rsa.CONFIG_GetMinCenterFreq()
         self.max_frequency = self.rsa.CONFIG_GetMaxCenterFreq()
+        self.min_iq_bandwidth = self.rsa.IQSTREAM_GetMinAcqBandwidth()
+        self.max_iq_bandwidth = self.rsa.IQSTREAM_GetMaxAcqBandwidth()
 
     def connect(self):
         logger.info("Connecting to TEKRSA")
@@ -99,7 +101,7 @@ class TekRSASigan(SignalAnalyzerInterface):
 
     @sample_rate.setter
     def sample_rate(self, sample_rate):
-        """Set the device sample rate and bandwidth."""
+        """Set the device sample rate and bandwidth by specifying the sample rate."""
         if sample_rate > self.max_sample_rate:
             err_msg = f"Sample rate {sample_rate} too high. Max sample rate is {self.max_sample_rate}."
             logger.error(err_msg)
@@ -115,8 +117,34 @@ class TekRSASigan(SignalAnalyzerInterface):
         # The IQ Bandwidth determines the RSA sample rate.
         bw = self.SR_BW_MAP.get(sample_rate)
         self.rsa.IQSTREAM_SetAcqBandwidth(bw)
+        self.rsa.DEVICE_Stop()
+        self.rsa.DEVICE_Run()
         msg = "Set Tektronix RSA sample rate: " \
               + f"{self.rsa.IQSTREAM_GetAcqParameters()[1]:.1f} samples/sec"
+        logger.debug(msg)
+        
+    @property
+    def iq_bandwidth(self):
+        return self.rsa.IQSTREAM_GetAcqParameters()[0]
+    
+    @iq_bandwidth.setter
+    def iq_bandwidth(self, iq_bandwidth):
+        """Set the device sample rate and bandwidth by specifying the bandwidth."""
+        if iq_bandwidth > self.max_iq_bandwidth:
+            err_msg = f"IQ Bandwidth {iq_bandwidth} too high. Max IQ bandwidth is {self.max_iq_bandwidth}."
+            logger.error(err_msg)
+            raise Exception(err_msg)
+        if iq_bandwidth < self.min_iq_bandwidth:
+            err_msg = f"IQ Bandwidth {iq_bandwidth} too low. Min IQ bandwidth is {self.min_iq_bandwidth}."
+            logger.error(err_msg)
+            raise Exception(err_msg)
+        # Set the RSA IQ Bandwidth. This also sets the sample rate.
+        self.rsa.IQSTREAM_SetAcqBandwidth(iq_bandwidth)
+        self.rsa.DEVICE_Stop()
+        self.rsa.DEVICE_Run()
+        new_bw, new_sr = self.rsa.IQSTREAM_GetAcqParameters()
+        msg = "Set Tektronix RSA IQ Bandwidth: " \
+              + f"{new_bw:.1f} Hz, resulting in sample rate: {new_sr:.1f} samples/sec"
         logger.debug(msg)
 
     @property
