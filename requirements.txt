@@ -14,7 +14,7 @@ django==3.2.12
     # via scos-actions
 idna==3.3
     # via requests
-its-preselector @ git+https://github.com/NTIA/Preselector@scos-sensor
+its-preselector @ git+https://github.com/NTIA/Preselector@1.0.0
     # via scos-actions
 numpy==1.21.5
     # via
@@ -42,7 +42,7 @@ six==1.16.0
     #   sigmf
 sqlparse==0.4.2
     # via django
-tekrsa-api-wrap @ git+https://github.com/NTIA/tekrsa-api-wrap@1.0.0
+tekrsa-api-wrap @ git+https://github.com/NTIA/tekrsa-api-wrap@1.1.0
     # via -r requirements.in
 urllib3==1.26.9
     # via requests

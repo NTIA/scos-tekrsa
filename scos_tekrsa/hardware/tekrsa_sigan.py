@@ -117,8 +117,6 @@ class TekRSASigan(SignalAnalyzerInterface):
         # The IQ Bandwidth determines the RSA sample rate.
         bw = self.SR_BW_MAP.get(sample_rate)
         self.rsa.IQSTREAM_SetAcqBandwidth(bw)
-        self.rsa.DEVICE_Stop()
-        self.rsa.DEVICE_Run()
         msg = "Set Tektronix RSA sample rate: " \
               + f"{self.rsa.IQSTREAM_GetAcqParameters()[1]:.1f} samples/sec"
         logger.debug(msg)
@@ -140,8 +138,6 @@ class TekRSASigan(SignalAnalyzerInterface):
             raise Exception(err_msg)
         # Set the RSA IQ Bandwidth. This also sets the sample rate.
         self.rsa.IQSTREAM_SetAcqBandwidth(iq_bandwidth)
-        self.rsa.DEVICE_Stop()
-        self.rsa.DEVICE_Run()
         new_bw, new_sr = self.rsa.IQSTREAM_GetAcqParameters()
         msg = "Set Tektronix RSA IQ Bandwidth: " \
               + f"{new_bw:.1f} Hz, resulting in sample rate: {new_sr:.1f} samples/sec"
@@ -185,8 +181,6 @@ class TekRSASigan(SignalAnalyzerInterface):
         if self.device_name not in ['RSA306B', 'RSA306']:
             self.rsa.CONFIG_SetAutoAttenuationEnable(False)
             self.rsa.CONFIG_SetRFAttenuator(-1 * attenuation)  # rounded to nearest integer
-            self.rsa.DEVICE_Stop()
-            self.rsa.DEVICE_Run()
             msg = "Set Tektronix RSA attenuation: " \
                   + f"{self.rsa.CONFIG_GetRFAttenuator():.1} dB"
             logger.debug(msg)
@@ -207,8 +201,6 @@ class TekRSASigan(SignalAnalyzerInterface):
             if self.preamp_enable != preamp_enable:
                 logger.debug('Switching preamp to ' + str(preamp_enable))
                 self.rsa.CONFIG_SetRFPreampEnable(preamp_enable)
-                self.rsa.DEVICE_Stop()
-                self.rsa.DEVICE_Run()
                 msg = "Set Tektronix RSA preamp enable status: " \
                     f"{self.rsa.CONFIG_GetRFPreampEnable()}"
                 logger.debug(msg)
