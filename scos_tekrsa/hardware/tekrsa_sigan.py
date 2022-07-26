@@ -1,29 +1,18 @@
 import logging
-import time
 import traceback
-import numpy as np
 from scos_actions import utils
 from scos_actions.hardware.sigan_iface import SignalAnalyzerInterface
-
 from scos_tekrsa import settings
-from scos_tekrsa.hardware import calibration
 from scos_tekrsa.hardware.mocks.rsa_block import MockRSA
-from scos_tekrsa.hardware.tests.resources.utils import create_dummy_calibration
-from scos_tekrsa.hardware.calibration import (
-    DEFAULT_SENSOR_CALIBRATION,
-    DEFAULT_SIGAN_CALIBRATION
-)
+
 
 logger = logging.getLogger(__name__)
 
 
 class TekRSASigan(SignalAnalyzerInterface):
-    def __init__(
-        self,
-        sensor_cal_file=settings.SENSOR_CALIBRATION_FILE,
-        sigan_cal_file=settings.SIGAN_CALIBRATION_FILE
-    ):
+    def __init__(self):
         try:
+            super().__init__()
             logger.info("Initializing Tektronix RSA Signal Analyzer")
 
             self.rsa = None
@@ -32,10 +21,10 @@ class TekRSASigan(SignalAnalyzerInterface):
             # Allowed sample rates and bandwidth settings, ordered from 
             # greatest to least. SR in samples/sec, BW in Hz.
             self.ALLOWED_SR = [56.0e6, 28.0e6, 14.0e6, 7.0e6, 3.5e6, 1.75e6, 875.e3,
-                            437.5e3, 218.75e3, 109.375e3, 54687.5, 24373.75, 13671.875]
+                               437.5e3, 218.75e3, 109.375e3, 54687.5, 24373.75, 13671.875]
 
             self.ALLOWED_BW = [40.0e6, 20.0e6, 10.0e6, 5.0e6, 2.5e6, 1.25e6, 625.e3,
-                            312.5e3, 156.25e3, 78125., 39062.5, 19531.25, 9765.625]
+                               312.5e3, 156.25e3, 78125., 39062.5, 19531.25, 9765.625]
 
             # Use values defined above to create SR/BW mapping dict,
             # with SR as keys and BW as values.
@@ -51,19 +40,18 @@ class TekRSASigan(SignalAnalyzerInterface):
 
             self.sensor_calibration_data = None
             self.sigan_calibration_data = None
-            self.sensor_calibration = None
-            self.sigan_calibration = None
             self._capture_time = None
-
             self.connect()
-            self.get_calibration(sensor_cal_file, sigan_cal_file)
+
         except Exception as error:
-            logger.error("unable to initialize sigan")
+            logger.error("Unable to initialize sigan: {error}")
             traceback.print_exc()
 
     def get_constraints(self):
         self.min_frequency = self.rsa.CONFIG_GetMinCenterFreq()
         self.max_frequency = self.rsa.CONFIG_GetMaxCenterFreq()
+        self.min_iq_bandwidth = self.rsa.IQSTREAM_GetMinAcqBandwidth()
+        self.max_iq_bandwidth = self.rsa.IQSTREAM_GetMaxAcqBandwidth()
 
     def connect(self):
         logger.info("Connecting to TEKRSA")
@@ -80,7 +68,7 @@ class TekRSASigan(SignalAnalyzerInterface):
         else:
             try:
                 # Load API wrapper
-                logger.debug("Loading RSA API wrapper")
+                logger.info("Loading RSA API wrapper")
                 import rsa_api
             except ImportError:
                 logger.warning("API Wrapper not loaded - disabling signal analyzer.")
@@ -92,9 +80,7 @@ class TekRSASigan(SignalAnalyzerInterface):
                 # Connect to device using API wrapper
                 self.rsa.DEVICE_SearchAndConnect()
                 self.device_name = self.rsa.DEVICE_GetNomenclature()
-                logger.debug("Device Name: " + self.device_name)
-                self.align()
-                logger.debug("aligned")
+                logger.info("Device Name: " + self.device_name)
                 self.get_constraints()
                 logger.info("Using the following Tektronix RSA device:")
                 logger.info(self.device_name + " " + str(self.min_frequency) + '-' + str(self.max_frequency))
@@ -104,71 +90,10 @@ class TekRSASigan(SignalAnalyzerInterface):
 
         self._is_available = True
 
-    def align(self, retries=3):
-        """Check if device alignment is needed, and if so, run it."""
-        while True:
-            try:
-                if self.rsa.ALIGN_GetWarmupStatus():  # Must be warmed up first
-                    if self.rsa.ALIGN_GetAlignmentNeeded():
-                        self.rsa.ALIGN_RunAlignment()
-                        return
-                    else:
-                        logger.debug("Device already aligned.")
-                else:
-                    logger.debug("Device not yet warmed up.")
-                return
-            except Exception as e:
-                logger.error(e)
-                if retries > 0:
-                    logger.info("Waiting 5 seconds before retrying device alignment...")
-                    retries = retries - 1
-                    time.sleep(5)
-                    continue
-                else:
-                    error_message = "Max retries exceeded."
-                    logger.error(error_message)
-                    raise RuntimeError(error_message)
-
-    @property
-    def last_calibration_time(self):
-        """Return the last calibration time from calibration data."""
-        if self.sensor_calibration:
-            return utils.convert_string_to_millisecond_iso_format(
-                self.sensor_calibration.calibration_datetime
-            )
-        return None
-
     @property
     def is_available(self):
         """Returns True if initialized and ready for measurements"""
         return self._is_available
-
-    def get_calibration(self, sensor_cal_file, sigan_cal_file):
-        """Get calibration data from sensor_cal_file and sigan_cal_file."""
-        # Set the default calibration values
-        self.sensor_calibration_data = DEFAULT_SENSOR_CALIBRATION.copy()
-        self.sigan_calibration_data = DEFAULT_SIGAN_CALIBRATION.copy()
-
-        # Try and load sensor/sigan calibration data
-        if not settings.RUNNING_TESTS and not settings.MOCK_SIGAN:
-            try:
-                self.sensor_calibration = calibration.load_from_json(sensor_cal_file)
-            except Exception as e:
-                logger.error(
-                    "Unable to load sensor calibration data, reverting to none."
-                )
-                logger.exception(e)
-                self.sensor_calibration = None
-            try:
-                self.sigan_calibration = calibration.load_from_json(sigan_cal_file)
-            except Exception as e:
-                logger.error("Unable to load sigan calibration data, reverting to none.")
-                logger.exception(e)
-                self.sigan_calibration = None
-        else:  # If in testing, create our own test files
-            dummy_calibration = create_dummy_calibration()
-            self.sensor_calibration = dummy_calibration
-            self.sigan_calibration = dummy_calibration
 
     @property
     def sample_rate(self):
@@ -176,24 +101,46 @@ class TekRSASigan(SignalAnalyzerInterface):
 
     @sample_rate.setter
     def sample_rate(self, sample_rate):
-        """Set the device sample rate and bandwidth."""
+        """Set the device sample rate and bandwidth by specifying the sample rate."""
         if sample_rate > self.max_sample_rate:
             err_msg = f"Sample rate {sample_rate} too high. Max sample rate is {self.max_sample_rate}."
             logger.error(err_msg)
             raise Exception(err_msg)
-        if sample_rate not in ALLOWED_SR:
+        if sample_rate not in self.ALLOWED_SR:
             # If requested sample rate is not an allowed value
-            allowed_sample_rates_str = ", ".join(map(str, ALLOWED_SR))
+            allowed_sample_rates_str = ", ".join(map(str, self.ALLOWED_SR))
             err_msg = (f"Requested sample rate {sample_rate} not in allowed sample rates."
                        + f" Allowed sample rates are {allowed_sample_rates_str}")
             logger.error(err_msg)
             raise ValueError(err_msg)
         # Set RSA IQ Bandwidth based on sample_rate
         # The IQ Bandwidth determines the RSA sample rate.
-        bw = SR_BW_MAP.get(sample_rate)
+        bw = self.SR_BW_MAP.get(sample_rate)
         self.rsa.IQSTREAM_SetAcqBandwidth(bw)
         msg = "Set Tektronix RSA sample rate: " \
               + f"{self.rsa.IQSTREAM_GetAcqParameters()[1]:.1f} samples/sec"
+        logger.debug(msg)
+        
+    @property
+    def iq_bandwidth(self):
+        return self.rsa.IQSTREAM_GetAcqParameters()[0]
+    
+    @iq_bandwidth.setter
+    def iq_bandwidth(self, iq_bandwidth):
+        """Set the device sample rate and bandwidth by specifying the bandwidth."""
+        if iq_bandwidth > self.max_iq_bandwidth:
+            err_msg = f"IQ Bandwidth {iq_bandwidth} too high. Max IQ bandwidth is {self.max_iq_bandwidth}."
+            logger.error(err_msg)
+            raise Exception(err_msg)
+        if iq_bandwidth < self.min_iq_bandwidth:
+            err_msg = f"IQ Bandwidth {iq_bandwidth} too low. Min IQ bandwidth is {self.min_iq_bandwidth}."
+            logger.error(err_msg)
+            raise Exception(err_msg)
+        # Set the RSA IQ Bandwidth. This also sets the sample rate.
+        self.rsa.IQSTREAM_SetAcqBandwidth(iq_bandwidth)
+        new_bw, new_sr = self.rsa.IQSTREAM_GetAcqParameters()
+        msg = "Set Tektronix RSA IQ Bandwidth: " \
+              + f"{new_bw:.1f} Hz, resulting in sample rate: {new_sr:.1f} samples/sec"
         logger.debug(msg)
 
     @property
@@ -232,10 +179,8 @@ class TekRSASigan(SignalAnalyzerInterface):
     def attenuation(self, attenuation):
         """Set device attenuation, in dB, for RSA 500/600 series devices"""
         if self.device_name not in ['RSA306B', 'RSA306']:
-            self.rsa.DEVICE_Stop()
             self.rsa.CONFIG_SetAutoAttenuationEnable(False)
             self.rsa.CONFIG_SetRFAttenuator(-1 * attenuation)  # rounded to nearest integer
-            self.rsa.DEVICE_Run()
             msg = "Set Tektronix RSA attenuation: " \
                   + f"{self.rsa.CONFIG_GetRFAttenuator():.1} dB"
             logger.debug(msg)
@@ -253,90 +198,15 @@ class TekRSASigan(SignalAnalyzerInterface):
     @preamp_enable.setter
     def preamp_enable(self, preamp_enable):
         if self.device_name not in ['RSA306B', 'RSA306']:
-            self.rsa.DEVICE_Stop()
-            self.rsa.CONFIG_SetRFPreampEnable(preamp_enable)
-            self.rsa.DEVICE_Run()
-            msg = "Set Tektronix RSA preamp enable status: " \
-                  f"{self.rsa.CONFIG_GetRFPreampEnable()}"
-            logger.debug(msg)
+            if self.preamp_enable != preamp_enable:
+                logger.debug('Switching preamp to ' + str(preamp_enable))
+                self.rsa.CONFIG_SetRFPreampEnable(preamp_enable)
+                msg = "Set Tektronix RSA preamp enable status: " \
+                    f"{self.rsa.CONFIG_GetRFPreampEnable()}"
+                logger.debug(msg)
         else:
             logger.debug("Tektronix RSA 300 series device has no built-in preamp.")
 
-
-    def recompute_calibration_data(self):
-        """Set the calibration data based on the currently tuning"""
-
-        # Try and get the sensor calibration data
-        self.sensor_calibration_data = DEFAULT_SENSOR_CALIBRATION.copy()
-        if self.sensor_calibration is not None:
-            self.sensor_calibration_data.update(
-                self.sensor_calibration.get_calibration_dict(
-                    sample_rate=self.sample_rate,
-                    lo_frequency=self.frequency,
-                    reference_level=self.reference_level,
-                )
-            )
-
-        # Try and get the sigan calibration data
-        self.sigan_calibration_data = DEFAULT_SIGAN_CALIBRATION.copy()
-        if self.sigan_calibration is not None:
-            self.sigan_calibration_data.update(
-                self.sigan_calibration.get_calibration_dict(
-                    sample_rate=self.sample_rate,
-                    lo_frequency=self.frequency,
-                    reference_level=self.reference_level,
-                )
-            )
-
-        # Catch any defaulting calibration values for the sigan
-        if self.sigan_calibration_data["gain_sigan"] is None:
-            self.sigan_calibration_data["gain_sigan"] = 0
-        if self.sigan_calibration_data["enbw_sigan"] is None:
-            self.sigan_calibration_data["enbw_sigan"] = self.sample_rate
-
-        # Catch any defaulting calibration values for the sensor
-        if self.sensor_calibration_data["gain_sensor"] is None:
-            self.sensor_calibration_data["gain_sensor"] = self.sigan_calibration_data[
-                "gain_sigan"
-            ]
-        if self.sensor_calibration_data["enbw_sensor"] is None:
-            self.sensor_calibration_data["enbw_sensor"] = self.sigan_calibration_data[
-                "enbw_sigan"
-            ]
-        if self.sensor_calibration_data["noise_figure_sensor"] is None:
-            self.sensor_calibration_data[
-                "noise_figure_sensor"
-            ] = self.sigan_calibration_data["noise_figure_sigan"]
-        if self.sensor_calibration_data["1db_compression_sensor"] is None:
-            self.sensor_calibration_data["1db_compression_sensor"] = (
-                    self.sensor_calibration_data["gain_preselector"]
-                    + self.sigan_calibration_data["1db_compression_sigan"]
-            )
-
-    def create_calibration_annotation(self):
-        """Create the SigMF calibration annotation."""
-        annotation_md = {
-            "ntia-core:annotation_type": "CalibrationAnnotation",
-            "ntia-sensor:gain_sigan": self.sigan_calibration_data["gain_sigan"],
-            "ntia-sensor:noise_figure_sigan": self.sigan_calibration_data[
-                "noise_figure_sigan"
-            ],
-            "ntia-sensor:1db_compression_point_sigan": self.sigan_calibration_data[
-                "1db_compression_sigan"
-            ],
-            "ntia-sensor:enbw_sigan": self.sigan_calibration_data["enbw_sigan"],
-            "ntia-sensor:gain_preselector": self.sensor_calibration_data[
-                "gain_preselector"
-            ],
-            "ntia-sensor:noise_figure_sensor": self.sensor_calibration_data[
-                "noise_figure_sensor"
-            ],
-            "ntia-sensor:1db_compression_point_sensor": self.sensor_calibration_data[
-                "1db_compression_sensor"
-            ],
-            "ntia-sensor:enbw_sensor": self.sensor_calibration_data["enbw_sensor"],
-        }
-        return annotation_md
 
     @property
     def healthy(self, num_samples=56000):
@@ -356,20 +226,21 @@ class TekRSASigan(SignalAnalyzerInterface):
 
         return True
 
-    def acquire_time_domain_samples(self, num_samples, num_samples_skip=0, retries=5):
+    def acquire_time_domain_samples(self, num_samples, num_samples_skip=0, retries=5, gain_adjust=True):
         """Acquire specific number of time-domain IQ samples."""
         self._capture_time = None
-
-        # Get calibration data for acquisition
-        self.recompute_calibration_data()
         nsamps_req = int(num_samples)  # Requested number of samples
         nskip = int(num_samples_skip)  # Requested number of samples to skip
         nsamps = nsamps_req + nskip  # Total number of samples to collect
-
+        # Get calibration data for acquisition
+        calibration_args = [self.sample_rate, self.frequency, self.reference_level]
+        self.recompute_calibration_data(calibration_args)
         # Compute the linear gain
         db_gain = self.sensor_calibration_data["gain_sensor"]
-        linear_gain = 10 ** (db_gain / 20.0)
-
+        if gain_adjust:
+            linear_gain = 10 ** (db_gain / 20.0)
+        else:
+            linear_gain= 1
         # Determine correct time length (round up, integer ms)
         durationMsec = int(1000 * (nsamps / self.sample_rate)) + (1000 * nsamps % self.sample_rate > 0)
 
@@ -392,27 +263,24 @@ class TekRSASigan(SignalAnalyzerInterface):
             data = data[nskip:]  # Remove extra samples, if any
             data_len = len(data)
 
-            # Parse returned status indicator
-            iq_warn = 'RSA IQ Streaming warning: '
-            self.overload = False
-            if status == 1:
-                self.overload = True
-                iq_warn += 'Input overrange.'
-            elif status == 2:
-                iq_warn += 'Input buffer > 75% full.'
-            elif status == 3:
-                iq_warn += 'Input buffer overflow. IQ Stream processing' \
-                           + ' too slow. Data loss has occurred.'
-            elif status == 4:
-                iq_warn += 'Output buffer > 75% full.'
-            elif status == 5:
-                iq_warn += 'Output buffer overflow. File writing too slow.' \
-                           + 'Data loss has occurred.'
-
             # Print warning from status indicator
-            if status != 0:
-                logger.warning(iq_warn)
+           # if status != 'No error.':
+            iq_warn = 'IQ Stream Status:\n{}'
+            logger.warning(iq_warn.format(status))
 
+            # Check status string for overload / data loss
+            self.overload = False
+            if 'Input overrange' in status:
+                self.overload = True
+            if 'data loss' in status or 'discontinuity' in status:
+                if retries > 0:
+                    logger.warning(f'Retrying {retries} more times.')
+                    retries -= 1
+                else:
+                    err = 'Data loss occurred with no retries remaining.'
+                    err += f' (tried {retries} times.)'
+                    raise RuntimeError(err)
+            
             if not data_len == nsamps_req:
                 if retries > 0:
                     msg = f"RSA error: requested {nsamps_req + nskip} samples, but got {data_len}."
@@ -423,18 +291,10 @@ class TekRSASigan(SignalAnalyzerInterface):
                     err = "Failed to acquire correct number of samples "
                     err += f"{max_retries} times in a row."
                     raise RuntimeError(err)
-            if status == 3 or status == 5:
-                if retries > 0:
-                    logger.warning(f'Retrying {retries} more times.')
-                    retries -= 1
-                else:
-                    err = 'RSA overflow occurred with no retries remaining.'
-                    err += f' (tried {retries} times.)'
-                    raise RuntimeError(err)
             else:
                 logger.debug(f"Successfully acquired {data_len} samples.")
-
                 # Scale data to RF power and return
+                logger.debug('Applying gain of {}'.format(linear_gain))
                 data /= linear_gain
 
                 measurement_result = {
@@ -444,7 +304,6 @@ class TekRSASigan(SignalAnalyzerInterface):
                     "reference_level": self.reference_level,
                     "sample_rate": self.rsa.IQSTREAM_GetAcqParameters()[1],
                     "capture_time": self._capture_time,
-                    "calibration_annotation": self.create_calibration_annotation()
                 }
                 if self.device_name not in ['RSA306B', 'RSA306']:
                     measurement_result['attenuation'] = self.attenuation
