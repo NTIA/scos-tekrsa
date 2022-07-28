@@ -85,6 +85,7 @@ class TekRSASigan(SignalAnalyzerInterface):
                 logger.info("Using the following Tektronix RSA device:")
                 logger.info(self.device_name + " " + str(self.min_frequency) + '-' + str(self.max_frequency))
             except Exception as e:
+                self.device_name = 'NONE: Failed to connect to TekRSA'
                 logger.exception("Unable to connect to TEKRSA")
                 return
 
