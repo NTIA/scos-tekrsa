@@ -1,5 +1,8 @@
 y_factor_cal:
   name: calibrate_3550-3700_iir
+  # Preselector configuration
+  cal_source_idx: 0
+  temp_sensor_idx: 1
   # Signal Analyzer Settings
   preamp_enable: True
   reference_level: -25
