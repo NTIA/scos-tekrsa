@@ -1,5 +1,5 @@
 y_factor_cal:
-  name: calibrate_3555
+  name: calibrate_3555_iir
   # Signal Analyzer Settings
   preamp_enable: True
   reference_level: -25
@@ -9,3 +9,10 @@ y_factor_cal:
   nffts: 10000  # FFT setting to be deprecated
   nskip: 0
   frequency: 3555e6
+  # IIR Filter Settings:
+  # Optionally apply a low-pass IIR filter before Y-Factor
+  iir_apply: True
+  iir_rp_dB: 0.1
+  iir_rs_dB: 40
+  iir_cutoff_Hz: 5e6
+  iir_width_Hz: 8e3
