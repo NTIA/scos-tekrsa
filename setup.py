@@ -15,7 +15,7 @@ if path.isfile(requirements_path):
 
 setup(
     name="scos_tekrsa",
-    version="0.0.0",
+    version="1.0.0",
     author="The Institute for Telecommunication Sciences",
     description="Tektronix RSA support for scos-sensor",
     long_description=long_description,
