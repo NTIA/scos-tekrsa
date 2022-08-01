@@ -129,14 +129,12 @@ class TekRSASigan(SignalAnalyzerInterface):
     @iq_bandwidth.setter
     def iq_bandwidth(self, iq_bandwidth):
         """Set the device sample rate and bandwidth by specifying the bandwidth."""
-        if iq_bandwidth > self.max_iq_bandwidth:
-            err_msg = f"IQ Bandwidth {iq_bandwidth} too high. Max IQ bandwidth is {self.max_iq_bandwidth}."
+        if iq_bandwidth not in self.ALLOWED_BW:
+            allowed_bandwidths_str = ", ".join(map(str, self.allowed_BW))
+            err_msg = (f"Requested IQ bandwidth {iq_bandwidth} not in allowed bandwidths."
+                       + f" Allowed IQ bandwidths are {allowed_bandwidths_str}")
             logger.error(err_msg)
-            raise Exception(err_msg)
-        if iq_bandwidth < self.min_iq_bandwidth:
-            err_msg = f"IQ Bandwidth {iq_bandwidth} too low. Min IQ bandwidth is {self.min_iq_bandwidth}."
-            logger.error(err_msg)
-            raise Exception(err_msg)
+            raise ValueError(err_msg)
         # Set the RSA IQ Bandwidth. This also sets the sample rate.
         self.rsa.IQSTREAM_SetAcqBandwidth(iq_bandwidth)
         new_bw, new_sr = self.rsa.IQSTREAM_GetAcqParameters()
