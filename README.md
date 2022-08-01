@@ -20,7 +20,7 @@ For information on adding actions, see the [scos_actions documentation](https://
 
 - `scos_tekrsa/configs`: This folder contains the YAML files with the parameters used to initialize the Tektronix RSA supported actions and sample calibration files.
 - `scos_tekrsa/discover`: This includes the code to read YAML files and make actions available to scos-sensor.
-- `scos_tekrsa/hardware`: This includes the Tektronix RSA implementation of the signal analyzer interface. It also includes supporting calibration and test code.
+- `scos_tekrsa/hardware`: This includes the Tektronix RSA implementation of the signal analyzer interface. It also includes supporting test code.
 
 ## Running in scos-sensor
 
