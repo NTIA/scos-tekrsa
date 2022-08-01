@@ -222,6 +222,7 @@ class TekRSASigan(SignalAnalyzerInterface):
 
         if not len(data) == num_samples:
             logger.error("RSA data doesn't match request.")
+            return False
 
         return True
 
