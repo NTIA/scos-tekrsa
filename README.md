@@ -91,7 +91,7 @@ To build, tag the version as X.X.X, and push the updated image to the GitHub Con
 
 ```bash
 docker build -f docker/Dockerfile -t tekrsa_usb .
-docker tag takrsa_usb ghcr.io/ntia/scos-tekrsa/tekrsa_usb:X.X.X
+docker tag tekrsa_usb ghcr.io/ntia/scos-tekrsa/tekrsa_usb:X.X.X
 docker push ghcr.io/ntia/scos-tekrsa/tekrsa_usb:X.X.X
 ```
 
