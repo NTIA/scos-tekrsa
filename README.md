@@ -1,5 +1,7 @@
 # NTIA/ITS SCOS Tektronix® RSA Plugin[^disclaimer]
 
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 This repository is a plugin to add support for the Tektronix RSA306, RSA306B, RSA503A,
 RSA507A, RSA513A, RSA518A, RSA603A, and RSA607A real-time spectrum analyzers to
 scos-sensor. See the
@@ -27,6 +29,7 @@ For information on adding actions, see the [scos_actions documentation](https://
 - [Development](#development)
 - [License](#license)
 - [Contact](#contact)
+- [Disclaimer](#disclaimer)
 
 ## Overview of Repo Structure
 
@@ -154,6 +157,34 @@ docker build -f docker/Dockerfile-test -t rsa_test .
 docker run rsa_test
 ```
 
+### Committing
+
+Besides running the test suite and ensuring that all tests are passing, we also expect
+all Python code that's checked in to have been run through an auto-formatter.
+
+This project uses a Python auto-formatter called [Black](https://github.com/psf/black).
+Additionally, import statement sorting is handled by [`isort`](https://github.com/pycqa/isort).
+
+There are several ways to auto-format your code before committing. First, IDE integration
+with on-save hooks is very useful. Second, if you already pip-installed the development
+requirements from the section above, you already have a utility called `pre-commit` that
+will automate setting up this project's pre-commit Git hooks. Simply type the following
+once, and each time you make a commit, it will be appropriately auto-formatted.
+
+```bash
+pre-commit install
+```
+
+You can manually run the pre-commit hooks using the following command.
+
+```bash
+pre-commit run --all-files
+```
+
+In addition to Black and isort, various other pre-commit tools are enabled including [`markdownlint`](https://github.com/DavidAnson/markdownlint).
+See [`.pre-commit-config.yaml`](.pre-commit-config.yaml) for the list of pre-commit
+tools enabled for this repository.
+
 ## License
 
 See [LICENSE](LICENSE.md)
@@ -164,6 +195,10 @@ TEKTRONIX and TEK are registered trademarks of Tektronix, Inc.
 
 For technical questions about `scos_tekrsa`, contact Anthony Romaniello, aromaniello@ntia.gov
 
-### Disclaimer
+## Disclaimer
 
-[^disclaimer]: Certain commercial equipment, instruments, or materials are identified in this project were used for the convenience of the developers. In no case does such identification imply recommendation or endorsement by the National Telecommunications and Information Administration, nor does it imply that the material or equipment identified is necessarily the best available for the purpose.
+Certain commercial equipment, instruments, or materials are identified in this project
+were used for the convenience of the developers. In no case does such identification
+imply recommendation or endorsement by the National Telecommunications and Information
+Administration, nor does it imply that the material or equipment identified is
+necessarily the best available for the purpose.
