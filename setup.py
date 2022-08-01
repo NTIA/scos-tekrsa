@@ -1,7 +1,8 @@
 from os import path
-from setuptools import setup, find_packages
 
-with open("README.md", "r", encoding='utf-8') as fh:
+from setuptools import find_packages, setup
+
+with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 repo_root = path.dirname(path.realpath(__file__))
@@ -28,6 +29,5 @@ setup(
     ],
     python_requires=">=3.7",
     install_requires=install_requires,
-    package_data={"scos_tekrsa": ["configs/*example.json",
-                                  "configs/actions*/*.yml"]},
+    package_data={"scos_tekrsa": ["configs/*example.json", "configs/actions*/*.yml"]},
 )
