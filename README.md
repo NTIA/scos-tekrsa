@@ -18,7 +18,7 @@ A custom [Python wrapper for this API](https://github.com/NTIA/tekrsa-api-wrap/)
 used to mask Ctypes syntax, handle error-checking, and implement helper methods.
 
 This repository also includes many 700 MHz band actions in
-`scos_tekrsa/configs/actions-300` and CBRS band actions in `scos_tekrsa/configs/actions-500-600`.
+`scos_tekrsa/configs/actions-300` and CBRS band (3550-3700 MHz) actions in `scos_tekrsa/configs/actions-500-600`.
 Actions are defined separately for RSA300- and RSA500/600-series devices, allowing for
 preamp and attenuation control of the RSA500/600-series devices. Action classes,
 `SignalAnalyzerInterface`, and signals are used from the [SCOS Actions Plugin](https://github.com/NTIA/scos-actions/).
