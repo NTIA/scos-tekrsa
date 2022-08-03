@@ -187,7 +187,7 @@ docker run rsa_test
 
 ### Committing
 
-Besides running the test suite and ensuring that all tests are passing, we also expect
+Besides running the test suite and ensuring that all tests are passed, we also expect
 all Python code that's checked in to have been run through an auto-formatter. This project
 uses a Python auto-formatter called [Black](https://github.com/psf/black). Additionally,
 import statement sorting is handled by [isort](https://github.com/pycqa/isort).
