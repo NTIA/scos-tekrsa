@@ -120,6 +120,15 @@ from Tektronix. Place the three files `libRSA_API.so`, `libcyusb_shared.so`, and
 
 ## Development
 
+### Updating the `scos_tekrsa` package
+
+Build the Python package from the top level directory in this repository by running:
+
+```bash
+python -m pip install --upgrade build
+python -m build
+```
+
 ### Updating the `tekrsa_usb` package
 
 To build, tag the version as X.X.X, and push the updated image to the GitHub Container
