@@ -1,5 +1,8 @@
 # NTIA/ITS SCOS Tektronix® RSA Plugin
 
+![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/NTIA/scos-tekrsa?display_name=tag&sort=semver)
+![GitHub all releases](https://img.shields.io/github/downloads/NTIA/scos-tekrsa/total)
+![GitHub issues](https://img.shields.io/github/issues/NTIA/scos-tekrsa)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 This repository is a plugin to add support for the Tektronix RSA306, RSA306B, RSA503A,
@@ -25,7 +28,7 @@ For information on adding actions, see the [SCOS Actions Plugin documentation](h
 ## Table of Contents
 
 - [Overview of Repo Structure](#overview-of-repo-structure)
-- [Running in scos-sensor](#running-in-scos-sensor)
+- [Running in SCOS Sensor](#running-in-scos-sensor)
 - [Development](#development)
 - [License](#license)
 - [Contact](#contact)
