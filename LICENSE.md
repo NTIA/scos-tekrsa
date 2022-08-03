@@ -1,6 +1,6 @@
 SOFTWARE DISCLAIMER / RELEASE
 
-The software made available on this site requires the Tektronix RSA API for Linux, which is made available by Tektronix in the GPL version 3 or higher.
+The software made available on this site requires the Tektronix RSA API for Linux, which is made available by Tektronix and may contain one or more programs licensed under the GPL or LGPL.
 
 All software included on this site was developed by employees of the National Telecommunications and Information Administration (NTIA), an agency of the Federal Government and is provided to you as a public service. Pursuant to Title 15 United States Code Section 105, works of NTIA employees are not subject to copyright protection within the United States.
 
