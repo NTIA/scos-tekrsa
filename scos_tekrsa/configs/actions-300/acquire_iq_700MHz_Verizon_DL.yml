@@ -1,0 +1,7 @@
+single_frequency_time_domain_iq:
+  name: acquire_iq_700MHz_Verizon_DL
+  frequency: 751e6
+  reference_level: -10
+  sample_rate: 56e6
+  duration_ms: 714
+  nskip: 0

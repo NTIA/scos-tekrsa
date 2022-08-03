@@ -1,0 +1,9 @@
+single_frequency_time_domain_iq:
+  name: 3675_IQ
+  frequency: 3675e6
+  reference_level: -25
+  attenuation: 0
+  preamp_enable: True
+  sample_rate: 14e6
+  duration_ms: 4000
+  nskip: 0
