@@ -3,3 +3,5 @@ docker/libRSA_API.so
 docker/libcyusb_shared.so
 .idea
 .venv
+*.egg-info
+dist
