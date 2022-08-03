@@ -2,3 +2,4 @@ __pycache__
 docker/libRSA_API.so
 docker/libcyusb_shared.so
 .idea
+.venv
