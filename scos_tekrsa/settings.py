@@ -6,7 +6,6 @@ from django.conf import settings
 from environs import Env
 from scos_actions.settings import *
 
-
 env = Env()
 
 CONFIG_DIR = path.join(path.dirname(path.abspath(__file__)), "configs")
