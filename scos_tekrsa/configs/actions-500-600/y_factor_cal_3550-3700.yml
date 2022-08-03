@@ -8,8 +8,7 @@ y_factor_cal:
   reference_level: -25
   attenuation: 0
   sample_rate: 14e6
-  fft_size: 1400  # FFT setting to be deprecated
-  nffts: 10000  # FFT setting to be deprecated
+  duration_ms: 1000
   nskip: 0
   frequency:
     - 3555e6
