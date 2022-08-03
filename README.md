@@ -9,7 +9,7 @@ SCOS Sensor. See the
 for more information about SCOS Sensor, especially the section about
 [Actions and Hardware Support](https://github.com/NTIA/scos-sensor/blob/master/README.md#actions-and-hardware-support).
 
-This plugin makes use of the
+This plugin requires the
 [RSA API for Linux](https://github.com/tektronix/RSA_API/) by Tektronix.
 A custom [Python wrapper for this API](https://github.com/NTIA/tekrsa-api-wrap/) is also
 used to mask Ctypes syntax, handle error-checking, and implement helper methods.
@@ -37,8 +37,8 @@ For information on adding actions, see the [SCOS Actions Plugin documentation](h
 parameters used to initialize the Tektronix RSA supported actions
 - `scos_tekrsa/discover`: Includes the code to read YAML files and make actions
 available to `scos-sensor`
-- `scos_tekrsa/hardware`: Includes the Tektronix RSA implementation of the signal
-analyzer interface, along with supporting test code
+- `scos_tekrsa/hardware`: Includes an implementation of the signal analyzer interface for
+Tektronix RSA devices, along with supporting test code
 
 ## Running in SCOS Sensor
 
@@ -138,8 +138,8 @@ The following commands create a virtual environment using venv and install the r
 dependencies for development and testing.
 
 ```bash
-python3 -m venv ./venv
-source venv/bin/activate
+python3 -m venv .venv
+source .venv/bin/activate
 python3 -m pip install --upgrade pip # upgrade to pip>=18.1
 python3 -m pip install -r requirements.txt
 ```
