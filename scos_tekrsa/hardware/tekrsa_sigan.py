@@ -71,7 +71,7 @@ class TekRSASigan(SignalAnalyzerInterface):
             self.connect()
 
         except Exception as error:
-            logger.error("Unable to initialize sigan: {error}")
+            logger.error(f"Unable to initialize sigan: {error}")
             traceback.print_exc()
 
     def get_constraints(self):
