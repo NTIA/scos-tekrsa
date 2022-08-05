@@ -90,7 +90,7 @@ file:
 (such as `scos_usrp`), then add the `scos_tekrsa` dependency:
 
     ```text
-    scos_tekrsa @ git+https://github.com/NTIA/scos-tekrsa@1.0.0
+    scos_tekrsa @ git+https://github.com/NTIA/scos-tekrsa@1.0.1
     ```
 
 1. Compile requirements by running:
