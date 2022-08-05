@@ -42,15 +42,6 @@ idna==3.3
     # via
     #   -r requirements.txt
     #   requests
-importlib-metadata==4.12.0
-    # via
-    #   build
-    #   click
-    #   pep517
-    #   pluggy
-    #   pre-commit
-    #   pytest
-    #   virtualenv
 its-preselector @ git+https://github.com/NTIA/Preselector@1.0.0
     # via
     #   -r requirements.txt
@@ -61,7 +52,7 @@ more-itertools==8.12.0
     # via pytest
 nodeenv==1.7.0
     # via pre-commit
-numpy==1.21.5
+numpy==1.22.0
     # via
     #   -r requirements.txt
     #   scipy
@@ -115,10 +106,6 @@ ruamel-yaml==0.16.13
     # via
     #   -r requirements.txt
     #   scos-actions
-ruamel-yaml-clib==0.2.6
-    # via
-    #   -r requirements.txt
-    #   ruamel-yaml
 scipy==1.7.3
     # via
     #   -r requirements.txt
@@ -146,11 +133,6 @@ tomli==2.0.1
     # via
     #   build
     #   pep517
-typing-extensions==4.3.0
-    # via
-    #   -r requirements.txt
-    #   asgiref
-    #   importlib-metadata
 urllib3==1.26.9
     # via
     #   -r requirements.txt
@@ -161,10 +143,6 @@ wcwidth==0.2.5
     # via pytest
 wheel==0.37.1
     # via pip-tools
-zipp==3.8.1
-    # via
-    #   importlib-metadata
-    #   pep517
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip
