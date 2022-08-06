@@ -120,14 +120,51 @@ from Tektronix. Place the three files `libRSA_API.so`, `libcyusb_shared.so`, and
 
 ## Development
 
-### Updating the `scos_tekrsa` package
+### Development Environment
 
-Build the Python package from the top level directory in this repository by running:
+Set up a development environment using a tool like
+[Conda](https://docs.conda.io/en/latest/)
+or [venv](https://docs.python.org/3/library/venv.html#module-venv), with `python>=3.8`.
+Then, from the cloned directory, install the development dependencies by running:
 
 ```bash
-python -m pip install --upgrade build
-python -m build
+pip install .[dev]
 ```
+
+This will install the project itself, along with development dependencies, which include
+[Hatchling](https://github.com/pypa/hatch/tree/master/backend) and
+[pre-commit](https://pre-commit.com/). Set up pre-commit, which runs auto-formatting
+and code-checking automatically when you make a commit, by running:
+
+```bash
+pre-commit install
+```
+
+The pre-commit tool will auto-format Python code using [Black](https://github.com/psf/black)
+and [isort](https://github.com/pycqa/isort). Other pre-commit hooks are also enabled, and
+can be found in [.pre-commit-config.yaml](.pre-commit-config.yaml).
+
+### Updating the `scos_tekrsa` package
+
+This project uses [Hatchling](https://github.com/pypa/hatch/tree/master/backend) as a
+backend. Hatchling makes version control and building new releases easy. The package
+version can be updated easily using any of the following commands.
+
+```bash
+hatchling version major  # 1.0.0 -> 2.0.0
+hatchling version minor  # 1.0.0 -> 1.1.0
+hatchling version micro  # 1.0.0 -> 1.0.1
+hatchling version "X.X.X"  # 1.0.0 -> X.X.X
+```
+
+To build a wheel distribution and source distribution, run:
+
+```bash
+hatchling build
+```
+
+When using `hatchling version`, there's no need to update package metadata with the new
+version number.
 
 ### Updating the `tekrsa_usb` package
 
@@ -140,86 +177,23 @@ docker tag tekrsa_usb ghcr.io/ntia/scos-tekrsa/tekrsa_usb:X.X.X
 docker push ghcr.io/ntia/scos-tekrsa/tekrsa_usb:X.X.X
 ```
 
-### Requirements and Configuration
-
-Requires `pip>=18.1` and `python>=3.8`.
-
-It is highly recommended that you first initialize a virtual development environment
-using a tool such as [Conda](https://docs.conda.io/en/latest/) or [venv](https://docs.python.org/3/library/venv.html#module-venv).
-The following commands create a virtual environment using venv and install the required
-dependencies for development and testing.
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python3 -m pip install --upgrade pip # upgrade to pip>=18.1
-python3 -m pip install -r requirements.txt
-```
-
-#### Using pip-tools
-
-It is recommended to keep direct dependencies in a separate file. The direct
-dependencies are in the `requirements.in` and `requirements-dev.in` files. Then pip-tools
-can be used to generate files with all the dependencies and transitive dependencies
-(sub-dependencies). The files containing all the dependencies are in `requirements.txt` and
-`requirements-dev.txt`. Run the following in the virtual environment to install pip-tools:
-
-```bash
-python3 -m pip install pip-tools
-```
-
-To update `requirements.txt` and `requirements-dev.txt` after modifying `requirements.in`
-or `requirements-dev.in`:
-
-```bash
-pip-compile requirements.in
-pip-compile requirements-dev.in
-```
-
-Use `pip-sync` to match virtual environment to `requirements-dev.txt`:
-
-```bash
-pip-sync requirements.txt requirements-dev.txt
-```
-
-For more information, see [pip-tools' documentation](https://pip-tools.readthedocs.io/en/latest).
-
 ### Running Tests
 
-A Docker container is used for testing. [Install Docker](https://docs.docker.com/get-docker/)
-in order to run tests.
+A Docker container is used for testing the `tekrsa_usb` base image provided in this
+repository. [Install Docker](https://docs.docker.com/get-docker/) in order to run tests.
 
 ```bash
 docker build -f docker/Dockerfile-test -t rsa_test .
 docker run rsa_test
 ```
 
-### Committing
-
-Besides running the test suite and ensuring that all tests are passed, we also expect
-all Python code that's checked in to have been run through an auto-formatter. This project
-uses a Python auto-formatter called [Black](https://github.com/psf/black). Additionally,
-import statement sorting is handled by [isort](https://github.com/pycqa/isort).
-
-There are several ways to auto-format your code before committing. First, IDE integration
-with on-save hooks is very useful. Second, if you already pip-installed the development
-requirements from the section above, you already have a utility called pre-commit that
-will automate setting up this project's pre-commit Git hooks. Simply type the following
-once, and each time you make a commit, it will be appropriately auto-formatted.
+The `scos_tekrsa` plugin is tested using the [`pytest`](https://docs.pytest.org/en/7.1.x/)
+framework. Run tests, and view test coverage, by running the following command from the
+top-level directory of this repository.
 
 ```bash
-pre-commit install
+pytest --cov
 ```
-
-You can also manually run the pre-commit hooks on the entire project:
-
-```bash
-pre-commit run --all-files
-```
-
-In addition to Black and isort, various other pre-commit tools are enabled including [markdownlint](https://github.com/DavidAnson/markdownlint).
-See [`.pre-commit-config.yaml`](.pre-commit-config.yaml) for the list of pre-commit
-tools enabled for this repository.
 
 ## License
 

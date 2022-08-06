@@ -19,3 +19,5 @@ class TestTekRSA:
             raise RuntimeError("Receiver is not available.")
         self.rx = sigan
         self.setup_complete = True
+
+    # TODO Write unit test
