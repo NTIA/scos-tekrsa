@@ -142,7 +142,7 @@ docker push ghcr.io/ntia/scos-tekrsa/tekrsa_usb:X.X.X
 
 ### Requirements and Configuration
 
-Requires `pip>=18.1` and `python>=3.7`.
+Requires `pip>=18.1` and `python>=3.8`.
 
 It is highly recommended that you first initialize a virtual development environment
 using a tool such as [Conda](https://docs.conda.io/en/latest/) or [venv](https://docs.python.org/3/library/venv.html#module-venv).

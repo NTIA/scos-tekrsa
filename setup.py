@@ -27,7 +27,7 @@ setup(
         "Programming Language :: Python :: 3",
         "Operating System :: POSIX :: Linux",
     ],
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     install_requires=install_requires,
     package_data={"scos_tekrsa": ["configs/*example.json", "configs/actions*/*.yml"]},
 )
