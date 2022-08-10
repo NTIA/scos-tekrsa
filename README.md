@@ -150,29 +150,17 @@ pre-commit install
 
 The pre-commit tool will auto-format Python code using [Black](https://github.com/psf/black)
 and [isort](https://github.com/pycqa/isort). Other pre-commit hooks are also enabled, and
-can be found in [.pre-commit-config.yaml](.pre-commit-config.yaml).
+can be found in [`.pre-commit-config.yaml`](.pre-commit-config.yaml).
 
 ### Updating the `scos_tekrsa` package
 
-This project uses [Hatchling](https://github.com/pypa/hatch/tree/master/backend) as a
-backend. Hatchling makes version control and building new releases easy. The package
-version can be updated easily using any of the following commands.
+This project uses [flit](https://github.com/pypa/flit) as a backend. To build a
+new release (both wheel and sdist/tarball), first update the version number in
+[`src/scos_tekrsa/__init__.py`](src/scos_tekrsa/__init__.py), then run:
 
 ```bash
-hatchling version major  # 1.0.0 -> 2.0.0
-hatchling version minor  # 1.0.0 -> 1.1.0
-hatchling version micro  # 1.0.0 -> 1.0.1
-hatchling version "X.X.X"  # 1.0.0 -> X.X.X
+flit build
 ```
-
-To build a wheel distribution and source distribution, run:
-
-```bash
-hatchling build
-```
-
-When using `hatchling version`, there's no need to update package metadata with the new
-version number.
 
 ### Updating the `tekrsa_usb` package
 
