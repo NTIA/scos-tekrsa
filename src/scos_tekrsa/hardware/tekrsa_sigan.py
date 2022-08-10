@@ -1,5 +1,4 @@
 import logging
-import traceback
 
 from scos_actions import utils
 from scos_actions.hardware.sigan_iface import SignalAnalyzerInterface
@@ -71,8 +70,7 @@ class TekRSASigan(SignalAnalyzerInterface):
             self.connect()
 
         except Exception as error:
-            logger.error("Unable to initialize sigan: {error}")
-            traceback.print_exc()
+            logger.error(f"Unable to initialize sigan: {error}")
 
     def get_constraints(self):
         self.min_frequency = self.rsa.CONFIG_GetMinCenterFreq()

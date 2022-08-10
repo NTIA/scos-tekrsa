@@ -45,7 +45,7 @@ Tektronix RSA devices, along with supporting test code
 
 ## Running in SCOS Sensor
 
-Requires `git` and `pip-tools>=6.6.2`
+Requires `git`, `python>=3.7`, `pip>=18.1`, and `pip-tools>=6.6.2`
 
 Below are the steps to run SCOS Sensor with the SCOS Tektronix RSA plugin:
 
@@ -55,31 +55,45 @@ Below are the steps to run SCOS Sensor with the SCOS Tektronix RSA plugin:
     git clone https://github.com/NTIA/scos-sensor.git
     ```
 
-2. Navigate to the cloned scos-sensor directory:
+1. Navigate to the cloned `scos-sensor` directory:
 
     ```bash
     cd scos-sensor
     ```
 
-3. If testing locally, generate the necessary SSL certificates by running:
+1. If testing locally, generate the necessary SSL certificates by running:
 
     ```bash
     cd scripts && ./create_localhost_cert.sh
     ````
 
-4. While in the `scos-sensor` directory, create the `env` file by copying the template
+1. While in the `scos-sensor` directory, create the `env` file by copying the template
 file:
 
     ```bash
     cp env.template ./env
     ```
 
-5. In the newly created `env` file, set `BASE_IMAGE` to `BASE_IMAGE=ghcr.io/ntia/scos-tekrsa/tekrsa_usb:0.1.5`
+1. In the newly-created `env` file, set the `BASE_IMAGE`:
 
-6. In `scos-sensor/src/requirements.in`, remove or comment any unnecessary dependencies
-(such as `scos_usrp`), then add the `scos_tekrsa` dependency: `scos_tekrsa @ git+https://github.com/NTIA/scos-tekrsa@1.0.0`
+    ```text
+    BASE_IMAGE=ghcr.io/ntia/scos-tekrsa/tekrsa_usb:0.1.5
+    ```
 
-7. Compile requirements by running:
+1. Get environment variables:
+
+    ```bash
+    source ./env
+    ```
+
+1. In `scos-sensor/src/requirements.in`, remove or comment any unnecessary dependencies
+(such as `scos_usrp`), then add the `scos_tekrsa` dependency:
+
+    ```text
+    scos_tekrsa @ git+https://github.com/NTIA/scos-tekrsa@1.0.1
+    ```
+
+1. Compile requirements by running:
 
     ```bash
     cd src
@@ -87,11 +101,11 @@ file:
     pip-compile requirements-dev.in
     ```
 
-8. Download the [RSA API for Linux](https://www.tek.com/spectrum-analyzer/rsa306-software/rsa-application-programming-interface--api-for-64bit-linux--v100014)
+1. Download the [RSA API for Linux](https://www.tek.com/spectrum-analyzer/rsa306-software/rsa-application-programming-interface--api-for-64bit-linux--v100014)
 from Tektronix. Place the three files `libRSA_API.so`, `libcyusb_shared.so`, and
 `cyusb.conf` in the directory `scos-sensor/drivers`.
 
-9. Create a `files.json` file in `scos-sensor/drivers` containing:
+1. Create a `files.json` file in `scos-sensor/drivers` containing:
 
     ```json
     {
@@ -104,13 +118,7 @@ from Tektronix. Place the three files `libRSA_API.so`, `libcyusb_shared.so`, and
     }
     ```
 
-10. Get environment variables:
-
-    ```bash
-    source ./env
-    ```
-
-11. Build and start containers (and optionally, view logs):
+1. Build and start containers (and optionally, view logs):
 
     ```bash
     docker-compose build --no-cache
