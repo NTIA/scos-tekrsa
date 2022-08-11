@@ -38,7 +38,7 @@ classifiers = [
 
 dependencies = [
     "tekrsa-api-wrap>=1.2.3",
-    "scos_actions @ https://github.com/NTIA/scos-actions/archive/refs/heads/dsp-refactor.zip",
+    "scos_actions @ https://github.com/NTIA/scos-actions/archive/refs/heads/nasctn-sea.zip",
 ]
 
 [project.optional-dependencies]
