@@ -1,10 +1,11 @@
 [build-system]
-requires = ["flit_core >=3.2,<4.0"]
-build-backend = "flit_core.buildapi"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "scos-tekrsa"
-dynamic = ["version", "description"]
+dynamic = ["version"]
+description = "Plugin for SCOS Sensor which adds support for Tektronix RSA-series spectrum analyzers"
 readme = "README.md"
 requires-python = ">=3.8"
 license = { file = "LICENSE.md" }
@@ -38,16 +39,17 @@ classifiers = [
 
 dependencies = [
     "tekrsa-api-wrap>=1.2.3",
-    "scos_actions @ https://github.com/NTIA/scos-actions/archive/refs/heads/dsp-refactor.zip",
+    "scos_actions @ git+https://github.com/NTIA/scos-actions@dsp-refactor",
 ]
 
 [project.optional-dependencies]
 dev = [
     "environs>=9.5.0",
-    "flit>=3.4,<4",
+    "hatchling>=1.6.0,<2.0",
     "pre-commit>=2.20.0",
     "pytest>=7.1.2",
     "pytest-cov>=3.0.0",
+    "twine>=4.0.1,<5.0"
 ]
 
 [project.urls]
@@ -58,5 +60,8 @@ dev = [
 "ITS Website" = "https://its.ntia.gov"
 "Tektronix Website" = "https://www.tek.com/en"
 
-[tool.flit.module]
-name = "scos_tekrsa"
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.version]
+path = "src/scos_tekrsa/__init__.py"
