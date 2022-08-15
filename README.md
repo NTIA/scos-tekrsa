@@ -77,7 +77,7 @@ file:
 1. In the newly-created `env` file, set the `BASE_IMAGE`:
 
     ```text
-    BASE_IMAGE=ghcr.io/ntia/scos-tekrsa/tekrsa_usb:0.1.5
+    BASE_IMAGE=ghcr.io/ntia/scos-tekrsa/tekrsa_usb:0.2.0
     ```
 
 1. Get environment variables:
