@@ -1,5 +1,5 @@
 nasctn_sea_data_product:
-  name: data_product_3605MHz
+  name: 3695_DataProduct
 # IIR filter settings
   iir_apply: True
   iir_rp_dB: 0.1  # Max passband ripple below unity gain
@@ -28,4 +28,4 @@ nasctn_sea_data_product:
 # Acquisition settings (3600-3610 MHz, 4s dwell)
   duration_ms: 4000
   nskip: 0
-  frequency: 3605e6
+  frequency: 3695e6

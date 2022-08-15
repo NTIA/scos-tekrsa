@@ -1,5 +1,5 @@
 y_factor_cal:
-  name: calibrate_3550-3700_iir
+  name: 3550-3650_Cal_IIR
   # Preselector configuration
   cal_source_idx: 0
   temp_sensor_idx: 1
@@ -21,11 +21,6 @@ y_factor_cal:
     - 3625e6
     - 3635e6
     - 3645e6
-    - 3655e6
-    - 3665e6
-    - 3675e6
-    - 3685e6
-    - 3695e6
   # IIR Filter Settings:
   # Optionally apply a low-pass IIR filter before Y-Factor
   iir_apply: True

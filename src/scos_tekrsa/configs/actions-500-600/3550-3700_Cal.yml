@@ -1,5 +1,5 @@
 y_factor_cal:
-  name: calibrate_3550-3700
+  name: 3550-3700_Cal
   # Preselector configuration
   cal_source_idx: 0
   temp_sensor_idx: 1

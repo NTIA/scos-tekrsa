@@ -1,0 +1,31 @@
+nasctn_sea_data_product:
+  name: 3595_DataProduct
+# IIR filter settings
+  iir_apply: True
+  iir_rp_dB: 0.1  # Max passband ripple below unity gain
+  iir_rs_dB: 40  # Minimum stopband attenuation
+  iir_cutoff_Hz: 5e6  # Transition frequency
+  iir_width_Hz: 8e3  # Transition width
+# Quantile filter settings
+  qfilt_apply: True
+  qfilt_qlo: 0.00015  # Lower quantile
+  qfilt_qhi: 0.99999  # Upper quantile
+# Mean/Max FFT settings
+  fft_size: 175
+  nffts: 320e3
+  fft_window_type: flattop # See scipy.signal.get_window for supported input
+# APD downsampling settings
+  apd_bin_size_dB: 0.5  # Set to 0 or negative for no downsampling
+# Time domain power statistics settings
+  td_bin_size_ms: 100
+# Round all power results to X decimal places
+  round_to_places: 2
+# Sigan Settings
+  preamp_enable: True
+  reference_level: -25
+  attenuation: 0
+  sample_rate: 14e6
+# Acquisition settings (3600-3610 MHz, 4s dwell)
+  duration_ms: 4000
+  nskip: 0
+  frequency: 3595e6
