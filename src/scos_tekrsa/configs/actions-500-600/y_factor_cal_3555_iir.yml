@@ -18,3 +18,4 @@ y_factor_cal:
   iir_rs_dB: 40
   iir_cutoff_Hz: 5e6
   iir_width_Hz: 8e3
+  iir_num_response_frequencies: 1000
