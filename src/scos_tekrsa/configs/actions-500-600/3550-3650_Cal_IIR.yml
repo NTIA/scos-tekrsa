@@ -24,7 +24,8 @@ y_factor_cal:
   # IIR Filter Settings:
   # Optionally apply a low-pass IIR filter before Y-Factor
   iir_apply: True
-  iir_rp_dB: 0.1
-  iir_rs_dB: 40
-  iir_cutoff_Hz: 5e6
-  iir_width_Hz: 8e3
+  iir_gpass_dB: 0.1
+  iir_gstop_dB: 40
+  iir_pb_edge_Hz: 5e6
+  iir_sb_edge_Hz: 5.008e3
+  iir_num_response_frequencies: 1000
