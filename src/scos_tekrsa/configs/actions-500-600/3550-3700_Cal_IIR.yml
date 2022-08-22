@@ -32,5 +32,5 @@ y_factor_cal:
   iir_gpass_dB: 0.1
   iir_gstop_dB: 40
   iir_pb_edge_Hz: 5e6
-  iir_sb_edge_Hz: 5.008e3
+  iir_sb_edge_Hz: 5.008e6
   iir_num_response_frequencies: 1000
