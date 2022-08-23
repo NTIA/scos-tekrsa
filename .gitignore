@@ -5,3 +5,4 @@ docker/libcyusb_shared.so
 .venv
 *.egg-info
 dist
+.coverage

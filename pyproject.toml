@@ -1,0 +1,67 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "scos-tekrsa"
+dynamic = ["version"]
+description = "Plugin for SCOS Sensor which adds support for Tektronix RSA-series spectrum analyzers"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { file = "LICENSE.md" }
+
+authors = [
+    { name = "The Institute for Telecommunication Sciences" },
+]
+
+maintainers = [
+    { name="Anthony Romaniello", email="aromaniello@ntia.gov"},
+]
+
+keywords = [
+    "SCOS", "Tektronix", "RSA", "SDR", "spectrum", "analyzer",
+    "sensor", "scos-sensor", "radio", "monitoring", "remote",
+    "distributed", "sensing", "NTIA", "ITS", "telecommunications",
+]
+
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Telecommunications Industry",
+    "Natural Language :: English",
+    "Operating System :: POSIX :: Linux",
+    "Environment :: Plugins",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+]
+
+dependencies = [
+    "environs>=9.5.0",
+    "tekrsa-api-wrap>=1.2.3",
+    "scos_actions @ git+https://github.com/NTIA/scos-actions@3.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "hatchling>=1.6.0,<2.0",
+    "pre-commit>=2.20.0",
+    "pytest>=7.1.2",
+    "pytest-cov>=3.0.0",
+    "twine>=4.0.1,<5.0"
+]
+
+[project.urls]
+"Repository" = "https://github.com/NTIA/scos-tekrsa"
+"Bug Tracker" = "https://github.com/NTIA/scos-tekrsa/issues"
+"SCOS Sensor" = "https://github.com/NTIA/scos-sensor"
+"NTIA GitHub" = "https://github.com/NTIA"
+"ITS Website" = "https://its.ntia.gov"
+"Tektronix Website" = "https://www.tek.com/en"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.version]
+path = "src/scos_tekrsa/__init__.py"
