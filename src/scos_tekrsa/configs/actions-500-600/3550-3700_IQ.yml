@@ -1,6 +1,7 @@
 stepped_frequency_time_domain_iq:
   # 500 ms captures every 10 MHz
   name: 3550-3700_IQ
+  rf_path: antenna
   reference_level: -25
   attenuation: 0
   preamp_enable: True
