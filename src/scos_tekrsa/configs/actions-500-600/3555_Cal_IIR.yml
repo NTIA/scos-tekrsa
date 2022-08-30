@@ -3,6 +3,8 @@ y_factor_cal:
   # Preselector configuration
   cal_source_idx: 0
   temp_sensor_idx: 1
+  noise_diode_on: noise_diode_on
+  noise_diode_off: noise_diode_off
   # Signal Analyzer Settings
   preamp_enable: True
   reference_level: -25
