@@ -1,5 +1,6 @@
 single_frequency_time_domain_iq:
   name: 3555_IQ
+  rf_path: antenna
   frequency: 3555e6
   reference_level: -25
   attenuation: 0

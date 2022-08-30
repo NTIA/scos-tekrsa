@@ -1,5 +1,6 @@
 single_frequency_fft:
   name: 3675_M4
+  rf_path: antenna
   frequency: 3675e6
   reference_level: -25
   attenuation: 0
