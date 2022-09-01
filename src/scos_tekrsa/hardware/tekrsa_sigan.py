@@ -2,7 +2,7 @@ import logging
 
 from scos_actions import utils
 from scos_actions.hardware.sigan_iface import SignalAnalyzerInterface
-
+from scos_actions.hardware.utils import power_cycle_sigan
 from scos_tekrsa import settings
 from scos_tekrsa.hardware.mocks.rsa_block import MockRSA
 
@@ -71,6 +71,17 @@ class TekRSASigan(SignalAnalyzerInterface):
 
         except Exception as error:
             logger.error(f"Unable to initialize sigan: {error}")
+            self.power_cyle_and_connect()
+
+    def power_cyle_and_connect(self):
+        logger.info("Attempting to power cycle and reconnect")
+        try:
+            power_cycle_sigan()
+            logger.info("Power cycled signal analyzer. Reconnecting...")
+            self.connect()
+        except Exception as error:
+            logger.error(f"Unable to connect after power cycling signal analyzer: {error}")
+
 
     def get_constraints(self):
         self.min_frequency = self.rsa.CONFIG_GetMinCenterFreq()
@@ -261,15 +272,10 @@ class TekRSASigan(SignalAnalyzerInterface):
         logger.debug("Performing Tektronix RSA health check.")
 
         try:
-            measurement_result = self.acquire_time_domain_samples(num_samples)
-            data = measurement_result["data"]
+             return self.rsa.DEVICE_GetOverTemperatureStatus()
         except Exception as e:
             logger.error("Unable to acquire samples from RSA device.")
             logger.error(e)
-            return False
-
-        if not len(data) == num_samples:
-            logger.error("RSA data doesn't match request.")
             return False
 
         return True
