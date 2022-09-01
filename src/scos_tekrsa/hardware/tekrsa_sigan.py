@@ -108,10 +108,11 @@ class TekRSASigan(SignalAnalyzerInterface):
                 # Load API wrapper
                 logger.info("Loading RSA API wrapper")
                 import rsa_api
-            except ImportError:
+            except ImportError as import_error:
                 logger.warning("API Wrapper not loaded - disabling signal analyzer.")
                 self._is_available = False
-                return
+                raise import_error
+
             try:
                 logger.debug("Initializing ")
                 self.rsa = rsa_api.RSA()
@@ -129,9 +130,10 @@ class TekRSASigan(SignalAnalyzerInterface):
                     + str(self.max_frequency)
                 )
             except Exception as e:
+                self._is_available = False
                 self.device_name = "NONE: Failed to connect to TekRSA"
                 logger.exception("Unable to connect to TEKRSA")
-                return
+                raise e
 
         self._is_available = True
 
