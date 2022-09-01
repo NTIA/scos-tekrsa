@@ -2,6 +2,7 @@ import logging
 
 from scos_actions import utils
 from scos_actions.hardware.sigan_iface import SignalAnalyzerInterface
+from scos_actions.hardware.utils import power_cycle_sigan
 
 from scos_tekrsa import settings
 from scos_tekrsa.hardware.mocks.rsa_block import MockRSA
@@ -71,7 +72,17 @@ class TekRSASigan(SignalAnalyzerInterface):
 
         except Exception as error:
             logger.error(f"Unable to initialize sigan: {error}")
+            self.power_cyle_and_connect()
 
+
+    def power_cyle_and_connect(self):
+        logger.info("Attempting to power cycle and reconnect")
+        try:
+            power_cycle_sigan()
+            logger.info("Power cycled signal analyzer. Reconnecting...")
+            self.connect()
+        except Exception as error:
+            logger.error(f"Unable to connect after power cycling signal analyzer: {error}")
     def get_constraints(self):
         self.min_frequency = self.rsa.CONFIG_GetMinCenterFreq()
         self.max_frequency = self.rsa.CONFIG_GetMaxCenterFreq()
