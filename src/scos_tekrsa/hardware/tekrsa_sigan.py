@@ -1,4 +1,5 @@
 import logging
+import time
 
 from scos_actions import utils
 from scos_actions.hardware.sigan_iface import SignalAnalyzerInterface
@@ -78,6 +79,8 @@ class TekRSASigan(SignalAnalyzerInterface):
         logger.info("Attempting to power cycle and reconnect")
         try:
             power_cycle_sigan()
+            # wait for power cycle to complete
+            time.sleep(2.0)
             logger.info("Power cycled signal analyzer. Reconnecting...")
             self.connect()
         except Exception as error:
