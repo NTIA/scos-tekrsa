@@ -29,7 +29,9 @@ if sigan:
         logger.error("Unable to determine RSA model")
         ACTION_DEFINITIONS_DIR += "-500-600"
     logger.debug("Action dir: " + ACTION_DEFINITIONS_DIR)
-    actions["monitor_tekrsa"] = MonitorSignalAnalyzer(sigan)
+    actions["monitor_tekrsa"] = MonitorSignalAnalyzer(
+        parameters={"name": "monitor_tekrsa"}, sigan=sigan
+    )
     logger.debug("Created Monitor SIGAN action")
     # Pass new radio to existing action classes with new SDR specific yaml files
     logger.debug("Initializing yaml actions")
