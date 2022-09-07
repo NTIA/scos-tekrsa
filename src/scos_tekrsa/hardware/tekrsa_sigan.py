@@ -279,17 +279,17 @@ class TekRSASigan(SignalAnalyzerInterface):
         """Perform health check by collecting IQ samples."""
         logger.debug("Performing Tektronix RSA health check.")
 
-        try:
-            measurement_result = self.acquire_time_domain_samples(num_samples)
-            data = measurement_result["data"]
-        except Exception as e:
-            logger.error("Unable to acquire samples from RSA device.")
-            logger.error(e)
-            return False
+        #  try:
+        #      measurement_result = self.acquire_time_domain_samples(num_samples)
+        #        data = measurement_result["data"]
+        #  except Exception as e:
+        #      logger.error("Unable to acquire samples from RSA device.")
+        #      logger.error(e)
+        #      return False
 
-        if not len(data) == num_samples:
-            logger.error("RSA data doesn't match request.")
-            return False
+        #    if not len(data) == num_samples:
+        #       logger.error("RSA data doesn't match request.")
+        #       return False
 
         return True
 
