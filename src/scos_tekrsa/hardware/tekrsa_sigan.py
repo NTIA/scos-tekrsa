@@ -75,12 +75,13 @@ class TekRSASigan(SignalAnalyzerInterface):
             logger.error(f"Unable to initialize sigan: {error}")
             self.power_cycle_and_connect()
 
-    def power_cycle_and_connect(self):
+    def power_cycle_and_connect(self, sleep_time=2.0):
         logger.info("Attempting to power cycle and reconnect")
         try:
             power_cycle_sigan()
             # wait for power cycle to complete
-            time.sleep(2.0)
+            logger.debug(f"Waiting {sleep_time} seconds before reconnecting...")
+            time.sleep(sleep_time)
             logger.info("Power cycled signal analyzer. Reconnecting...")
             self.connect()
         except Exception as error:
