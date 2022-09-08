@@ -2,6 +2,9 @@ import logging
 import time
 
 from scos_actions import utils
+from scos_actions.hardware.hardware_configuration_exception import (
+    HardwareConfigurationException,
+)
 from scos_actions.hardware.sigan_iface import SignalAnalyzerInterface
 from scos_actions.hardware.utils import power_cycle_sigan
 
@@ -79,6 +82,10 @@ class TekRSASigan(SignalAnalyzerInterface):
         logger.info("Attempting to power cycle and reconnect")
         try:
             power_cycle_sigan()
+        except HardwareConfigurationException as hce:
+            logger.error(f"Unable to power cycle sigan: {hce}")
+            return
+        try:
             # wait for power cycle to complete
             logger.debug(f"Waiting {sleep_time} seconds before reconnecting...")
             time.sleep(sleep_time)
