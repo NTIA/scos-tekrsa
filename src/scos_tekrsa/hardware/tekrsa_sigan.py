@@ -83,7 +83,7 @@ class TekRSASigan(SignalAnalyzerInterface):
         try:
             power_cycle_sigan()
         except HardwareConfigurationException as hce:
-            logger.error(f"Unable to power cycle sigan: {hce}")
+            logger.warn(f"Unable to power cycle sigan: {hce}")
             return
         try:
             # wait for power cycle to complete
