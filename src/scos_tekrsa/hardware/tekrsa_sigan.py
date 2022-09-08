@@ -78,24 +78,6 @@ class TekRSASigan(SignalAnalyzerInterface):
             logger.error(f"Unable to initialize sigan: {error}")
             self.power_cycle_and_connect()
 
-    def power_cycle_and_connect(self, sleep_time=2.0):
-        logger.info("Attempting to power cycle and reconnect")
-        try:
-            power_cycle_sigan()
-        except HardwareConfigurationException as hce:
-            logger.warn(f"Unable to power cycle sigan: {hce}")
-            return
-        try:
-            # wait for power cycle to complete
-            logger.debug(f"Waiting {sleep_time} seconds before reconnecting...")
-            time.sleep(sleep_time)
-            logger.info("Power cycled signal analyzer. Reconnecting...")
-            self.connect()
-        except Exception as error:
-            logger.error(
-                f"Unable to connect after power cycling signal analyzer: {error}"
-            )
-
     def get_constraints(self):
         self.min_frequency = self.rsa.CONFIG_GetMinCenterFreq()
         self.max_frequency = self.rsa.CONFIG_GetMaxCenterFreq()
