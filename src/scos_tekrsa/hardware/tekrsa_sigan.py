@@ -282,8 +282,8 @@ class TekRSASigan(SignalAnalyzerInterface):
             logger.debug("Tektronix RSA 300 series device has no built-in preamp.")
 
     @property
-    def healthy(self, num_samples=56000):
-        """Perform health check by collecting IQ samples."""
+    def healthy(self):
+        """Perform health check by checking the over temp status."""
         logger.debug("Performing Tektronix RSA health check.")
         try:
             return not self.rsa.DEVICE_GetOverTemperatureStatus()
