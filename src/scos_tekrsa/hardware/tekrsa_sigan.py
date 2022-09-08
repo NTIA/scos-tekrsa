@@ -1,7 +1,12 @@
 import logging
+import time
 
 from scos_actions import utils
+from scos_actions.hardware.hardware_configuration_exception import (
+    HardwareConfigurationException,
+)
 from scos_actions.hardware.sigan_iface import SignalAnalyzerInterface
+from scos_actions.hardware.utils import power_cycle_sigan
 
 from scos_tekrsa import settings
 from scos_tekrsa.hardware.mocks.rsa_block import MockRSA
@@ -71,6 +76,7 @@ class TekRSASigan(SignalAnalyzerInterface):
 
         except Exception as error:
             logger.error(f"Unable to initialize sigan: {error}")
+            self.power_cycle_and_connect()
 
     def get_constraints(self):
         self.min_frequency = self.rsa.CONFIG_GetMinCenterFreq()
@@ -95,10 +101,11 @@ class TekRSASigan(SignalAnalyzerInterface):
                 # Load API wrapper
                 logger.info("Loading RSA API wrapper")
                 import rsa_api
-            except ImportError:
+            except ImportError as import_error:
                 logger.warning("API Wrapper not loaded - disabling signal analyzer.")
                 self._is_available = False
-                return
+                raise import_error
+
             try:
                 logger.debug("Initializing ")
                 self.rsa = rsa_api.RSA()
@@ -116,9 +123,10 @@ class TekRSASigan(SignalAnalyzerInterface):
                     + str(self.max_frequency)
                 )
             except Exception as e:
+                self._is_available = False
                 self.device_name = "NONE: Failed to connect to TekRSA"
                 logger.exception("Unable to connect to TEKRSA")
-                return
+                raise e
 
         self._is_available = True
 
@@ -256,23 +264,15 @@ class TekRSASigan(SignalAnalyzerInterface):
             logger.debug("Tektronix RSA 300 series device has no built-in preamp.")
 
     @property
-    def healthy(self, num_samples=56000):
-        """Perform health check by collecting IQ samples."""
+    def healthy(self):
+        """Perform health check by checking the over temp status."""
         logger.debug("Performing Tektronix RSA health check.")
-
         try:
-            measurement_result = self.acquire_time_domain_samples(num_samples)
-            data = measurement_result["data"]
+            return not self.rsa.DEVICE_GetOverTemperatureStatus()
         except Exception as e:
-            logger.error("Unable to acquire samples from RSA device.")
+            logger.error("Unable to check if device is healthy.")
             logger.error(e)
             return False
-
-        if not len(data) == num_samples:
-            logger.error("RSA data doesn't match request.")
-            return False
-
-        return True
 
     def acquire_time_domain_samples(
         self, num_samples, num_samples_skip=0, retries=5, gain_adjust=True
