@@ -1,6 +1,7 @@
 import logging
 from os import path
 
+from scos_actions.actions.logger import Logger
 from scos_actions.actions.monitor_sigan import MonitorSignalAnalyzer
 from scos_actions.discover import init
 
@@ -32,6 +33,7 @@ if sigan:
     actions["monitor_tekrsa"] = MonitorSignalAnalyzer(
         parameters={"name": "monitor_tekrsa"}, sigan=sigan
     )
+    actions["logger"] = Logger()
     logger.debug("Created Monitor SIGAN action")
     # Pass new radio to existing action classes with new SDR specific yaml files
     logger.debug("Initializing yaml actions")
