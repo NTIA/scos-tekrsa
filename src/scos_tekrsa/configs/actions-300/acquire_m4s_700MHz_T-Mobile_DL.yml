@@ -6,3 +6,4 @@ single_frequency_fft:
   fft_size: 2048
   nffts: 300
   nskip: 0
+  classification: UNCLASSIFIED
