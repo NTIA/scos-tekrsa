@@ -1,5 +1,5 @@
 y_factor_cal:
-  name: CBRS_Calibrate_5dB_Attenuation
+  name: CBRS_Calibrate_05dB_Attenuation
   # Preselector configuration
   cal_source_idx: 0
   temp_sensor_idx: 1
