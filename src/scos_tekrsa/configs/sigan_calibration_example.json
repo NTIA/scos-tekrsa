@@ -18,6 +18,48 @@
 							"gain_sigan": 0.40803345928877379,
 							"gain_preselector": 0,
 							"noise_figure_preselector": 0
+						},
+						"5": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"10": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"15": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"20": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"25": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"30": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
 						}
 					}
 				}
@@ -26,6 +68,48 @@
 				"-25":{
 					"1": {
 						"0": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"5": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"10": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"15": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"20": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"25": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"30": {
 							"noise_figure_sigan": 46.03993010994134,
 							"enbw_sigan": 15723428.858731967,
 							"gain_sigan": 0.40803345928877379,
@@ -45,6 +129,48 @@
 							"gain_sigan": 0.40803345928877379,
 							"gain_preselector": 0,
 							"noise_figure_preselector": 0
+						},
+						"5": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"10": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"15": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"20": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"25": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"30": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
 						}
 					}
 				}
@@ -53,6 +179,48 @@
 				"-25":{
 					"1": {
 						"0": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"5": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"10": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"15": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"20": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"25": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"30": {
 							"noise_figure_sigan": 46.03993010994134,
 							"enbw_sigan": 15723428.858731967,
 							"gain_sigan": 0.40803345928877379,
@@ -71,6 +239,48 @@
 							"gain_sigan": 0.40803345928877379,
 							"gain_preselector": 0,
 							"noise_figure_preselector": 0
+						},
+						"5": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"10": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"15": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"20": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"25": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"30": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
 						}
 					}
 				}
@@ -79,6 +289,48 @@
 				"-25":{
 					"1": {
 						"0": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"5": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"10": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"15": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"20": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"25": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"30": {
 							"noise_figure_sigan": 46.03993010994134,
 							"enbw_sigan": 15723428.858731967,
 							"gain_sigan": 0.40803345928877379,
@@ -97,6 +349,48 @@
 							"gain_sigan": 0.40803345928877379,
 							"gain_preselector": 0,
 							"noise_figure_preselector": 0
+						},
+						"5": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"10": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"15": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"20": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"25": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"30": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
 						}
 					}
 				}
@@ -105,6 +399,48 @@
 				"-25":{
 					"1": {
 						"0": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"5": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"10": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"15": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"20": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"25": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"30": {
 							"noise_figure_sigan": 46.03993010994134,
 							"enbw_sigan": 15723428.858731967,
 							"gain_sigan": 0.40803345928877379,
@@ -123,6 +459,48 @@
 							"gain_sigan": 0.40803345928877379,
 							"gain_preselector": 0,
 							"noise_figure_preselector": 0
+						},
+						"5": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"10": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"15": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"20": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"25": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"30": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
 						}
 					}
 				}
@@ -131,6 +509,48 @@
 				"-25":{
 					"1": {
 						"0": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"5": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"10": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"15": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"20": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"25": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"30": {
 							"noise_figure_sigan": 46.03993010994134,
 							"enbw_sigan": 15723428.858731967,
 							"gain_sigan": 0.40803345928877379,
@@ -149,6 +569,48 @@
 							"gain_sigan": 0.40803345928877379,
 							"gain_preselector": 0,
 							"noise_figure_preselector": 0
+						},
+						"5": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"10": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"15": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"20": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"25": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"30": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
 						}
 					}
 				}
@@ -157,6 +619,48 @@
 				"-25":{
 					"1": {
 						"0": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"5": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"10": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"15": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"20": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"25": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"30": {
 							"noise_figure_sigan": 46.03993010994134,
 							"enbw_sigan": 15723428.858731967,
 							"gain_sigan": 0.40803345928877379,
@@ -175,6 +679,48 @@
 							"gain_sigan": 0.40803345928877379,
 							"gain_preselector": 0,
 							"noise_figure_preselector": 0
+						},
+						"5": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"10": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"15": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"20": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"25": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"30": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
 						}
 					}
 				}
@@ -188,6 +734,48 @@
 							"gain_sigan": 0.40803345928877379,
 							"gain_preselector": 0,
 							"noise_figure_preselector": 0
+						},
+						"5": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"10": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"15": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"20": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"25": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"30": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
 						}
 					}
 				}
@@ -196,6 +784,48 @@
 				"-25":{
 					"1": {
 						"0": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"5": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"10": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"15": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"20": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"25": {
+							"noise_figure_sigan": 46.03993010994134,
+							"enbw_sigan": 15723428.858731967,
+							"gain_sigan": 0.40803345928877379,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0
+						},
+						"30": {
 							"noise_figure_sigan": 46.03993010994134,
 							"enbw_sigan": 15723428.858731967,
 							"gain_sigan": 0.40803345928877379,
