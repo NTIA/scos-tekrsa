@@ -285,13 +285,8 @@ class TekRSASigan(SignalAnalyzerInterface):
 
         if gain_adjust:
             # Get calibration data for acquisition
-            if self.device_name in ["RSA306", "RSA306B"]:
-                calibration_args = [
-                    self.sample_rate,
-                    self.frequency,
-                    self.reference_level,
-                ]
-            elif self.device_name in [
+            calibration_args = [self.sample_rate, self.frequency, self.reference_level]
+            if self.device_name in [
                 "RSA503A",
                 "RSA507A",
                 "RSA513A",
@@ -299,17 +294,7 @@ class TekRSASigan(SignalAnalyzerInterface):
                 "RSA603A",
                 "RSA607A",
             ]:
-                calibration_args = [
-                    self.sample_rate,
-                    self.frequency,
-                    self.preamp_enable,
-                    self.attenuation,
-                    self.reference_level,
-                ]
-            else:
-                logger.error(
-                    "Unable to determine RSA model while attempting to get calibration data."
-                )
+                calibration_args.extend([self.preamp_enable, self.attenuation])
             self.recompute_calibration_data(calibration_args)
             # Compute the linear gain
             db_gain = self.sensor_calibration_data["gain_sensor"]
