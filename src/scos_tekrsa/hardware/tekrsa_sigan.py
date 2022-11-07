@@ -294,7 +294,9 @@ class TekRSASigan(SignalAnalyzerInterface):
                 "RSA603A",
                 "RSA607A",
             ]:
-                calibration_args.extend([self.preamp_enable, self.attenuation])
+                calibration_args.extend(
+                    [1 if self.preamp_enable else 0, self.attenuation]
+                )
             self.recompute_calibration_data(calibration_args)
             # Compute the linear gain
             db_gain = self.sensor_calibration_data["gain_sensor"]
