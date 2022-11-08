@@ -1,6 +1,6 @@
 import logging
 
-from scos_actions.actions.interfaces.signals import register_component_with_status
+from scos_actions.signals import register_component_with_status
 
 from scos_tekrsa.hardware.tekrsa_sigan import TekRSASigan
 
