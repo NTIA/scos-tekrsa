@@ -8,10 +8,6 @@ nasctn_sea_data_product:
   iir_pb_edge_Hz: 5e6  # Passband edge frequency
   iir_sb_edge_Hz: 5.008e6  # Stopband edge frequency
   iir_num_response_frequencies: 1000  # Number of frequency points used to compute filter response
-# Quantile filter settings
-  qfilt_apply: True
-  qfilt_qlo: 0.00015  # Lower quantile
-  qfilt_qhi: 0.99999  # Upper quantile
 # Mean/Max FFT settings
   fft_size: 875
   nffts: 64e3
