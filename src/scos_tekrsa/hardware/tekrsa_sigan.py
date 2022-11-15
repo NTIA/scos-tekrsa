@@ -1,12 +1,8 @@
 import logging
-import time
 
 from scos_actions import utils
-from scos_actions.hardware.hardware_configuration_exception import (
-    HardwareConfigurationException,
-)
+from scos_actions.calibration import sensor_calibration
 from scos_actions.hardware.sigan_iface import SignalAnalyzerInterface
-from scos_actions.hardware.utils import power_cycle_sigan
 
 from scos_tekrsa import settings
 from scos_tekrsa.hardware.mocks.rsa_block import MockRSA
@@ -277,7 +273,11 @@ class TekRSASigan(SignalAnalyzerInterface):
             return False
 
     def acquire_time_domain_samples(
-        self, num_samples, num_samples_skip=0, retries=5, gain_adjust=True
+        self,
+        num_samples,
+        num_samples_skip=0,
+        retries=5,
+        gain_adjust=True,
     ):
         """Acquire specific number of time-domain IQ samples."""
         self._capture_time = None
@@ -287,22 +287,21 @@ class TekRSASigan(SignalAnalyzerInterface):
 
         if gain_adjust:
             # Get calibration data for acquisition
-            calibration_args = [self.sample_rate, self.frequency, self.reference_level]
-            if self.device_name in [
-                "RSA503A",
-                "RSA507A",
-                "RSA513A",
-                "RSA518A",
-                "RSA603A",
-                "RSA607A",
-            ]:
-                calibration_args.extend(
-                    [1 if self.preamp_enable else 0, self.attenuation]
+            calibration_params = sensor_calibration.calibration_parameters
+            logger.debug(f"Calibration params required to match: {calibration_params}")
+            try:
+                calibration_args = [self.__dict__[p] for p in calibration_params]
+            except KeyError:
+                raise Exception(
+                    f"One or more required calibration parameters is not a valid TekRSA sigan setting."
                 )
+            # Replace any boolean values (preamp setting) with 1/0
+            # TODO: This should cause an error for now.
+            logger.debug(f"Got calibration args: {calibration_args}")
             self.recompute_calibration_data(calibration_args)
             # Compute the linear gain
             db_gain = self.sensor_calibration_data["gain_sensor"]
-            linear_gain = 10 ** (db_gain / 20.0)
+            linear_gain = 10.0 ** (db_gain / 20.0)
         else:
             linear_gain = 1
 
