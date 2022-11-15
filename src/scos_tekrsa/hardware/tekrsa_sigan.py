@@ -1,12 +1,7 @@
 import logging
-import time
 
 from scos_actions import utils
-from scos_actions.hardware.hardware_configuration_exception import (
-    HardwareConfigurationException,
-)
 from scos_actions.hardware.sigan_iface import SignalAnalyzerInterface
-from scos_actions.hardware.utils import power_cycle_sigan
 
 from scos_tekrsa import settings
 from scos_tekrsa.hardware.mocks.rsa_block import MockRSA
@@ -277,7 +272,12 @@ class TekRSASigan(SignalAnalyzerInterface):
             return False
 
     def acquire_time_domain_samples(
-        self, num_samples, num_samples_skip=0, retries=5, gain_adjust=True
+        self,
+        num_samples,
+        num_samples_skip=0,
+        retries=5,
+        gain_adjust=True,
+        parameters=None,
     ):
         """Acquire specific number of time-domain IQ samples."""
         self._capture_time = None
@@ -287,6 +287,8 @@ class TekRSASigan(SignalAnalyzerInterface):
 
         if gain_adjust:
             # Get calibration data for acquisition
+            if parameters is not None:
+                pass
             calibration_args = [self.sample_rate, self.frequency, self.reference_level]
             if self.device_name in [
                 "RSA503A",
