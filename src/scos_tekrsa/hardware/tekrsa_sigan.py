@@ -278,7 +278,6 @@ class TekRSASigan(SignalAnalyzerInterface):
         num_samples_skip=0,
         retries=5,
         gain_adjust=True,
-        parameters=None,
     ):
         """Acquire specific number of time-domain IQ samples."""
         self._capture_time = None
@@ -290,36 +289,14 @@ class TekRSASigan(SignalAnalyzerInterface):
             # Get calibration data for acquisition
             calibration_params = sensor_calibration.calibration_parameters
             logger.debug(f"Calibration params required to match: {calibration_params}")
-            calibration_args = []
-            for p in calibration_params:
-                try:
-                    if p == "preamp_enable":
-                        # Use 1/0 to represent boolean value
-                        calibration_args.append(1 if parameters[p] else 0)
-                        set_value = self.preamp_enable
-                    else:
-                        calibration_args.append(parameters[p])
-                        # Ensure value in parameters dict matches current sigan setting
-                        if p == "sample_rate":
-                            set_value = self.sample_rate
-                        elif p == "frequency":
-                            set_value = self.frequency
-                        elif p == "attenuation":
-                            set_value = self.attenuation
-                        elif p == "reference_level":
-                            set_value = self.reference_level
-                        elif p == "iq_bandwidth":
-                            set_value = self.iq_bandwidth
-                    assert parameters[p] == set_value
-                except KeyError:
-                    logger.error(
-                        f"Required calibration parameter {p} missing from measurement parameters"
-                    )
-                    raise KeyError
-                except AssertionError:
-                    logger.error(
-                        f"Parameter {p} matched to calibration data, but sigan setting is {set_value}, not {parameters[p]}"
-                    )
+            try:
+                calibration_args = [self.__dict__[p] for p in calibration_params]
+            except KeyError:
+                raise Exception(
+                    f"One or more required calibration parameters is not a valid TekRSA sigan setting."
+                )
+            # Replace any boolean values (preamp setting) with 1/0
+            # TODO: This should cause an error for now.
             logger.debug(f"Got calibration args: {calibration_args}")
             self.recompute_calibration_data(calibration_args)
             # Compute the linear gain
