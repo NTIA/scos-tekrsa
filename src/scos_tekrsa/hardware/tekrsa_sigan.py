@@ -1,6 +1,7 @@
 import logging
 
 from scos_actions import utils
+from scos_actions.calibration import sensor_calibration
 from scos_actions.hardware.sigan_iface import SignalAnalyzerInterface
 
 from scos_tekrsa import settings
@@ -287,24 +288,43 @@ class TekRSASigan(SignalAnalyzerInterface):
 
         if gain_adjust:
             # Get calibration data for acquisition
-            if parameters is not None:
-                pass
-            calibration_args = [self.sample_rate, self.frequency, self.reference_level]
-            if self.device_name in [
-                "RSA503A",
-                "RSA507A",
-                "RSA513A",
-                "RSA518A",
-                "RSA603A",
-                "RSA607A",
-            ]:
-                calibration_args.extend(
-                    [1 if self.preamp_enable else 0, self.attenuation]
-                )
+            calibration_params = sensor_calibration.calibration_parameters
+            logger.debug(f"Calibration params required to match: {calibration_params}")
+            calibration_args = []
+            for p in calibration_params:
+                try:
+                    if p == "preamp_enable":
+                        # Use 1/0 to represent boolean value
+                        calibration_args.append(1 if parameters[p] else 0)
+                        set_value = self.preamp_enable
+                    else:
+                        calibration_args.append(parameters[p])
+                        # Ensure value in parameters dict matches current sigan setting
+                        if p == "sample_rate":
+                            set_value = self.sample_rate
+                        elif p == "frequency":
+                            set_value = self.frequency
+                        elif p == "attenuation":
+                            set_value = self.attenuation
+                        elif p == "reference_level":
+                            set_value = self.reference_level
+                        elif p == "iq_bandwidth":
+                            set_value = self.iq_bandwidth
+                    assert parameters[p] == set_value
+                except KeyError:
+                    logger.error(
+                        f"Required calibration parameter {p} missing from measurement parameters"
+                    )
+                    raise KeyError
+                except AssertionError:
+                    logger.error(
+                        f"Parameter {p} matched to calibration data, but sigan setting is {set_value}, not {parameters[p]}"
+                    )
+            logger.debug(f"Got calibration args: {calibration_args}")
             self.recompute_calibration_data(calibration_args)
             # Compute the linear gain
             db_gain = self.sensor_calibration_data["gain_sensor"]
-            linear_gain = 10 ** (db_gain / 20.0)
+            linear_gain = 10.0 ** (db_gain / 20.0)
         else:
             linear_gain = 1
 
