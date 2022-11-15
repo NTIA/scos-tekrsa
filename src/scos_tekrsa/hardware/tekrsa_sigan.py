@@ -289,11 +289,9 @@ class TekRSASigan(SignalAnalyzerInterface):
             # Get calibration data for acquisition
             calibration_params = sensor_calibration.calibration_parameters
             logger.debug(f"Calibration params required to match: {calibration_params}")
-            logger.debug(f"Available object attributes: {self.__dict__}")
-            logger.debug(f"Available attributes (dir): {dir(self)}")
             try:
-                calibration_args = [self.__dict__[p] for p in calibration_params]
-            except KeyError:
+                calibration_args = [eval(f"self.{p}") for p in calibration_params]
+            except AttributeError:
                 raise Exception(
                     f"One or more required calibration parameters is not a valid TekRSA sigan setting."
                 )
