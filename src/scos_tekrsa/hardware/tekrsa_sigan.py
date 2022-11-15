@@ -118,6 +118,13 @@ class TekRSASigan(SignalAnalyzerInterface):
                     + "-"
                     + str(self.max_frequency)
                 )
+                # Populate instance variables for parameters on connect
+                self._preamp_enable = self.preamp_enable
+                self._attenuation = self.attenuation
+                self._sample_rate = self.sample_rate  # Also sets self._iq_bandwidth
+                self._frequency = self.frequency
+                self._reference_level = self.reference_level
+
             except Exception as e:
                 self._is_available = False
                 self.device_name = "NONE: Failed to connect to TekRSA"
@@ -133,7 +140,8 @@ class TekRSASigan(SignalAnalyzerInterface):
 
     @property
     def sample_rate(self):
-        return self.rsa.IQSTREAM_GetAcqParameters()[1]
+        self._iq_bandwidth, self._sample_rate = self.rsa.IQSTREAM_GetAcqParameters()
+        return self._sample_rate
 
     @sample_rate.setter
     def sample_rate(self, sample_rate):
@@ -155,15 +163,14 @@ class TekRSASigan(SignalAnalyzerInterface):
         # The IQ Bandwidth determines the RSA sample rate.
         bw = self.SR_BW_MAP.get(sample_rate)
         self.rsa.IQSTREAM_SetAcqBandwidth(bw)
-        msg = (
-            "Set Tektronix RSA sample rate: "
-            + f"{self.rsa.IQSTREAM_GetAcqParameters()[1]:.1f} samples/sec"
-        )
+        self._iq_bandwidth, self._sample_rate = self.rsa.IQSTREAM_GetAcqParameters()
+        msg = "Set Tektronix RSA sample rate: " + f"{self._sample_rate:.1f} samples/sec"
         logger.debug(msg)
 
     @property
     def iq_bandwidth(self):
-        return self.rsa.IQSTREAM_GetAcqParameters()[0]
+        self._iq_bandwidth, self._sample_rate = self.rsa.IQSTREAM_GetAcqParameters()
+        return self._iq_bandwidth
 
     @iq_bandwidth.setter
     def iq_bandwidth(self, iq_bandwidth):
@@ -178,49 +185,49 @@ class TekRSASigan(SignalAnalyzerInterface):
             raise ValueError(err_msg)
         # Set the RSA IQ Bandwidth. This also sets the sample rate.
         self.rsa.IQSTREAM_SetAcqBandwidth(iq_bandwidth)
-        new_bw, new_sr = self.rsa.IQSTREAM_GetAcqParameters()
+        self._iq_bandwidth, self._sample_rate = self.rsa.IQSTREAM_GetAcqParameters()
         msg = (
             "Set Tektronix RSA IQ Bandwidth: "
-            + f"{new_bw:.1f} Hz, resulting in sample rate: {new_sr:.1f} samples/sec"
+            + f"{self._iq_bandwidth:.1f} Hz, resulting in sample rate: "
+            + f"{self._sample_rate:.1f} samples/sec"
         )
         logger.debug(msg)
 
     @property
     def frequency(self):
-        return self.rsa.CONFIG_GetCenterFreq()
+        self._frequency = self.rsa.CONFIG_GetCenterFreq()
+        return self._frequency
 
     @frequency.setter
     def frequency(self, freq):
         """Set the device center frequency."""
         self.rsa.CONFIG_SetCenterFreq(freq)
-        msg = (
-            "Set Tektronix RSA center frequency: "
-            + f"{self.rsa.CONFIG_GetCenterFreq():.1f} Hz"
-        )
+        self._frequency = self.rsa.CONFIG_GetCenterFreq()
+        msg = f"Set Tektronix RSA center frequency: {self._frequency:.1f} Hz"
         logger.debug(msg)
 
     @property
     def reference_level(self):
-        return self.rsa.CONFIG_GetReferenceLevel()
+        self._reference_level = self.rsa.CONFIG_GetReferenceLevel()
+        return self._reference_level
 
     @reference_level.setter
     def reference_level(self, reference_level):
         """Set the device reference level."""
         self.rsa.CONFIG_SetReferenceLevel(reference_level)
-        msg = (
-            "Set Tektronix RSA reference level: "
-            + f"{self.rsa.CONFIG_GetReferenceLevel():.1f} dBm"
-        )
+        self._reference_level = self.rsa.CONFIG_GetReferenceLevel()
+        msg = f"Set Tektronix RSA reference level: {self._reference_level:.1f} dBm"
         logger.debug(msg)
 
     @property
     def attenuation(self):
         if self.device_name not in ["RSA306B", "RSA306"]:
             # API returns attenuation as negative value. Convert to positive.
-            return -1 * self.rsa.CONFIG_GetRFAttenuator()
+            self._attenuation = -1 * self.rsa.CONFIG_GetRFAttenuator()
         else:
             logger.debug("Tektronix RSA 300 series device has no attenuator.")
-            return None
+            self._attenuation = None
+        return self._attenuation
 
     @attenuation.setter
     def attenuation(self, attenuation):
@@ -231,21 +238,19 @@ class TekRSASigan(SignalAnalyzerInterface):
             self.rsa.CONFIG_SetRFAttenuator(
                 -1 * attenuation
             )  # rounded to nearest integer
-            msg = (
-                "Set Tektronix RSA attenuation: "
-                + f"{self.rsa.CONFIG_GetRFAttenuator():.1} dB"
-            )
-            logger.debug(msg)
+            self._attenuation = self.rsa.CONFIG_GetRFAttenuator()
+            logger.debug(f"Set Tektronix RSA attenuation: {self._attenuation:.1} dB")
         else:
             logger.debug("Tektronix RSA 300 series device has no attenuator.")
 
     @property
     def preamp_enable(self):
         if self.device_name not in ["RSA306B", "RSA306"]:
-            return self.rsa.CONFIG_GetRFPreampEnable()
+            self._preamp_enable = self.rsa.CONFIG_GetRFPreampEnable()
         else:
             logger.debug("Tektronix RSA 300 series device has no built-in preamp.")
-            return None
+            self._preamp_enable = None
+        return self._preamp_enable
 
     @preamp_enable.setter
     def preamp_enable(self, preamp_enable):
@@ -253,10 +258,8 @@ class TekRSASigan(SignalAnalyzerInterface):
             if self.preamp_enable != preamp_enable:
                 logger.debug("Switching preamp to " + str(preamp_enable))
                 self.rsa.CONFIG_SetRFPreampEnable(preamp_enable)
-                msg = (
-                    "Set Tektronix RSA preamp enable status: "
-                    f"{self.rsa.CONFIG_GetRFPreampEnable()}"
-                )
+                self._preamp_enable = self.rsa.CONFIG_GetRFPreampEnable()
+                msg = f"Set Tektronix RSA preamp enable status: {self._preamp_enable}"
                 logger.debug(msg)
         else:
             logger.debug("Tektronix RSA 300 series device has no built-in preamp.")
@@ -289,9 +292,10 @@ class TekRSASigan(SignalAnalyzerInterface):
             # Get calibration data for acquisition
             calibration_params = sensor_calibration.calibration_parameters
             logger.debug(f"Calibration params required to match: {calibration_params}")
+            logger.debug(f"Available object attributes: {vars(self)}")
             try:
-                calibration_args = [eval(f"self.{p}") for p in calibration_params]
-            except AttributeError:
+                calibration_args = [vars(self)[f"_{p}"] for p in calibration_params]
+            except KeyError:
                 raise Exception(
                     f"One or more required calibration parameters is not a valid TekRSA sigan setting."
                 )
