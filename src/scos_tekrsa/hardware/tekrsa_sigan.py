@@ -291,17 +291,15 @@ class TekRSASigan(SignalAnalyzerInterface):
         if gain_adjust:
             # Get calibration data for acquisition
             calibration_params = sensor_calibration.calibration_parameters
-            logger.debug(f"Calibration params required to match: {calibration_params}")
-            logger.debug(f"Available object attributes: {vars(self)}")
             try:
                 calibration_args = [vars(self)[f"_{p}"] for p in calibration_params]
             except KeyError:
                 raise Exception(
-                    f"One or more required calibration parameters is not a valid TekRSA sigan setting."
+                    "One or more required calibration parameters is not a valid TekRSA sigan setting."
                 )
-            # Replace any boolean values (preamp setting) with 1/0
-            # TODO: This should cause an error for now.
-            logger.debug(f"Got calibration args: {calibration_args}")
+            logger.debug(
+                f"Matched calibration parameters: {dict(zip(calibration_params, calibration_args))}"
+            )
             self.recompute_calibration_data(calibration_args)
             # Compute the linear gain
             db_gain = self.sensor_calibration_data["gain_sensor"]
