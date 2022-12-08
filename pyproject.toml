@@ -39,7 +39,7 @@ classifiers = [
 
 dependencies = [
     "environs>=9.5.0",
-    "tekrsa-api-wrap>=iq-stream-to-buffer",
+    "tekrsa-api-wrap @ git+https://github.com/NTIA/tekrsa-api-wrap@iq-stream-to-buffer",
     "scos_actions @ git+https://github.com/NTIA/scos-actions@sea-action-updates",
 ]
 
