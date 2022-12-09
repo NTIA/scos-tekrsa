@@ -238,7 +238,7 @@ class TekRSASigan(SignalAnalyzerInterface):
             self.rsa.CONFIG_SetRFAttenuator(
                 -1 * attenuation
             )  # rounded to nearest integer
-            self._attenuation = self.rsa.CONFIG_GetRFAttenuator()
+            self._attenuation = -1 * self.rsa.CONFIG_GetRFAttenuator()
             logger.debug(f"Set Tektronix RSA attenuation: {self._attenuation:.1} dB")
         else:
             logger.debug("Tektronix RSA 300 series device has no attenuator.")
