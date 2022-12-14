@@ -269,12 +269,12 @@ class TekRSASigan(SignalAnalyzerInterface):
         logger.debug("Performing Tektronix RSA health check.")
 
         try:
-            self.frequency = 3555e6
-            self.reference_level = -25
-            self.attenuation = 0
-            self.preamp_enable = True
-            self.sample_rate = 14e6
-            measurement_result = self.acquire_time_domain_samples(num_samples)
+            # self.frequency = 3555e6
+            # self.reference_level = -25
+            # self.attenuation = 0
+            # self.preamp_enable = True
+            # self.sample_rate = 14e6
+            measurement_result = self.acquire_time_domain_samples(num_samples, gain_adjust=False)
             data = measurement_result["data"]
         except Exception as e:
             logger.exception("Unable to acquire samples from RSA device.")
