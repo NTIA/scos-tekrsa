@@ -284,7 +284,7 @@ class TekRSASigan(SignalAnalyzerInterface):
         return True
 
 
-def acquire_time_domain_samples(
+    def acquire_time_domain_samples(
         self, num_samples, num_samples_skip=0, retries=5, gain_adjust=True
     ):
         """Acquire specific number of time-domain IQ samples."""
