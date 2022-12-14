@@ -324,7 +324,7 @@ def acquire_time_domain_samples(
             self._capture_time = utils.get_datetime_str_now()
             try:
                 self.sigan_lock.acquire()
-                data, status = self.rsa.IQSTREAM_Tempfile_NoConfig(durationMsec, True)
+                data, status = self.rsa.IQSTREAM_Acquire(durationMsec, True)
             finally:
                 self.sigan_lock.release()
             data = data[nskip:]  # Remove extra samples, if any
