@@ -1,6 +1,5 @@
 import logging
 import threading
-import time
 
 from scos_actions import utils
 from scos_actions.hardware.hardware_configuration_exception import (
@@ -278,8 +277,7 @@ class TekRSASigan(SignalAnalyzerInterface):
             measurement_result = self.acquire_time_domain_samples(num_samples)
             data = measurement_result["data"]
         except Exception as e:
-            logger.error("Unable to acquire samples from RSA device.")
-            logger.error(e)
+            logger.exception("Unable to acquire samples from RSA device.")
             return False
 
         if not len(data) == num_samples:
