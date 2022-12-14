@@ -270,6 +270,11 @@ class TekRSASigan(SignalAnalyzerInterface):
         logger.debug("Performing Tektronix RSA health check.")
 
         try:
+            self.frequency = 3555e6
+            self.reference_level = -25
+            self.attenuation = 0
+            self.preamp_enable = True
+            self.sample_rate = 14e6
             measurement_result = self.acquire_time_domain_samples(num_samples)
             data = measurement_result["data"]
         except Exception as e:
@@ -323,7 +328,7 @@ class TekRSASigan(SignalAnalyzerInterface):
         while True:
             self._capture_time = utils.get_datetime_str_now()
             try:
-                self.sigan_lock.acquire()
+                self.sigan_lock.acquire() # not sure if this is sufficient, may need lock to include setting sigan parameters
                 data, status = self.rsa.IQSTREAM_Acquire(durationMsec, True)
             finally:
                 self.sigan_lock.release()
