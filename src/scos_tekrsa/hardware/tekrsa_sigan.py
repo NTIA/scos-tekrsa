@@ -1,4 +1,5 @@
 import logging
+import threading
 
 from scos_actions import utils
 from scos_actions.calibration import sensor_calibration
@@ -8,6 +9,8 @@ from scos_tekrsa import settings
 from scos_tekrsa.hardware.mocks.rsa_block import MockRSA
 
 logger = logging.getLogger(__name__)
+
+sigan_lock = threading.Lock()
 
 
 class TekRSASigan(SignalAnalyzerInterface):
@@ -312,7 +315,8 @@ class TekRSASigan(SignalAnalyzerInterface):
 
         while True:
             self._capture_time = utils.get_datetime_str_now()
-            data, status = self.rsa.IQSTREAM_Acquire(durationMsec, True)
+            with sigan_lock:
+                data, status = self.rsa.IQSTREAM_Acquire(durationMsec, True)
 
             data = data[nskip:]  # Remove extra samples, if any
             data_len = len(data)
