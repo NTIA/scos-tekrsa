@@ -264,17 +264,6 @@ class TekRSASigan(SignalAnalyzerInterface):
         else:
             logger.debug("Tektronix RSA 300 series device has no built-in preamp.")
 
-    @property
-    def healthy(self):
-        """Perform health check by checking the over temp status."""
-        logger.debug("Performing Tektronix RSA health check.")
-        try:
-            return not self.rsa.DEVICE_GetOverTemperatureStatus()
-        except Exception as e:
-            logger.error("Unable to check if device is healthy.")
-            logger.error(e)
-            return False
-
     def acquire_time_domain_samples(
         self,
         num_samples,
