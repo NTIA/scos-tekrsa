@@ -2,7 +2,7 @@ y_factor_cal:
   name: CBRS_Calibrate_10dB_Attenuation
   # Preselector configuration
   cal_source_idx: 0
-  temp_sensor_idx: 1
+  temp_sensor_idx: 2
   noise_diode_on: noise_diode_on
   noise_diode_off: noise_diode_off
   # Signal Analyzer Settings
