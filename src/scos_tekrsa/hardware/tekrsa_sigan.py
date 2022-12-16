@@ -20,7 +20,7 @@ class TekRSASigan(SignalAnalyzerInterface):
             logger.info("Initializing Tektronix RSA Signal Analyzer")
 
             self.rsa = None
-            self._is_available = False
+            self._is_available = False # should not be set outside of connect method
 
             # Allowed sample rates and bandwidth settings, ordered from
             # greatest to least. SR in samples/sec, BW in Hz.
