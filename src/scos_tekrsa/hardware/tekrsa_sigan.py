@@ -263,6 +263,10 @@ class TekRSASigan(SignalAnalyzerInterface):
                 self._preamp_enable = self.rsa.CONFIG_GetRFPreampEnable()
                 msg = f"Set Tektronix RSA preamp enable status: {self._preamp_enable}"
                 logger.debug(msg)
+            else:
+                logger.debug(
+                    f"Tektronix RSA preamp enable status is already {self._preamp_enable}"
+                )
         else:
             logger.debug("Tektronix RSA 300 series device has no built-in preamp.")
 
@@ -299,6 +303,7 @@ class TekRSASigan(SignalAnalyzerInterface):
                 raise Exception(
                     "One or more required cal parameters is not a valid sigan setting."
                 )
+            logger.debug(f"Matched calibration params: {cal_args}")
             self.recompute_calibration_data(cal_args)
             # Compute the linear gain
             db_gain = self.sensor_calibration_data["gain_sensor"]
