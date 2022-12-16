@@ -1,8 +1,10 @@
 import logging
 
 from scos_actions import utils
-from scos_actions.calibration import sensor_calibration
-from scos_actions.hardware.sigan_iface import SignalAnalyzerInterface
+from scos_actions.hardware.sigan_iface import (
+    SignalAnalyzerInterface,
+    sensor_calibration,
+)
 
 from scos_tekrsa import settings
 from scos_tekrsa.hardware.mocks.rsa_block import MockRSA
