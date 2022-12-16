@@ -225,7 +225,7 @@ class TekRSASigan(SignalAnalyzerInterface):
     def attenuation(self):
         if self.device_name not in ["RSA306B", "RSA306"]:
             # API returns attenuation as negative value. Convert to positive.
-            self._attenuation = -1 * self.rsa.CONFIG_GetRFAttenuator()
+            self._attenuation = abs(self.rsa.CONFIG_GetRFAttenuator())
         else:
             logger.debug("Tektronix RSA 300 series device has no attenuator.")
             self._attenuation = None
@@ -238,9 +238,9 @@ class TekRSASigan(SignalAnalyzerInterface):
             self.rsa.CONFIG_SetAutoAttenuationEnable(False)
             # API requires attenuation set as a negative number. Convert to negative.
             self.rsa.CONFIG_SetRFAttenuator(
-                -1 * attenuation
+                -1 * abs(attenuation)
             )  # rounded to nearest integer
-            self._attenuation = -1 * self.rsa.CONFIG_GetRFAttenuator()
+            self._attenuation = abs(self.rsa.CONFIG_GetRFAttenuator())
             logger.debug(f"Set Tektronix RSA attenuation: {self._attenuation:.1} dB")
         else:
             logger.debug("Tektronix RSA 300 series device has no attenuator.")
