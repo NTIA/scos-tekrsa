@@ -2,8 +2,10 @@ import logging
 import threading
 
 from scos_actions import utils
-from scos_actions.calibration import sensor_calibration
-from scos_actions.hardware.sigan_iface import SignalAnalyzerInterface
+from scos_actions.hardware.sigan_iface import (
+    SignalAnalyzerInterface,
+    sensor_calibration,
+)
 
 from scos_tekrsa import settings
 from scos_tekrsa.hardware.mocks.rsa_block import MockRSA
@@ -226,7 +228,7 @@ class TekRSASigan(SignalAnalyzerInterface):
     def attenuation(self):
         if self.device_name not in ["RSA306B", "RSA306"]:
             # API returns attenuation as negative value. Convert to positive.
-            self._attenuation = -1 * self.rsa.CONFIG_GetRFAttenuator()
+            self._attenuation = abs(self.rsa.CONFIG_GetRFAttenuator())
         else:
             logger.debug("Tektronix RSA 300 series device has no attenuator.")
             self._attenuation = None
@@ -239,9 +241,9 @@ class TekRSASigan(SignalAnalyzerInterface):
             self.rsa.CONFIG_SetAutoAttenuationEnable(False)
             # API requires attenuation set as a negative number. Convert to negative.
             self.rsa.CONFIG_SetRFAttenuator(
-                -1 * attenuation
+                -1 * abs(attenuation)
             )  # rounded to nearest integer
-            self._attenuation = -1 * self.rsa.CONFIG_GetRFAttenuator()
+            self._attenuation = abs(self.rsa.CONFIG_GetRFAttenuator())
             logger.debug(f"Set Tektronix RSA attenuation: {self._attenuation:.1} dB")
         else:
             logger.debug("Tektronix RSA 300 series device has no attenuator.")
@@ -264,6 +266,10 @@ class TekRSASigan(SignalAnalyzerInterface):
                 self._preamp_enable = self.rsa.CONFIG_GetRFPreampEnable()
                 msg = f"Set Tektronix RSA preamp enable status: {self._preamp_enable}"
                 logger.debug(msg)
+            else:
+                logger.debug(
+                    f"Tektronix RSA preamp enable status is already {self._preamp_enable}"
+                )
         else:
             logger.debug("Tektronix RSA 300 series device has no built-in preamp.")
 
@@ -289,6 +295,7 @@ class TekRSASigan(SignalAnalyzerInterface):
                 raise Exception(
                     "One or more required cal parameters is not a valid sigan setting."
                 )
+            logger.debug(f"Matched calibration params: {cal_args}")
             self.recompute_calibration_data(cal_args)
             # Compute the linear gain
             db_gain = self.sensor_calibration_data["gain_sensor"]
