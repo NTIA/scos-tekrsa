@@ -1,0 +1,39 @@
+y_factor_cal:
+  name: CBRS_EXT_Calibrate_15dB_Attenuation
+  # Preselector configuration
+  cal_source_idx: 0
+  temp_sensor_idx: 2
+  noise_diode_on: noise_diode_on
+  noise_diode_off: noise_diode_off
+  # Signal Analyzer Settings
+  preamp_enable: True
+  reference_level: -25
+  attenuation: 15
+  sample_rate: 14e6
+  duration_ms: 1000
+  nskip: 0
+  frequency:
+    - 3545e6
+    - 3555e6
+    - 3565e6
+    - 3575e6
+    - 3585e6
+    - 3595e6
+    - 3605e6
+    - 3615e6
+    - 3625e6
+    - 3635e6
+    - 3645e6
+    - 3655e6
+    - 3665e6
+    - 3675e6
+    - 3685e6
+    - 3695e6
+  # IIR Filter Settings:
+  # Optionally apply a low-pass IIR filter before Y-Factor
+  iir_apply: True
+  iir_gpass_dB: 0.1
+  iir_gstop_dB: 40
+  iir_pb_edge_Hz: 5e6
+  iir_sb_edge_Hz: 5.008e6
+  iir_num_response_frequencies: 1000
