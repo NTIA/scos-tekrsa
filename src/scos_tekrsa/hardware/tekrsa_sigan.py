@@ -1,4 +1,5 @@
 import logging
+import threading
 
 from scos_actions import utils
 from scos_actions.hardware.sigan_iface import (
@@ -11,6 +12,8 @@ from scos_tekrsa.hardware.mocks.rsa_block import MockRSA
 
 logger = logging.getLogger(__name__)
 
+sigan_lock = threading.Lock()
+
 
 class TekRSASigan(SignalAnalyzerInterface):
     def __init__(self):
@@ -19,7 +22,7 @@ class TekRSASigan(SignalAnalyzerInterface):
             logger.info("Initializing Tektronix RSA Signal Analyzer")
 
             self.rsa = None
-            self._is_available = False
+            self._is_available = False # should not be set outside of connect method
 
             # Allowed sample rates and bandwidth settings, ordered from
             # greatest to least. SR in samples/sec, BW in Hz.
@@ -270,17 +273,6 @@ class TekRSASigan(SignalAnalyzerInterface):
         else:
             logger.debug("Tektronix RSA 300 series device has no built-in preamp.")
 
-    @property
-    def healthy(self):
-        """Perform health check by checking the over temp status."""
-        logger.debug("Performing Tektronix RSA health check.")
-        try:
-            return not self.rsa.DEVICE_GetOverTemperatureStatus()
-        except Exception as e:
-            logger.error("Unable to check if device is healthy.")
-            logger.error(e)
-            return False
-
     def acquire_time_domain_samples(
         self,
         num_samples,
@@ -330,7 +322,8 @@ class TekRSASigan(SignalAnalyzerInterface):
 
         while True:
             self._capture_time = utils.get_datetime_str_now()
-            data, status = self.rsa.IQSTREAM_Acquire(durationMsec, True)
+            with sigan_lock:
+                data, status = self.rsa.IQSTREAM_Acquire(durationMsec, True)
 
             data = data[nskip:]  # Remove extra samples, if any
             data_len = len(data)
