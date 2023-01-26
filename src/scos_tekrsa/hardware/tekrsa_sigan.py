@@ -328,16 +328,16 @@ class TekRSASigan(SignalAnalyzerInterface):
             data = data[nskip:]  # Remove extra samples, if any
             data_len = len(data)
 
-            # Print warning from status indicator
-            logger.warning(f"IQ Stream Status: {status}")
-
             # Check status string for overload / data loss
             self.overload = False
             if "Input overrange" in status:
                 self.overload = True
+                logger.warning("IQ stream: ADC overrange event occurred.")
             if "data loss" in status or "discontinuity" in status:
                 if retries > 0:
-                    logger.warning(f"Retrying {retries} more times.")
+                    logger.warning(
+                        f"Data loss occurred during IQ streaming. Retrying {retries} more times."
+                    )
                     retries -= 1
                 else:
                     err = "Data loss occurred with no retries remaining."
@@ -355,7 +355,7 @@ class TekRSASigan(SignalAnalyzerInterface):
                     err += f"{max_retries} times in a row."
                     raise RuntimeError(err)
             else:
-                logger.debug(f"Successfully acquired {data_len} samples.")
+                logger.debug(f"IQ stream: successfully acquired {data_len} samples.")
                 # Scale data to RF power and return
                 logger.debug("Applying gain of {}".format(linear_gain))
                 data /= linear_gain
