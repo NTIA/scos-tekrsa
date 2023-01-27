@@ -9,7 +9,6 @@ from scos_actions.settings import *
 env = Env()
 
 CONFIG_DIR = Path(__file__).parent.resolve() / "configs"
-ACTION_DEFINITIONS_DIR = CONFIG_DIR / "actions"
 
 __cmd = Path(sys.argv[0]).name
 
