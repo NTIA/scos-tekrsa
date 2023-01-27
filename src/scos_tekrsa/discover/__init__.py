@@ -1,5 +1,4 @@
 import logging
-from os import path
 
 from scos_actions.actions.monitor_sigan import MonitorSignalAnalyzer
 from scos_actions.discover import init
