@@ -191,12 +191,13 @@ docker build -f docker/Dockerfile-test -t rsa_test .
 docker run rsa_test
 ```
 
-The `scos_tekrsa` plugin is tested using the [`pytest`](https://docs.pytest.org/en/7.1.x/)
-framework. Run tests, and view test coverage, by running the following command from the
-top-level directory of this repository.
+The `scos_tekrsa` plugin is tested using [`tox`](https://tox.wiki/en/latest/) and the [`pytest`](https://docs.pytest.org/en/7.1.x/)
+framework. The following commands can be used to run tests and show coverage reports.
 
 ```bash
-pytest --cov
+pytest          # faster, but less thorough
+tox --parallel  # test code in virtual environments for multiple versions of Python
+tox --recreate  # To recreate the virtual environments used for testing
 ```
 
 ## License

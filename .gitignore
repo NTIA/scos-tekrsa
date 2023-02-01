@@ -6,3 +6,4 @@ docker/libcyusb_shared.so
 *.egg-info
 dist
 .coverage
+.tox
