@@ -196,7 +196,7 @@ framework. The following commands can be used to run tests and show coverage rep
 
 ```bash
 pytest          # faster, but less thorough
-tox --parallel  # test code in virtual environments for multiple versions of Python
+tox             # test code in virtual environments for multiple versions of Python
 tox --recreate  # To recreate the virtual environments used for testing
 ```
 
