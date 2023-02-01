@@ -321,6 +321,7 @@ class TekRSASigan(SignalAnalyzerInterface):
         max_retries = retries
 
         while True:
+            logger.info(f"Attempting IQ recording... ({retries=})")
             self._capture_time = utils.get_datetime_str_now()
             with sigan_lock:
                 data, status = self.rsa.IQSTREAM_Acquire(durationMsec, True)
@@ -335,23 +336,27 @@ class TekRSASigan(SignalAnalyzerInterface):
             if "Input overrange" in status:
                 self.overload = True
                 logger.warning("IQ stream: ADC overrange event occurred.")
-            if "data loss" in status or "discontinuity" in status:
+
+            if "data loss" in status or "discontinuity" in status:  # Invalid data
                 if retries > 0:
                     logger.warning(
                         f"Data loss occurred during IQ streaming. Retrying {retries} more times."
                     )
                     retries -= 1
+                    continue
                 else:
                     err = "Data loss occurred with no retries remaining."
                     err += f" (tried {max_retries} times.)"
                     raise RuntimeError(err)
-
-            if not data_len == nsamps_req:
+            elif (
+                not data_len == nsamps_req
+            ):  # Invalid data: incorrect number of samples
                 if retries > 0:
                     msg = f"RSA error: requested {nsamps_req + nskip} samples, but got {data_len}."
                     logger.warning(msg)
                     logger.warning(f"Retrying {retries} more times.")
                     retries -= 1
+                    continue
                 else:
                     err = "Failed to acquire correct number of samples "
                     err += f"{max_retries} times in a row."
