@@ -328,7 +328,7 @@ class TekRSASigan(SignalAnalyzerInterface):
             data = data[nskip:]  # Remove extra samples, if any
             data_len = len(data)
 
-            logger.warning(f"IQ Stream status: {status}")
+            logger.debug(f"IQ Stream status: {status}")
 
             # Check status string for overload / data loss
             self.overload = False
