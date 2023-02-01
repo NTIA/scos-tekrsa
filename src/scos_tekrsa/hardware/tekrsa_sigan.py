@@ -343,7 +343,7 @@ class TekRSASigan(SignalAnalyzerInterface):
                     retries -= 1
                 else:
                     err = "Data loss occurred with no retries remaining."
-                    err += f" (tried {retries} times.)"
+                    err += f" (tried {max_retries} times.)"
                     raise RuntimeError(err)
 
             if not data_len == nsamps_req:
