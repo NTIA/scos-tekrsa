@@ -321,7 +321,6 @@ class TekRSASigan(SignalAnalyzerInterface):
         max_retries = retries
 
         while True:
-            logger.info(f"Attempting IQ recording... ({retries=})")
             self._capture_time = utils.get_datetime_str_now()
             with sigan_lock:
                 data, status = self.rsa.IQSTREAM_Acquire(durationMsec, True)
