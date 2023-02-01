@@ -328,6 +328,8 @@ class TekRSASigan(SignalAnalyzerInterface):
             data = data[nskip:]  # Remove extra samples, if any
             data_len = len(data)
 
+            logger.debug(f"IQ Stream status: {status}")
+
             # Check status string for overload / data loss
             self.overload = False
             if "Input overrange" in status:
@@ -357,7 +359,7 @@ class TekRSASigan(SignalAnalyzerInterface):
             else:
                 logger.debug(f"IQ stream: successfully acquired {data_len} samples.")
                 # Scale data to RF power and return
-                logger.debug("Applying gain of {}".format(linear_gain))
+                logger.debug(f"Applying gain of {linear_gain}")
                 data /= linear_gain
 
                 measurement_result = {
