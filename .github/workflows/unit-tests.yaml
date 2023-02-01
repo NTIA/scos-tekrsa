@@ -8,7 +8,7 @@ jobs:
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
-      maxtrix:
+      matrix:
         os: Ubuntu
         py:
           - "3.8"
