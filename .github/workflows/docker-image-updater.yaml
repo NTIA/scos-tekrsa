@@ -6,6 +6,9 @@ on:
   workflow_dispatch:
   push:
 
+permissions:
+  packages: write
+
 jobs:
   auto_updater:
     runs-on: ubuntu-latest
@@ -20,7 +23,7 @@ jobs:
 
       - name: Get current image version number
         run: |
-          MANIFEST=$(curl https://ghcr.io/v2/NTIA/scos-tekrsa/tekrsa_usb/manifests/$GITHUB_SHA -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" | jq '.')
+          MANIFEST=$(curl -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://ghcr.io/v2/NTIA/scos-tekrsa/tekrsa_usb/manifests/$GITHUB_SHA | jq '.')
           echo $MANIFEST
           echo "IMG_VER=$MANIFEST" >> $GITHUB_ENV
 
