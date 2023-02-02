@@ -27,28 +27,28 @@ jobs:
 
       - name: Check for parent image updates
         id: check
-        uses: twiddler/is-my-docker-parent-image-out-of-date@v1
+        uses: giggio/docker-image-update-checker@v2
         with:
-          parent-image: ubuntu:20.04
-          my-image: ${{ env.REGISTRY }}/ntia/scos-tekrsa/${{ env.IMAGE_NAME }}:latest
+          base-image: ubuntu:20.04
+          image: ${{ env.REGISTRY }}/ntia/scos-tekrsa/${{ env.IMAGE_NAME }}:latest
+          verbose: true
 
       - name: Update version number locally
         run: echo "V_PATCH_NEW=$((${{ env.V_PATCH }}+1))" >> $GITHUB_ENV
-        if: steps.check.outputs.out-of-date == 'true'
+        if: steps.check.outputs.needs-updating == 'true'
 
-      # TEMPORARILY DISABLE WHILE TROUBLESHOOTING
+      - name: Build and push updated Docker image
+        id: build-and-push
+        uses: docker/build-push-action@v4
+        with:
+          file: ./docker/Dockerfile
+          push: false # TEMPORARILY DISABLED WHILE TROUBLESHOOTING
+          tags: |
+            ${{ env.REGISTRY }}/ntia/scos-tekrsa/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/ntia/scos-tekrsa/${{ env.IMAGE_NAME }}:${{ env.V_MAJOR }}.${{ env.V_MINOR }}.${{ env.V_PATCH_NEW }}
+        if: steps.check.outputs.needs-updating == 'true'
 
-      # - name: Build and push updated Docker image
-      #   id: build-and-push
-      #   uses: docker/build-push-action@v4
-      #   with:
-      #     file: ./docker/Dockerfile
-      #     push: true
-      #     tags: |
-      #       ${{ env.REGISTRY }}/ntia/scos-tekrsa/${{ env.IMAGE_NAME }}:latest
-      #       ${{ env.REGISTRY }}/ntia/scos-tekrsa/${{ env.IMAGE_NAME }}:${{ env.V_MAJOR }}.${{ env.V_MINOR }}.${{ env.V_PATCH_NEW }}
-      #   if: steps.check.outputs.out-of-date == 'true'
-
+      # TEMPORARILY DISABLED WHILE TROUBLESHOOTING
       # - name: Update version number secret
       #   uses: hmanzur/actions-set-secret@v2.0.0
       #   with:
