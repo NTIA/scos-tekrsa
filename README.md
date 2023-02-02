@@ -195,14 +195,6 @@ docker push ghcr.io/ntia/scos-tekrsa/tekrsa_usb:X.X.X
 
 ### Running Tests
 
-A Docker container is used for testing the `tekrsa_usb` base image provided in this
-repository. [Install Docker](https://docs.docker.com/get-docker/) in order to run tests.
-
-```bash
-docker build -f docker/Dockerfile-test -t rsa_test .
-docker run rsa_test
-```
-
 The `scos_tekrsa` plugin is tested using [`tox`](https://tox.wiki/en/latest/) and the [`pytest`](https://docs.pytest.org/en/7.1.x/)
 framework. The following commands can be used to run tests and show coverage reports.
 
