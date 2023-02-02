@@ -57,9 +57,7 @@ jobs:
         with:
           name: TEKRSA_USB_MAJOR_VERSION
           value: $((${{ secrets.TEKRSA_USB_MAJOR_VERSION }}+1))
-          repository: ${{ github.repository }}
           token: ${{ secrets.ACTION_TOKEN }}
-          org: false
 
       - name: Read new package version from GH
         run: echo ${{ secrets.TEKRSA_USB_PATCH_VERSION }}
