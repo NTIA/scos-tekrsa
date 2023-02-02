@@ -1,4 +1,4 @@
-name: "Run scos-tekrsa Unit Tests"
+name: "all tests"
 
 on: push
 

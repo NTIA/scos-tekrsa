@@ -1,13 +1,25 @@
 # NTIA/ITS SCOS Tektronix® RSA Plugin
 
-![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/NTIA/scos-tekrsa?display_name=tag&sort=semver)
-![GitHub all releases](https://img.shields.io/github/downloads/NTIA/scos-tekrsa/total)
-![GitHub issues](https://img.shields.io/github/issues/NTIA/scos-tekrsa)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![GitHub release (latest SemVer)][latest-release-semver-badge]][github-releases]
+[![GitHub Actions Test Status][github-actions-test-badge]][github-actions-link]
+[![GitHub all releases][github-download-count-badge]][github-releases]
+[![GitHub issues][github-issue-count-badge]][github-issues]
+[![Code style: black][code-style-badge]][code-style-repo]
+
+[NTIA/ITS]: https://its.ntia.gov/
+[github-actions-link]: https://github.com/ntia/scos-tekrsa/actions/
+[github-actions-test-badge]: https://github.com/NTIA/scos-tekrsa/actions/workflows/unit-tests.yaml/badge.svg
+[code-style-badge]: https://img.shields.io/badge/code%20style-black-000000.svg
+[code-style-repo]: https://github.com/psf/black
+[latest-release-semver-badge]: https://img.shields.io/github/v/release/NTIA/scos-tekrsa?display_name=tag&sort=semver
+[github-releases]: https://github.com/NTIA/scos-tekrsa/releases
+[github-download-count-badge]: https://img.shields.io/github/downloads/NTIA/scos-tekrsa/total
+[github-issue-count-badge]: https://img.shields.io/github/issues/NTIA/scos-tekrsa
+[github-issues]: https://github.com/NTIA/scos-tekrsa/issues
 
 This repository is a plugin to add support for the Tektronix RSA306, RSA306B, RSA503A,
 RSA507A, RSA513A, RSA518A, RSA603A, and RSA607A real-time spectrum analyzers to
-SCOS Sensor. See the
+SCOS Sensor, developed by [NTIA/ITS]. See the
 [SCOS Sensor documentation](https://github.com/NTIA/scos-sensor/blob/master/README.md)
 for more information about SCOS Sensor, especially the section about
 [Actions and Hardware Support](https://github.com/NTIA/scos-sensor/blob/master/README.md#actions-and-hardware-support).
