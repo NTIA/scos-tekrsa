@@ -30,8 +30,18 @@ jobs:
         uses: twiddler/is-my-docker-parent-image-out-of-date@v1
         with:
           parent-image: ubuntu:20.04
-          # TODO: Replace below with :latest after running successfully once
-          my-image: ${{ env.REGISTRY }}/ntia/scos-tekrsa/${{ env.IMAGE_NAME }}:${{ env.V_MAJOR }}.${{ env.V_MINOR }}.${{ env.V_PATCH }}
+          my-image: ${{ env.REGISTRY }}/ntia/scos-tekrsa/${{ env.IMAGE_NAME }}:latest
+
+      - name: Build and push updated Docker image
+        id: build-and-push
+        uses: docker/build-push-action@v4
+        with:
+          file: ./docker/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/ntia/scos-tekrsa/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/ntia/scos-tekrsa/${{ env.IMAGE_NAME }}:${{ env.V_MAJOR }}.${{ env.V_MINOR }}.$((${{ env.V_PATCH }}+1))
+        if: steps.check.outputs.out-of-date == 'true'
 
       - name: Update version number secret
         uses: hmanzur/actions-set-secret@v2.0.0
@@ -39,14 +49,4 @@ jobs:
           name: TEKRSA_USB_PATCH_VERSION
           value: $((${{ env.V_PATCH }}+1))
           token: ${{ secrets.ACTION_TOKEN }}
-        if: steps.check.outputs.out-of-date == 'true'
-
-      - name: Build and push updated Docker image
-        uses: docker/build-push-action@v4
-        with:
-          file: ./docker/Dockerfile
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/ntia/scos-tekrsa/${{ env.IMAGE_NAME }}:latest
-            ${{ env.REGISTRY }}/ntia/scos-tekrsa/${{ env.IMAGE_NAME }}:${{ env.V_MAJOR }}.${{ env.V_MINOR }}.${{ env.V_PATCH }}
-        if: steps.check.outputs.out-of-date == 'true'
+        if: steps.build-and-push.outcome == 'success'
