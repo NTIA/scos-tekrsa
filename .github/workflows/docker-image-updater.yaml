@@ -27,7 +27,7 @@ jobs:
           registry: ghcr.io
           username: $${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-        if: steps.updatecheck.outputs.needs-updating == "true"
+        if: steps.updatecheck.outputs.out-of-date == 'true'
 
       - name: Get current image version number
         run: |
@@ -43,7 +43,7 @@ jobs:
       #     token: ${{ secrets.GITHUB_TOKEN }}
       #     org: true
       #     visibility: "all"
-      #   if: steps.updatecheck.outputs.needs-updating == "true"
+      #   if: steps.updatecheck.outputs.out-of-date == 'true'
 
       # - name: Build and push Docker images
       #   uses: docker/build-push-action@v4
@@ -54,7 +54,7 @@ jobs:
       #       tekrsa_usb
       #       ghcr.io/ntia/scos-tekrsa/tekrsa_usb:latest
       #       ghcr.io/ntia/scos-tekrsa/tekrsa_usb:${{ secrets.TEKRSA_USB_MAJOR_VERSION }}.${{ secrets.TEKRSA_USB_MINOR_VERSION }}.${{ secrets.TEKRSA_USB_MICRO_VERSION }}
-      #   if: steps.updatecheck.outputs.out-of-date == "true"
+      #   if: steps.updatecheck.outputs.out-of-date == 'true'
 
 
       #  - name: Autoincrement a new patch version
