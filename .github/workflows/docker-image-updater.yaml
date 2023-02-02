@@ -6,8 +6,6 @@ on:
   workflow_dispatch:
   push:
 
-permissions: write-all
-
 jobs:
   auto_updater:
     runs-on: ubuntu-latest
@@ -54,8 +52,8 @@ jobs:
       #       ghcr.io/ntia/scos-tekrsa/tekrsa_usb:$V_MAJOR.$V_MINOR.$V_PATCH
       #   if: steps.check.outputs.out-of-date == 'true'
 
-      # - name: GH CLI Login
-      #   run: gh auth login --with-token <<< ${{ secrets.GITHUB_TOKEN }}
+      - name: GH CLI Login
+        run: gh auth login --with-token <<< ${{ secrets.GITHUB_TOKEN }}
       - name: Autoincrement package version
         run: gh secret set TEKRSA_USB_PATCH_VERSION -r NTIA/scos-tekrsa -a actions -b $((${{ secrets.TEKRSA_USB_PATCH_VERSION }}+1))
         env:
