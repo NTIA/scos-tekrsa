@@ -1,0 +1,34 @@
+name: Check for Ubuntu base image updates
+
+on:
+  schedule:
+    - cron: "0 0 1 * * "
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Check for parent image updates
+        id: updatecheck
+        uses: twiddler/is-my-docker-parent-image-of-date@v1
+        with:
+          parent-image: ubuntu:20.04
+          my-image: ghcr.io/ntia/tekrsa_usb:latest
+      - name: Login to Github Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: $${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        if: steps.ubuntu-update-check.outputs.needs-updating == 'true'
+
+      # - name: Build and push Docker images
+      #   uses: docker/build-push-action@v4
+      #   with:
+      #     context: "${{ github.workspace }}"
+      #     push: true
+      #     tags: ghcr.io/ntia/tekrsa_usb:latest
+      #   if: steps.updatecheck.outputs.out-of-date == 'true'
