@@ -17,7 +17,7 @@ jobs:
         uses: twiddler/is-my-docker-parent-image-out-of-date@v1
         with:
           parent-image: ubuntu:20.04
-          my-image: ghcr.io/ntia/tekrsa_usb:latest
+          my-image: ghcr.io/ntia/scos-tekrsa/tekrsa_usb:latest
       - name: Login to Github Container Registry
         uses: docker/login-action@v2
         with:
