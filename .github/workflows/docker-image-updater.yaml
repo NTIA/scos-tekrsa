@@ -31,7 +31,8 @@ jobs:
 
       - name: Get current image version number
         run: |
-          manifest=$(curl -X GET https://ghcr.io/v2/NTIA/scos-tekrsa/tekrsa_usb/manifests/$GITHUB_SHA -u $GITHUB_ACTOR:${{ secrets.GITHUB_TOKEN }} | jg '.')
+          img_url=https://ghcr.io/v2/NTIA/scos-tekrsa/tekrsa_usb/manifests/$GITHUB_SHA
+          manifest=$(curl $img_url -u $GITHUB_ACTOR:${{ secrets.GITHUB_TOKEN }} | jg '.')
           echo $manifest
 
       # - name: Increment patch version number
