@@ -11,16 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      - name: Login to Github Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: $${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Get current image version number
         run: |
-          MANIFEST=$(curl https://ghcr.io/v2/NTIA/scos-tekrsa/tekrsa_usb/manifests/$GITHUB_SHA | jq '.')
+          MANIFEST=$(curl https://ghcr.io/v2/NTIA/scos-tekrsa/tekrsa_usb/manifests/$GITHUB_SHA -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" | jq '.')
           echo $MANIFEST
           echo "IMG_VER=$MANIFEST" >> $GITHUB_ENV
 
@@ -37,6 +30,14 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v3
+        if: steps.check.outputs.out-of-date == 'true'
+
+      - name: Login to Github Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: $${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
         if: steps.check.outputs.out-of-date == 'true'
 
       # - name: Increment patch version number
