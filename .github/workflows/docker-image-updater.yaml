@@ -60,6 +60,8 @@ jobs:
 
       - name: Autoincrement package version
         run: gh secret set TEKRSA_USB_PATCH_VERSION -r NTIA/scos-tekrsa -b $(($V_PATCH+1))
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Read new package version from GH
         run: echo ${{ secrets.TEKRSA_USB_PATCH_VERSION }}
