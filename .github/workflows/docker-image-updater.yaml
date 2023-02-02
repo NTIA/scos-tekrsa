@@ -23,13 +23,16 @@ jobs:
           username: $${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Test read env vars
+        run: echo $V_MAJOR $V_MINOR $V_PATCH
+
       - name: Check for parent image updates
         id: check
         uses: twiddler/is-my-docker-parent-image-out-of-date@v1
         with:
           parent-image: ubuntu:20.04
           # TODO: Replace below with :latest after running successfully once
-          my-image: ghcr.io/ntia/scos-tekrsa/tekrsa_usb:$V_MAJOR.$V_MINOR.$V_PATCH
+          my-image: "ghcr.io/ntia/scos-tekrsa/tekrsa_usb:$V_MAJOR.$V_MINOR.$V_PATCH"
 
       - name: Checkout repository
         uses: actions/checkout@v3
