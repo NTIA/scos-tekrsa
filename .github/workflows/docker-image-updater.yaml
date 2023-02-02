@@ -52,12 +52,14 @@ jobs:
       #       ghcr.io/ntia/scos-tekrsa/tekrsa_usb:$V_MAJOR.$V_MINOR.$V_PATCH
       #   if: steps.check.outputs.out-of-date == 'true'
 
-      - name: GH CLI Login
-        run: gh auth login --with-token <<< ${{ secrets.GITHUB_TOKEN }}
-      - name: Autoincrement package version
-        run: gh secret set TEKRSA_USB_PATCH_VERSION -r NTIA/scos-tekrsa -a actions -b $((${{ secrets.TEKRSA_USB_PATCH_VERSION }}+1))
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update version number secret
+        uses: hmanzur/actions-set-secret@v2.0.0
+        with:
+          name: TEKRSA_USB_MAJOR_VERSION
+          value: $((${{ secrets.TEKRSA_USB_MAJOR_VERSION }}+1))
+          repository: ${{ github.repository }}
+          token: ${{ secrets.ACTION_TOKEN }}
+          org: false
 
       - name: Read new package version from GH
         run: echo ${{ secrets.TEKRSA_USB_PATCH_VERSION }}
