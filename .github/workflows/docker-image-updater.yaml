@@ -6,8 +6,10 @@ on:
   workflow_dispatch:
   push:
 
-permissions:
-  packages: write
+env:
+  V_MAJOR: ${{ secrets.TEKRSA_USB_MAJOR_VERSION }}
+  V_MINOR: ${{ secrets.TEKRSA_USB_MINOR_VERSION }}
+  V_PATCH: ${{ secrets.TEKRSA_USB_PATCH_VERSION }}
 
 jobs:
   auto_updater:
@@ -21,12 +23,6 @@ jobs:
           username: $${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get current image version number
-        run: |
-          MANIFEST=$(curl -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://ghcr.io/v2/NTIA/scos-tekrsa/tekrsa_usb/manifests/$GITHUB_SHA | jq '.')
-          echo $MANIFEST
-          echo "IMG_VER=$MANIFEST" >> $GITHUB_ENV
-
       - name: Check for parent image updates
         id: check
         uses: twiddler/is-my-docker-parent-image-out-of-date@v1
@@ -34,9 +30,6 @@ jobs:
           parent-image: ubuntu:20.04
           # TODO: Replace below with :latest after running successfully once
           my-image: ghcr.io/ntia/scos-tekrsa/tekrsa_usb:$V_MAJOR.$V_MINOR.$V_PATCH
-
-      - name: Test Env. var. access
-        run: echo "Environment variable is set to ${{ env.IMG_VER }}"
 
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -65,6 +58,8 @@ jobs:
       #   if: steps.check.outputs.out-of-date == 'true'
 
 
-      #  - name: Autoincrement a new patch version
-      #     run: |
-      #       echo "NEW_PATCH_VERSION=$((${{ secrets.PATCH_VERSION }}+1))" >> $GITHUB_ENV
+      - name: Autoincrement package version
+        run: gh secret set TEKRSA_USB_PATCH_VERSION -r NTIA/scos-tekrsa -b $(($V_PATCH+1))
+
+      - name: Read new package version from GH
+        run: echo ${{ secrets.TEKRSA_USB_PATCH_VERSION }}
