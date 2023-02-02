@@ -1,4 +1,4 @@
-name: Check for Ubuntu base image updates
+name: auto-update tekrsa_usb parent image
 
 on:
   schedule:
