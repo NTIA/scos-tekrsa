@@ -6,11 +6,6 @@ on:
   workflow_dispatch:
   push:
 
-env:
-  V_MAJOR: ${{ secrets.TEKRSA_USB_MAJOR_VERSION }}
-  V_MINOR: ${{ secrets.TEKRSA_USB_MINOR_VERSION }}
-  V_PATCH: ${{ secrets.TEKRSA_USB_PATCH_VERSION }}
-
 jobs:
   auto_updater:
     runs-on: ubuntu-latest
@@ -32,7 +27,7 @@ jobs:
         with:
           parent-image: ubuntu:20.04
           # TODO: Replace below with :latest after running successfully once
-          my-image: "ghcr.io/ntia/scos-tekrsa/tekrsa_usb:$V_MAJOR.$V_MINOR.$V_PATCH"
+          my-image: ghcr.io/ntia/scos-tekrsa/tekrsa_usb:${{ secrets.TEKRSA_USB_MAJOR_VERSION }}.${{ secrets.TEKRSA_USB_MINOR_VERSION }}.${{ secrets.TEKRSA_USB_PATCH_VERSION }}
 
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -62,7 +57,7 @@ jobs:
 
 
       - name: Autoincrement package version
-        run: gh secret set TEKRSA_USB_PATCH_VERSION -r NTIA/scos-tekrsa -b $(($V_PATCH+1))
+        run: gh secret set TEKRSA_USB_PATCH_VERSION -r NTIA/scos-tekrsa -a actions -b $((${{ secrets.TEKRSA_USB_PATCH_VERSION }}+1))
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
