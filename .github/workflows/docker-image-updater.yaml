@@ -26,9 +26,9 @@ jobs:
           # TODO: Replace below with :latest after running successfully once
           my-image: ghcr.io/ntia/scos-tekrsa/tekrsa_usb:${{ secrets.TEKRSA_USB_MAJOR_VERSION }}.${{ secrets.TEKRSA_USB_MINOR_VERSION }}.${{ secrets.TEKRSA_USB_PATCH_VERSION }}
 
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        if: steps.check.outputs.out-of-date == 'true'
+      # - name: Checkout repository
+      #   uses: actions/checkout@v3
+      #   if: steps.check.outputs.out-of-date == 'true'
 
       - name: Update version number secret
         uses: hmanzur/actions-set-secret@v2.0.0
@@ -41,7 +41,7 @@ jobs:
       - name: Build and push updated Docker image
         uses: docker/build-push-action@v4
         with:
-          context: "${{ github.workspace }}"
+          file: ./docker/Dockerfile
           push: true
           tags: |
             tekrsa_usb
