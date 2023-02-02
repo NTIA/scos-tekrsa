@@ -6,6 +6,13 @@ on:
   workflow_dispatch:
   push:
 
+env:
+  IMAGE_NAME: tekrsa_usb
+  REGISTRY: ghcr.io
+  V_MAJOR: ${{ secrets.TEKRSA_USB_MAJOR_VERSION }}
+  V_MINOR: ${{ secrets.TEKRSA_USB_MINOR_VERSION }}
+  V_PATCH: ${{ secrets.TEKRSA_USB_PATCH_VERSION }}
+
 jobs:
   auto_updater:
     runs-on: ubuntu-latest
@@ -14,7 +21,7 @@ jobs:
       - name: Login to Github Container Registry
         uses: docker/login-action@v2
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: $${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -24,17 +31,13 @@ jobs:
         with:
           parent-image: ubuntu:20.04
           # TODO: Replace below with :latest after running successfully once
-          my-image: ghcr.io/ntia/scos-tekrsa/tekrsa_usb:${{ secrets.TEKRSA_USB_MAJOR_VERSION }}.${{ secrets.TEKRSA_USB_MINOR_VERSION }}.${{ secrets.TEKRSA_USB_PATCH_VERSION }}
-
-      # - name: Checkout repository
-      #   uses: actions/checkout@v3
-      #   if: steps.check.outputs.out-of-date == 'true'
+          my-image: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ env.V_MAJOR }}.${{ env.V_MINOR }}.${{ env.V_PATCH }}
 
       - name: Update version number secret
         uses: hmanzur/actions-set-secret@v2.0.0
         with:
           name: TEKRSA_USB_PATCH_VERSION
-          value: $((${{ secrets.TEKRSA_USB_PATCH_VERSION }}+1))
+          value: $((${{ env.V_PATCH }}+1))
           token: ${{ secrets.ACTION_TOKEN }}
         if: steps.check.outputs.out-of-date == 'true'
 
@@ -44,7 +47,6 @@ jobs:
           file: ./docker/Dockerfile
           push: true
           tags: |
-            tekrsa_usb
-            ghcr.io/ntia/scos-tekrsa/tekrsa_usb:latest
-            ghcr.io/ntia/scos-tekrsa/tekrsa_usb:${{ secrets.TEKRSA_USB_MAJOR_VERSION }}.${{ secrets.TEKRSA_USB_MINOR_VERSION }}.${{ secrets.TEKRSA_USB_PATCH_VERSION }}
+            ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ env.V_MAJOR }}.${{ env.V_MINOR }}.${{ env.V_PATCH }}
         if: steps.check.outputs.out-of-date == 'true'
