@@ -31,7 +31,7 @@ jobs:
         with:
           parent-image: ubuntu:20.04
           # TODO: Replace below with :latest after running successfully once
-          my-image: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ env.V_MAJOR }}.${{ env.V_MINOR }}.${{ env.V_PATCH }}
+          my-image: ${{ env.REGISTRY }}/ntia/scos-tekrsa/${{ env.IMAGE_NAME }}:${{ env.V_MAJOR }}.${{ env.V_MINOR }}.${{ env.V_PATCH }}
 
       - name: Update version number secret
         uses: hmanzur/actions-set-secret@v2.0.0
@@ -47,6 +47,6 @@ jobs:
           file: ./docker/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ env.V_MAJOR }}.${{ env.V_MINOR }}.${{ env.V_PATCH }}
+            ${{ env.REGISTRY }}/ntia/scos-tekrsa/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/ntia/scos-tekrsa/${{ env.IMAGE_NAME }}:${{ env.V_MAJOR }}.${{ env.V_MINOR }}.${{ env.V_PATCH }}
         if: steps.check.outputs.out-of-date == 'true'
