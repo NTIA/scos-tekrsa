@@ -7,19 +7,21 @@ on:
   push:
 
 jobs:
-  build:
+  auto_updater:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
 
       - name: Check for parent image updates
-        id: updatecheck
+        id: check
         uses: twiddler/is-my-docker-parent-image-out-of-date@v1
         with:
           parent-image: ubuntu:20.04
-          # TODO: Replace below with :latest after running successfully
-          my-image: ghcr.io/ntia/scos-tekrsa/tekrsa_usb:${{ secrets.TEKRSA_USB_MAJOR_VERSION }}.${{ secrets.TEKRSA_USB_MINOR_VERSION }}.${{ secrets.TEKRSA_USB_MICRO_VERSION }}
+          # TODO: Replace below with :latest after running successfully once
+          my-image: ghcr.io/ntia/scos-tekrsa/tekrsa_usb:$V_MAJOR.$V_MINOR.$V_PATCH
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        if: steps.check.outputs.out-of-date == 'true'
 
       - name: Login to Github Container Registry
         uses: docker/login-action@v2
@@ -27,13 +29,12 @@ jobs:
           registry: ghcr.io
           username: $${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-        if: steps.updatecheck.outputs.out-of-date == 'true'
+        if: steps.check.outputs.out-of-date == 'true'
 
       - name: Get current image version number
         run: |
-          img_url=https://ghcr.io/v2/NTIA/scos-tekrsa/tekrsa_usb/manifests/$GITHUB_SHA
-          manifest=$(curl $img_url -u $GITHUB_ACTOR:${{ secrets.GITHUB_TOKEN }} | jg '.')
-          echo $manifest
+          MANIFEST=$(curl https://ghcr.io/v2/NTIA/scos-tekrsa/tekrsa_usb/manifests/$GITHUB_SHA -u $GITHUB_ACTOR:${{ secrets.GITHUB_TOKEN }} | jq '.')
+          echo $MANIFEST
 
       # - name: Increment patch version number
       #   uses: hmanzur/actions-set-secret@v2.0.0
@@ -44,7 +45,7 @@ jobs:
       #     token: ${{ secrets.GITHUB_TOKEN }}
       #     org: true
       #     visibility: "all"
-      #   if: steps.updatecheck.outputs.out-of-date == 'true'
+      #   if: steps.check.outputs.out-of-date == 'true'
 
       # - name: Build and push Docker images
       #   uses: docker/build-push-action@v4
@@ -54,8 +55,8 @@ jobs:
       #     tags: |
       #       tekrsa_usb
       #       ghcr.io/ntia/scos-tekrsa/tekrsa_usb:latest
-      #       ghcr.io/ntia/scos-tekrsa/tekrsa_usb:${{ secrets.TEKRSA_USB_MAJOR_VERSION }}.${{ secrets.TEKRSA_USB_MINOR_VERSION }}.${{ secrets.TEKRSA_USB_MICRO_VERSION }}
-      #   if: steps.updatecheck.outputs.out-of-date == 'true'
+      #       ghcr.io/ntia/scos-tekrsa/tekrsa_usb:$V_MAJOR.$V_MINOR.$V_PATCH
+      #   if: steps.check.outputs.out-of-date == 'true'
 
 
       #  - name: Autoincrement a new patch version
