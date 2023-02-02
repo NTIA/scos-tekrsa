@@ -13,7 +13,7 @@ jobs:
 
       - name: Get current image version number
         run: |
-          MANIFEST=$(curl https://ghcr.io/v2/NTIA/scos-tekrsa/tekrsa_usb/manifests/$GITHUB_SHA -u $GITHUB_ACTOR:${{ secrets.GITHUB_TOKEN }} | jq '.')
+          MANIFEST=$(curl https://ghcr.io/v2/NTIA/scos-tekrsa/tekrsa_usb/manifests/$GITHUB_SHA -u ${{ github.actor }}:${{ secrets.GITHUB_TOKEN }} | jq '.')
           echo $MANIFEST
           echo "IMG_VER=$MANIFEST" >> $GITHUB_ENV
 
