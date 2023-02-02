@@ -12,24 +12,51 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+
       - name: Check for parent image updates
         id: updatecheck
         uses: twiddler/is-my-docker-parent-image-out-of-date@v1
         with:
           parent-image: ubuntu:20.04
-          my-image: ghcr.io/ntia/scos-tekrsa/tekrsa_usb:0.2.1
+          # TODO: Replace below with :latest after running successfully
+          my-image: ghcr.io/ntia/scos-tekrsa/tekrsa_usb:${{ secrets.TEKRSA_USB_MAJOR_VERSION }}.${{ secrets.TEKRSA_USB_MINOR_VERSION }}.${{ secrets.TEKRSA_USB_MICRO_VERSION }}
+
       - name: Login to Github Container Registry
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: $${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-        if: steps.ubuntu-update-check.outputs.needs-updating == 'true'
+        if: steps.updatecheck.outputs.needs-updating == "true"
+
+      - name: Get current image version number
+        run: |
+          manifest=$(curl -X GET https://ghcr.io/v2/NTIA/scos-tekrsa/tekrsa_usb/manifests/$GITHUB_SHA -u $GITHUB_ACTOR:${{ secrets.GITHUB_TOKEN }} | jg '.')
+          echo $manifest
+
+      # - name: Increment patch version number
+      #   uses: hmanzur/actions-set-secret@v2.0.0
+      #   with:
+      #     name: "TEKRSA_USB_MICRO_VERSION"
+      #     value: $((${{ secrets.TEKRSA_USB_MICRO_VERSION }} + 1))
+      #     repository: "NTIA/scos-tekrsa"
+      #     token: ${{ secrets.GITHUB_TOKEN }}
+      #     org: true
+      #     visibility: "all"
+      #   if: steps.updatecheck.outputs.needs-updating == "true"
 
       # - name: Build and push Docker images
       #   uses: docker/build-push-action@v4
       #   with:
       #     context: "${{ github.workspace }}"
       #     push: true
-      #     tags: ghcr.io/ntia/tekrsa_usb:latest
-      #   if: steps.updatecheck.outputs.out-of-date == 'true'
+      #     tags: |
+      #       tekrsa_usb
+      #       ghcr.io/ntia/scos-tekrsa/tekrsa_usb:latest
+      #       ghcr.io/ntia/scos-tekrsa/tekrsa_usb:${{ secrets.TEKRSA_USB_MAJOR_VERSION }}.${{ secrets.TEKRSA_USB_MINOR_VERSION }}.${{ secrets.TEKRSA_USB_MICRO_VERSION }}
+      #   if: steps.updatecheck.outputs.out-of-date == "true"
+
+
+      #  - name: Autoincrement a new patch version
+      #     run: |
+      #       echo "NEW_PATCH_VERSION=$((${{ secrets.PATCH_VERSION }}+1))" >> $GITHUB_ENV
