@@ -30,34 +30,21 @@ jobs:
         uses: actions/checkout@v3
         if: steps.check.outputs.out-of-date == 'true'
 
-      # - name: Increment patch version number
-      #   uses: hmanzur/actions-set-secret@v2.0.0
-      #   with:
-      #     name: "TEKRSA_USB_MICRO_VERSION"
-      #     value: $((${{ secrets.TEKRSA_USB_MICRO_VERSION }} + 1))
-      #     repository: "NTIA/scos-tekrsa"
-      #     token: ${{ secrets.GITHUB_TOKEN }}
-      #     org: true
-      #     visibility: "all"
-      #   if: steps.check.outputs.out-of-date == 'true'
-
-      # - name: Build and push Docker images
-      #   uses: docker/build-push-action@v4
-      #   with:
-      #     context: "${{ github.workspace }}"
-      #     push: true
-      #     tags: |
-      #       tekrsa_usb
-      #       ghcr.io/ntia/scos-tekrsa/tekrsa_usb:latest
-      #       ghcr.io/ntia/scos-tekrsa/tekrsa_usb:$V_MAJOR.$V_MINOR.$V_PATCH
-      #   if: steps.check.outputs.out-of-date == 'true'
-
       - name: Update version number secret
         uses: hmanzur/actions-set-secret@v2.0.0
         with:
-          name: TEKRSA_USB_MAJOR_VERSION
-          value: $((${{ secrets.TEKRSA_USB_MAJOR_VERSION }}+1))
+          name: TEKRSA_USB_PATCH_VERSION
+          value: $((${{ secrets.TEKRSA_USB_PATCH_VERSION }}+1))
           token: ${{ secrets.ACTION_TOKEN }}
+        if: steps.check.outputs.out-of-date == 'true'
 
-      - name: Read new package version from GH
-        run: echo ${{ secrets.TEKRSA_USB_PATCH_VERSION }}
+      - name: Build and push updated Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: "${{ github.workspace }}"
+          push: true
+          tags: |
+            tekrsa_usb
+            ghcr.io/ntia/scos-tekrsa/tekrsa_usb:latest
+            ghcr.io/ntia/scos-tekrsa/tekrsa_usb:${{ secrets.TEKRSA_USB_MAJOR_VERSION }}.${{ secrets.TEKRSA_USB_MINOR_VERSION }}.${{ secrets.TEKRSA_USB_PATCH_VERSION }}
+        if: steps.check.outputs.out-of-date == 'true'
