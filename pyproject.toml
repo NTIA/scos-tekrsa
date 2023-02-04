@@ -39,7 +39,7 @@ classifiers = [
 
 dependencies = [
     "environs>=9.5.0",
-    "tekrsa-api-wrap @ git+https://github.com/NTIA/tekrsa-api-wrap@fix-status-parser",
+    "tekrsa-api-wrap>=1.3.1",
     "scos_actions @ git+https://github.com/NTIA/scos-actions@diagnostics-and-status-updates",
 ]
 
