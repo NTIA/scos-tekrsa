@@ -162,7 +162,7 @@ class TekRSASigan(SignalAnalyzerInterface):
         bw = self.SR_BW_MAP.get(sample_rate)
         self.rsa.IQSTREAM_SetAcqBandwidth(bw)
         self._iq_bandwidth, self._sample_rate = self.rsa.IQSTREAM_GetAcqParameters()
-        msg = "Set Tektronix RSA sample rate: " + f"{self._sample_rate:.1f} samples/sec"
+        msg = "Set Tektronix RSA sample rate: " + f"{self._sample_rate} samples/sec"
         logger.debug(msg)
 
     @property
@@ -186,8 +186,8 @@ class TekRSASigan(SignalAnalyzerInterface):
         self._iq_bandwidth, self._sample_rate = self.rsa.IQSTREAM_GetAcqParameters()
         msg = (
             "Set Tektronix RSA IQ Bandwidth: "
-            + f"{self._iq_bandwidth:.1f} Hz, resulting in sample rate: "
-            + f"{self._sample_rate:.1f} samples/sec"
+            + f"{self._iq_bandwidth} Hz, resulting in sample rate: "
+            + f"{self._sample_rate} samples/sec"
         )
         logger.debug(msg)
 
@@ -201,7 +201,7 @@ class TekRSASigan(SignalAnalyzerInterface):
         """Set the device center frequency."""
         self.rsa.CONFIG_SetCenterFreq(freq)
         self._frequency = self.rsa.CONFIG_GetCenterFreq()
-        msg = f"Set Tektronix RSA center frequency: {self._frequency:.1f} Hz"
+        msg = f"Set Tektronix RSA center frequency: {self._frequency} Hz"
         logger.debug(msg)
 
     @property
@@ -214,7 +214,7 @@ class TekRSASigan(SignalAnalyzerInterface):
         """Set the device reference level."""
         self.rsa.CONFIG_SetReferenceLevel(reference_level)
         self._reference_level = self.rsa.CONFIG_GetReferenceLevel()
-        msg = f"Set Tektronix RSA reference level: {self._reference_level:.1f} dBm"
+        msg = f"Set Tektronix RSA reference level: {self._reference_level} dBm"
         logger.debug(msg)
 
     @property
@@ -237,7 +237,7 @@ class TekRSASigan(SignalAnalyzerInterface):
                 -1 * abs(attenuation)
             )  # rounded to nearest integer
             self._attenuation = abs(self.rsa.CONFIG_GetRFAttenuator())
-            logger.debug(f"Set Tektronix RSA attenuation: {self._attenuation:.1} dB")
+            logger.debug(f"Set Tektronix RSA attenuation: {self._attenuation} dB")
         else:
             logger.debug("Tektronix RSA 300 series device has no attenuator.")
 
