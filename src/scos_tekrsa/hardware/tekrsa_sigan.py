@@ -147,7 +147,7 @@ class TekRSASigan(SignalAnalyzerInterface):
         if sample_rate > self.max_sample_rate:
             err_msg = f"Sample rate {sample_rate} too high. Max sample rate is {self.max_sample_rate}."
             logger.error(err_msg)
-            raise Exception(err_msg)
+            raise ValueError(err_msg)
         if sample_rate not in self.ALLOWED_SR:
             # If requested sample rate is not an allowed value
             allowed_sample_rates_str = ", ".join(map(str, self.ALLOWED_SR))
