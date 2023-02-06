@@ -96,7 +96,7 @@ class TekRSASigan(SignalAnalyzerInterface):
             logger.warning("Using mock Tektronix RSA.")
             random = settings.MOCK_SIGAN_RANDOM
             self.rsa = MockRSA(randomize_values=random)
-            self.device_name = "RSA306B"  # Mock sigan pretends to be a 306B
+            self.device_name = "MOCK RSA507A"
         else:
             try:
                 # Load API wrapper
@@ -106,36 +106,29 @@ class TekRSASigan(SignalAnalyzerInterface):
                 logger.warning("API Wrapper not loaded - disabling signal analyzer.")
                 self._is_available = False
                 raise import_error
-
             try:
                 logger.debug("Initializing ")
                 self.rsa = rsa_api.RSA()
                 # Connect to device using API wrapper
                 self.rsa.DEVICE_SearchAndConnect()
                 self.device_name = self.rsa.DEVICE_GetNomenclature()
-                logger.info("Device Name: " + self.device_name)
-                self.get_constraints()
-                logger.info("Using the following Tektronix RSA device:")
-                logger.info(
-                    self.device_name
-                    + " "
-                    + str(self.min_frequency)
-                    + "-"
-                    + str(self.max_frequency)
-                )
-                # Populate instance variables for parameters on connect
-                self._preamp_enable = self.preamp_enable
-                self._attenuation = self.attenuation
-                self._sample_rate = self.sample_rate  # Also sets self._iq_bandwidth
-                self._frequency = self.frequency
-                self._reference_level = self.reference_level
-
             except Exception as e:
                 self._is_available = False
                 self.device_name = "NONE: Failed to connect to TekRSA"
                 logger.exception("Unable to connect to TEKRSA")
                 raise e
-
+        # Finish setup with either real or Mock RSA device
+        self.get_constraints()
+        logger.info("Using the following Tektronix RSA device:")
+        logger.info(
+            f"{self.device_name} ({self.min_frequency}-{self.max_frequency} Hz)"
+        )
+        # Populate instance variables for parameters on connect
+        self._preamp_enable = self.preamp_enable
+        self._attenuation = self.attenuation
+        self._sample_rate = self.sample_rate  # Also sets self._iq_bandwidth
+        self._frequency = self.frequency
+        self._reference_level = self.reference_level
         self._is_available = True
 
     @property
