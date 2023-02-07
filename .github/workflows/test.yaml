@@ -1,6 +1,15 @@
 name: test
 
-on: push
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
 
 jobs:
   test:
@@ -11,6 +20,7 @@ jobs:
       matrix:
         os:
           - ubuntu-20.04
+          - ubuntu-latest
         py:
           - "3.8"
           - "3.9"
