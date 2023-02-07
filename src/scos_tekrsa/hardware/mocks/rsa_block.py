@@ -100,12 +100,13 @@ class MockRSA:
         self._iq_bandwidth = bw
         self._sample_rate = IQSTREAM_BW_SR_MAP[self._iq_bandwidth]
 
-    def IQSTREAM_Tempfile_NoConfig(self, dur_msec):
-        # Get n_samp from dur_msec (assuming 56e6 SR)
-        n_samp = int((dur_msec / 1000) * 56e6)
+    def IQSTREAM_Tempfile_NoConfig(self, dur_msec, return_status):
+        # Get n_samp from dur_msec
+        n_samp = int((dur_msec / 1000) * self.IQSTREAM_GetAcqParameters()[1])
 
         if self.times_failed < self.times_to_fail:
             self.times_failed += 1
+            iq = np.ones(0, dtype=np.complex64)
             return np.ones(0, dtype=np.complex64)
         if self.randomize_values:
             i = rng.normal(0.5, 0.5, n_samp)
@@ -113,12 +114,16 @@ class MockRSA:
             rand_iq = np.empty(n_samp, dtype=np.complex64)
             rand_iq.real = i
             rand_iq.imag = q
-            return rand_iq
+            iq = rand_iq
         else:
-            return np.ones(n_samp, dtype=np.complex64)
+            iq = np.ones(n_samp, dtype=np.complex64)
+        if return_status:
+            return iq, "No error."
+        else:
+            return iq
 
-    def IQSTREAM_Acquire(self, dur_msec):
-        self.IQSTREAM_Tempfile_NoConfig(dur_msec)
+    def IQSTREAM_Acquire(self, dur_msec, return_status):
+        return self.IQSTREAM_Tempfile_NoConfig(dur_msec, return_status)
 
     def set_times_to_fail(self, n):
         self.times_to_fail = n
