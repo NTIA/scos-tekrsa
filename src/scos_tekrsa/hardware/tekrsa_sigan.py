@@ -67,7 +67,6 @@ class TekRSASigan(SignalAnalyzerInterface):
             logger.warning("Using mock Tektronix RSA.")
             random = settings.MOCK_SIGAN_RANDOM
             self.rsa = MockRSA(randomize_values=random)
-            self.device_name = "MOCK RSA507A"
         else:
             try:
                 # Load API wrapper
@@ -82,13 +81,13 @@ class TekRSASigan(SignalAnalyzerInterface):
                 self.rsa = rsa_api.RSA()
                 # Connect to device using API wrapper
                 self.rsa.DEVICE_SearchAndConnect()
-                self.device_name = self.rsa.DEVICE_GetNomenclature()
             except Exception as e:
                 self._is_available = False
                 self.device_name = "NONE: Failed to connect to TekRSA"
                 logger.exception("Unable to connect to TEKRSA")
                 raise e
         # Finish setup with either real or Mock RSA device
+        self.device_name = self.rsa.DEVICE_GetNomenclature()
         self.get_constraints()
         logger.info("Using the following Tektronix RSA device:")
         logger.info(
@@ -258,7 +257,11 @@ class TekRSASigan(SignalAnalyzerInterface):
 
         if gain_adjust:
             # Get calibration data for acquisition
-            cal_params = sensor_calibration.calibration_parameters
+            if not (settings.RUNNING_TESTS or settings.MOCK_SIGAN):
+                cal_params = sensor_calibration.calibration_parameters
+            else:
+                # Make it work for mock sigan/testing. Just match frequency.
+                cal_params = [vars(self)["_frequency"]]
             try:
                 cal_args = [vars(self)[f"_{p}"] for p in cal_params]
             except KeyError:
@@ -295,7 +298,7 @@ class TekRSASigan(SignalAnalyzerInterface):
             with sigan_lock:
                 data, status = self.rsa.IQSTREAM_Acquire(durationMsec, True)
 
-            data = data[nskip:]  # Remove extra samples, if any
+            data = data[nskip : nskip + nsamps_req]  # Remove extra samples, if any
             data_len = len(data)
 
             # Print warning from status indicator
