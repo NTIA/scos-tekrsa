@@ -5,7 +5,7 @@ from scos_tekrsa.hardware.tekrsa_constants import IQSTREAM_BW_SR_MAP
 
 rng = np.random.default_rng()
 
-TIMES_TO_FAIL = 0
+TIMES_TO_FAIL = 3
 
 # Mock Signal Analyzer Constants
 DEVICE_NOMENCLATURE = "MOCK RSA507A"
@@ -107,8 +107,7 @@ class MockRSA:
         if self.times_failed < self.times_to_fail:
             self.times_failed += 1
             iq = np.ones(0, dtype=np.complex64)
-            return np.ones(0, dtype=np.complex64)
-        if self.randomize_values:
+        elif self.randomize_values:
             i = rng.normal(0.5, 0.5, n_samp)
             q = rng.normal(0.5, 0.5, n_samp)
             rand_iq = np.empty(n_samp, dtype=np.complex64)
