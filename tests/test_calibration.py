@@ -1,6 +1,5 @@
 from os import path
 
-import pytest
 from scos_actions.calibration import get_sensor_calibration, get_sigan_calibration
 
 from scos_tekrsa.settings import CONFIG_DIR
