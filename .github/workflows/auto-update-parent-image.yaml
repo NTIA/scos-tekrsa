@@ -42,7 +42,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           file: ./docker/Dockerfile
-          push: false # TEMPORARILY DISABLED WHILE TROUBLESHOOTING
+          push: false # TEMPORARILY DISABLED
           tags: |
             ${{ env.REGISTRY }}/ntia/scos-tekrsa/${{ env.IMAGE_NAME }}:latest
             ${{ env.REGISTRY }}/ntia/scos-tekrsa/${{ env.IMAGE_NAME }}:${{ env.V_MAJOR }}.${{ env.V_MINOR }}.${{ env.V_PATCH_NEW }}
