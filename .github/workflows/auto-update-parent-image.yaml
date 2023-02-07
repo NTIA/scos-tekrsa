@@ -1,8 +1,8 @@
 name: auto-update tekrsa_usb parent image
 
 on:
-  schedule:
-    - cron: "0 0 1 * * "
+  # schedule:  # TEMPORARILY DISABLED
+  #   - cron: "0 0 1 * * "
   workflow_dispatch:
   # push:  # TEMPORARILY DISABLED
 
