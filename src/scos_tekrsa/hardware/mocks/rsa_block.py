@@ -25,7 +25,6 @@ PREAMP_ENABLE = True
 
 class MockRSA:
     def __init__(self, randomize_values=False):
-
         # Simulate returning less than requested num samples
         self.times_to_fail = TIMES_TO_FAIL
         self.times_failed = 0
