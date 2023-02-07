@@ -244,14 +244,19 @@ class TekRSASigan(SignalAnalyzerInterface):
 
     def acquire_time_domain_samples(
         self,
-        num_samples,
-        num_samples_skip=0,
-        retries=5,
-        gain_adjust=True,
-    ):
+        num_samples: int,
+        num_samples_skip: int = 0,
+        retries: int = 5,
+        gain_adjust: bool = True,
+    ) -> dict:
         """Acquire specific number of time-domain IQ samples."""
         self._capture_time = None
-        nsamps_req = int(num_samples)  # Requested number of samples
+        if isinstance(num_samples, int) or (
+            isinstance(num_samples, float) and num_samples.is_integer()
+        ):
+            nsamps_req = int(num_samples)  # Requested number of samples
+        else:
+            raise ValueError("Requested number of samples must be an integer.")
         nskip = int(num_samples_skip)  # Requested number of samples to skip
         nsamps = nsamps_req + nskip  # Total number of samples to collect
 
