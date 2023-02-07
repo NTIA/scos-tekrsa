@@ -1,20 +1,26 @@
 """ Mock functions from RSA API that are used in SignalAnalyzerInterface. """
 import numpy as np
 
+from scos_tekrsa.hardware.tekrsa_constants import IQSTREAM_BW_SR_MAP
+
 rng = np.random.default_rng()
 
 TIMES_TO_FAIL = 0
+
+# Mock Signal Analyzer Constants
+DEVICE_NOMENCLATURE = "MOCK RSA507A"
 MIN_CENTER_FREQ = 9e3
 MAX_CENTER_FREQ = 6.2e9
+MIN_IQ_BW = 9e3
+MAX_IQ_BW = 40e6
+
+# Default values
+IQSTREAM_BW = 40e6
+IQSTREAM_SR = 56e6
 CENTER_FREQ = 1e9
 REFERENCE_LEVEL = -30
 ATTENUATION = 10
 PREAMP_ENABLE = True
-DEVICE_NOMENCLATURE = "Mock TekRSA"
-IQSTREAM_BW = 40e6
-IQSTREAM_SR = 56e6
-MIN_IQ_BW = 9e3
-MAX_IQ_BW = 40e6
 
 
 class MockRSA:
@@ -25,6 +31,14 @@ class MockRSA:
         self.times_failed = 0
         self.randomize_values = randomize_values
 
+        # Initialize parameters
+        self._frequency = CENTER_FREQ
+        self._reference_level = REFERENCE_LEVEL
+        self._iq_bandwidth = IQSTREAM_BW
+        self._sample_rate = IQSTREAM_SR
+        self._attenuation = ATTENUATION
+        self._preamp_enable = PREAMP_ENABLE
+
     def CONFIG_GetMinCenterFreq(self):
         return MIN_CENTER_FREQ
 
@@ -32,31 +46,31 @@ class MockRSA:
         return MAX_CENTER_FREQ
 
     def CONFIG_GetCenterFreq(self):
-        return CENTER_FREQ
+        return self._frequency
 
     def CONFIG_SetCenterFreq(self, val):
-        return None
+        self._frequency = val
 
     def CONFIG_GetReferenceLevel(self):
-        return REFERENCE_LEVEL
+        return self._reference_level
 
     def CONFIG_SetReferenceLevel(self, val):
-        return None
+        self._reference_level = val
 
     def CONFIG_GetRFAttenuator(self):
-        return ATTENUATION
+        return self._attenuation
 
-    def CONFIG_SetRFAttenuator(self, atten):
-        return
+    def CONFIG_SetRFAttenuator(self, val):
+        self._attenuation = val
 
     def CONFIG_SetAutoAttenuationEnable(self, en):
         return
 
     def CONFIG_GetRFPreampEnable(self):
-        return PREAMP_ENABLE
+        return self._preamp_enable
 
     def CONFIG_SetRFPreampEnable(self, en):
-        return
+        self._preamp_enable = en
 
     def DEVICE_SearchAndConnect(self, verbose=False):
         return None
@@ -74,7 +88,7 @@ class MockRSA:
         return None
 
     def IQSTREAM_GetAcqParameters(self):
-        return IQSTREAM_BW, IQSTREAM_SR
+        return self._iq_bandwidth, self._sample_rate
 
     def IQSTREAM_GetMinAcqBandwidth(self):
         return MIN_IQ_BW
@@ -83,7 +97,8 @@ class MockRSA:
         return MAX_IQ_BW
 
     def IQSTREAM_SetAcqBandwidth(self, bw):
-        return None
+        self._iq_bandwidth = bw
+        self._sample_rate = IQSTREAM_BW_SR_MAP[self._iq_bandwidth]
 
     def IQSTREAM_Tempfile_NoConfig(self, dur_msec):
         # Get n_samp from dur_msec (assuming 56e6 SR)
