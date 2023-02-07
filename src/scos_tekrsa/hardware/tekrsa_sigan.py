@@ -7,6 +7,7 @@ from scos_actions.hardware.sigan_iface import (
     sensor_calibration,
 )
 
+import scos_tekrsa.hardware.tekrsa_constants as rsa_constants
 from scos_tekrsa import settings
 from scos_tekrsa.hardware.mocks.rsa_block import MockRSA
 
@@ -24,49 +25,19 @@ class TekRSASigan(SignalAnalyzerInterface):
             self.rsa = None
             self._is_available = False  # should not be set outside of connect method
 
-            # Allowed sample rates and bandwidth settings, ordered from
-            # greatest to least. SR in samples/sec, BW in Hz.
-            self.ALLOWED_SR = [
-                56.0e6,
-                28.0e6,
-                14.0e6,
-                7.0e6,
-                3.5e6,
-                1.75e6,
-                875.0e3,
-                437.5e3,
-                218.75e3,
-                109.375e3,
-                54687.5,
-                24373.75,
-                13671.875,
-            ]
+            # Retrieve constants applicable to ALL supported devices
+            self.ALLOWED_SR = rsa_constants.IQSTREAM_ALLOWED_SR  # Samps/sec
+            self.ALLOWED_BW = rsa_constants.IQSTREAM_ALLOWED_BW  # Hz
+            self.max_sample_rate = max(self.ALLOWED_SR)
+            self.max_reference_level = rsa_constants.MAX_REFERENCE_LEVEL  # dBm
+            self.min_reference_level = rsa_constants.MIN_REFERENCE_LEVEL  # dBm
+            self.max_attenuation = rsa_constants.MAX_ATTENUATION  # dB
+            self.min_attenuation = rsa_constants.MIN_ATTENUATION  # dB
 
-            self.ALLOWED_BW = [
-                40.0e6,
-                20.0e6,
-                10.0e6,
-                5.0e6,
-                2.5e6,
-                1.25e6,
-                625.0e3,
-                312.5e3,
-                156.25e3,
-                78125.0,
-                39062.5,
-                19531.25,
-                9765.625,
-            ]
+            # SR/BW mapping dict, with SR as keys and BW as values.
+            self.SR_BW_MAP = rsa_constants.IQSTREAM_SR_BW_MAP
 
-            # Use values defined above to create SR/BW mapping dict,
-            # with SR as keys and BW as values.
-            self.SR_BW_MAP = dict(zip(self.ALLOWED_SR, self.ALLOWED_BW))
-
-            self.max_sample_rate = self.ALLOWED_SR[0]
-            self.max_reference_level = 30  # dBm, constant
-            self.min_reference_level = -130  # dBm, constant
-            self.max_attenuation = 51
-            self.min_attenuation = 0
+            # These are device-dependent, set in get_constraints()
             self.max_frequency = None
             self.min_frequency = None
 
@@ -174,7 +145,7 @@ class TekRSASigan(SignalAnalyzerInterface):
     def iq_bandwidth(self, iq_bandwidth):
         """Set the device sample rate and bandwidth by specifying the bandwidth."""
         if iq_bandwidth not in self.ALLOWED_BW:
-            allowed_bandwidths_str = ", ".join(map(str, self.allowed_BW))
+            allowed_bandwidths_str = ", ".join(map(str, self.ALLOWED_BW))
             err_msg = (
                 f"Requested IQ bandwidth {iq_bandwidth} not in allowed bandwidths."
                 + f" Allowed IQ bandwidths are {allowed_bandwidths_str}"
