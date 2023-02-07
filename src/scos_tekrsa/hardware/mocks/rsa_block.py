@@ -4,7 +4,6 @@ import numpy as np
 
 class MockRSA:
     def __init__(self, randomize_values=False):
-
         # Simulate returning less than requested num samples
         self.times_to_fail = 0
         self.times_failed = 0
