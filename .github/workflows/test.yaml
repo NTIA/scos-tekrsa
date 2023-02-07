@@ -5,27 +5,28 @@ on: push
 jobs:
   test:
     name: Test ${{ matrix.py }} - ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os:
-          - Ubuntu
+          - ubuntu-20.04
         py:
           - "3.8"
           - "3.9"
           - "3.10"
     steps:
-      - name: Setup Python for test ${{ matrix.py }}
+      - name: Set up Python ${{ matrix.py }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.py }}
-      - uses: actions/checkout@v3
+      - name: Checkout scos-tekrsa
+        uses: actions/checkout@v3
       - name: Install tox-gh
         run: python -m pip install tox-gh
-      - name: Setup test suite
+      - name: Set up test suite
         run: tox r -vv --notest
       - name: Run test suite
         run: tox r --skip-pkg-install
         env:
-          PYTEST_ADDOPTS: "-vv --durations=10"
+          PYTEST_ADDOPTS: "-vv --durations=0"
