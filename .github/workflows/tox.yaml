@@ -1,4 +1,4 @@
-name: test
+name: Tox
 
 on:
   workflow_dispatch:
