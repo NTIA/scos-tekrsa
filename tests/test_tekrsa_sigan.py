@@ -208,6 +208,3 @@ class TestTekRSA:
             int(self.rx.iq_bandwidth * 0.001), 100, gain_adjust=False
         )
         assert len(r["data"]) == int(self.rx.iq_bandwidth * 0.001)
-
-    # def test_acquire_samples_retry(self):
-    #     setattr(self.rx.rsa.)
