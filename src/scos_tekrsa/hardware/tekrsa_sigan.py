@@ -301,41 +301,47 @@ class TekRSASigan(SignalAnalyzerInterface):
         while True:
             self._capture_time = utils.get_datetime_str_now()
             with sigan_lock:
-                data, status = self.rsa.IQSTREAM_Acquire(durationMsec, True)
+                data, status = self.rsa.IQSTREAM_Tempfile_NoConfig(durationMsec, True)
 
             data = data[nskip : nskip + nsamps_req]  # Remove extra samples, if any
             data_len = len(data)
 
-            # Print warning from status indicator
-            logger.warning(f"IQ Stream Status: {status}")
+            logger.debug(f"IQ Stream status: {status}")
 
             # Check status string for overload / data loss
             self.overload = False
             if "Input overrange" in status:
                 self.overload = True
-            if "data loss" in status or "discontinuity" in status:
+                logger.warning("IQ stream: ADC overrange event occurred.")
+
+            if "data loss" in status or "discontinuity" in status:  # Invalid data
                 if retries > 0:
-                    logger.warning(f"Retrying {retries} more times.")
+                    logger.warning(
+                        f"Data loss occurred during IQ streaming. Retrying {retries} more times."
+                    )
                     retries -= 1
+                    continue
                 else:
                     err = "Data loss occurred with no retries remaining."
-                    err += f" (tried {retries} times.)"
+                    err += f" (tried {max_retries} times.)"
                     raise RuntimeError(err)
-
-            if not data_len == nsamps_req:
+            elif (
+                not data_len == nsamps_req
+            ):  # Invalid data: incorrect number of samples
                 if retries > 0:
                     msg = f"RSA error: requested {nsamps_req + nskip} samples, but got {data_len}."
                     logger.warning(msg)
                     logger.warning(f"Retrying {retries} more times.")
                     retries -= 1
+                    continue
                 else:
                     err = "Failed to acquire correct number of samples "
                     err += f"{max_retries} times in a row."
                     raise RuntimeError(err)
             else:
-                logger.debug(f"Successfully acquired {data_len} samples.")
+                logger.debug(f"IQ stream: successfully acquired {data_len} samples.")
                 # Scale data to RF power and return
-                logger.debug("Applying gain of {}".format(linear_gain))
+                logger.debug(f"Applying gain of {linear_gain}")
                 data /= linear_gain
 
                 measurement_result = {
