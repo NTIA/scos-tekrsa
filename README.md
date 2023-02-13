@@ -8,7 +8,7 @@
 
 [NTIA/ITS]: https://its.ntia.gov/
 [github-actions-link]: https://github.com/ntia/scos-tekrsa/actions/
-[github-actions-test-badge]: https://github.com/NTIA/scos-tekrsa/actions/workflows/unit-tests.yaml/badge.svg
+[github-actions-test-badge]: https://github.com/NTIA/scos-tekrsa/actions/workflows/test.yaml/badge.svg
 [code-style-badge]: https://img.shields.io/badge/code%20style-black-000000.svg
 [code-style-repo]: https://github.com/psf/black
 [latest-release-semver-badge]: https://img.shields.io/github/v/release/NTIA/scos-tekrsa?display_name=tag&sort=semver
