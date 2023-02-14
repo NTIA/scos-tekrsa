@@ -14,8 +14,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: Test ${{ matrix.py }} - ${{ matrix.os }}
+  run-all-tests:
+    name: Py${{ matrix.py }} / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
