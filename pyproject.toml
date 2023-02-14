@@ -45,6 +45,8 @@ dependencies = [
 
 [project.optional-dependencies]
 tests = [
+    "bandit[toml]>=1.7.4",
+    "bandit-sarif-formatter>=1.1.1",
     "pytest>=7.2.1",
     "pytest-cov>=4.0.0",
     "tox>=4.4.4",
@@ -70,3 +72,6 @@ allow-direct-references = true
 
 [tool.hatch.version]
 path = "src/scos_tekrsa/__init__.py"
+
+[tool.bandit]
+exclude_dirs = ["tests", "docker"]
