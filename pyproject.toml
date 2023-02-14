@@ -44,9 +44,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-tests = [
+ci = [
     "bandit>=1.7.4",
     "bandit-sarif-formatter>=1.1.1",
+]
+
+tests = [
+
     "pytest>=7.2.1",
     "pytest-cov>=4.0.0",
     "tox>=4.4.4",
