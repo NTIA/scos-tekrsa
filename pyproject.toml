@@ -72,6 +72,3 @@ allow-direct-references = true
 
 [tool.hatch.version]
 path = "src/scos_tekrsa/__init__.py"
-
-[tool.bandit]
-exclude_dirs = ["tests", "docker"]
