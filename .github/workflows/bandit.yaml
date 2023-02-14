@@ -15,22 +15,13 @@ concurrency:
 
 jobs:
   run-bandit:
-    name: Py${{ matrix.py }} / ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - ubuntu-latest
-        py:
-          - "3.8"
-          # - "3.9"
-          # - "3.10"
+    name: Security Scan
+    runs-on: ubuntu-latest
     steps:
       - name: Set up Python ${{ matrix.py }}
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.py }}
+          python-version: "3.8"
 
       - name: Checkout scos-tekrsa
         uses: actions/checkout@v3
