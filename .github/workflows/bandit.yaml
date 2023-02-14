@@ -39,7 +39,7 @@ jobs:
         run: pip install .[tests]
 
       - name: Run Bandit
-        run: bandit -r . -c pyproject.toml --format sarif --output out.sarif
+        run: bandit -r src --format sarif --output out.sarif
 
       - name: Upload SARIF file to GitHub
         uses: github/codeql-action/upload-sarif@v2
