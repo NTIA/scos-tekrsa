@@ -1,14 +1,14 @@
 # NTIA/ITS SCOS Tektronix® RSA Plugin
 
 [![GitHub release (latest SemVer)][latest-release-semver-badge]][github-releases]
-[![GitHub Actions Test Status][github-actions-test-badge]][github-actions-link]
+[![GitHub Actions Test Status][github-actions-test-badge]][github-actions-tox-link]
 [![GitHub all releases][github-download-count-badge]][github-releases]
 [![GitHub issues][github-issue-count-badge]][github-issues]
 [![Code style: black][code-style-badge]][code-style-repo]
 
 [NTIA/ITS]: https://its.ntia.gov/
-[github-actions-link]: https://github.com/ntia/scos-tekrsa/actions/
-[github-actions-test-badge]: https://github.com/NTIA/scos-tekrsa/actions/workflows/test.yaml/badge.svg
+[github-actions-tox-link]: https://github.com/NTIA/scos-tekrsa/actions/workflows/tox.yaml
+[github-actions-test-badge]: https://github.com/NTIA/scos-tekrsa/actions/workflows/tox.yaml/badge.svg
 [code-style-badge]: https://img.shields.io/badge/code%20style-black-000000.svg
 [code-style-repo]: https://github.com/psf/black
 [latest-release-semver-badge]: https://img.shields.io/github/v/release/NTIA/scos-tekrsa?display_name=tag&sort=semver
@@ -89,7 +89,7 @@ file:
 1. In the newly-created `env` file, set the `BASE_IMAGE`:
 
     ```text
-    BASE_IMAGE=ghcr.io/ntia/scos-tekrsa/tekrsa_usb:0.2.1
+    BASE_IMAGE=ghcr.io/ntia/scos-tekrsa/tekrsa_usb:latest
     ```
 
 1. Get environment variables:
@@ -102,7 +102,7 @@ file:
 (such as `scos_usrp`), then add the `scos_tekrsa` dependency:
 
     ```text
-    scos_tekrsa @ git+https://github.com/NTIA/scos-tekrsa@1.0.1
+    scos_tekrsa @ git+https://github.com/NTIA/scos-tekrsa@3.0.1
     ```
 
 1. Compile requirements by running:
