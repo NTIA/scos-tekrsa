@@ -3,9 +3,8 @@ name: Build Docker Image
 # Run when Dockerfile is edited
 on:
   push:
-    # TEMP disabled while testing.
-    # paths:
-    #   - docker/Dockerfile
+    paths:
+      - docker/Dockerfile
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
