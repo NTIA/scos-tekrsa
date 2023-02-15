@@ -50,7 +50,6 @@ ci = [
 ]
 
 tests = [
-
     "pytest>=7.2.1",
     "pytest-cov>=4.0.0",
     "tox>=4.4.4",
@@ -60,7 +59,6 @@ dev = [
     "hatchling>=1.12.2",
     "pre-commit>=3.0.2",
     "scos-tekrsa[tests]",
-    "twine>=4.0.2",
 ]
 
 [project.urls]
