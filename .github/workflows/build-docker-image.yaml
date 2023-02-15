@@ -1,0 +1,24 @@
+# Run when Dockerfile is edited
+on:
+  push:
+    # Temp: disable filtering for testing
+    # paths:
+    #   - docker/Dockerfile
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  build-docker-image:
+    name: Build tekrsa_usb Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Build tekrsa_usb Docker image
+        uses: docker/build-and-push-action@v4
+        with:
+          push: false
+          tags: tekrsa_usb
+          file: ./docker/Dockerfile
