@@ -5,6 +5,9 @@ on:
   push:
     paths:
       - docker/Dockerfile
+  pull_request:
+    paths:
+      - docker/Dockerfile
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
