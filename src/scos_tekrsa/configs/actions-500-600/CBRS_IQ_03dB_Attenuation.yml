@@ -2,7 +2,7 @@ stepped_frequency_time_domain_iq:
   # 500 ms captures every 10 MHz
   name: CBRS_IQ_03dB_Attenuation
   rf_path: antenna
-  reference_level: -25
+  reference_level: -22
   attenuation: 3
   preamp_enable: True
   sample_rate: 14e6

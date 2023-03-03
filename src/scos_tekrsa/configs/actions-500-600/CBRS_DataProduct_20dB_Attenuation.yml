@@ -16,7 +16,7 @@ nasctn_sea_data_product:
   td_bin_size_ms: 10
 # Sigan Settings
   preamp_enable: True
-  reference_level: -25
+  reference_level: -5
   attenuation: 20
   sample_rate: 14e6
 # Acquisition settings (3550-3700 MHz in 10 MHz steps, each 4s long)
