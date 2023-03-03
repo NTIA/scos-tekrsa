@@ -29,6 +29,7 @@ y_factor_cal:
     - 3675e6
     - 3685e6
     - 3695e6
+    - 3705e6
   # IIR Filter Settings:
   # Optionally apply a low-pass IIR filter before Y-Factor
   iir_apply: True
