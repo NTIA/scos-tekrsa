@@ -25,3 +25,4 @@ stepped_frequency_time_domain_iq:
     - 3685e6
     - 3695e6
   classification: UNCLASSIFIED
+  calibration_adjust: True
