@@ -11,7 +11,9 @@ nasctn_sea_data_product:
 # PFP frame
   pfp_frame_period_ms: 10
 # APD downsampling settings
-  apd_bin_size_dB: 0.5  # Set to 0 or negative for no downsampling
+  apd_bin_size_dB: 1.0  # Set to 0 or negative for no downsampling
+  apd_max_bin_dBm: -30
+  apd_min_bin_dBm: -180
 # Time domain power statistics settings
   td_bin_size_ms: 10
 # Sigan Settings
