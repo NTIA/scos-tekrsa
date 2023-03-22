@@ -1,5 +1,5 @@
 nasctn_sea_data_product:
-  name: CBRS_EXT_DataProduct_03dB_Attenuation
+  name: CBRS_EXT_DataProduct_20dB_Attenuation
   rf_path: antenna
 # IIR filter settings
   iir_gpass_dB: 0.1  # Max passband ripple below unity gain
@@ -18,8 +18,42 @@ nasctn_sea_data_product:
   td_bin_size_ms: 10
 # Sigan Settings
   preamp_enable: True
-  reference_level: -22
-  attenuation: 3
+  reference_level:
+    - -25
+    - -25
+    - -25
+    - -25
+    - -25
+    - -25
+    - -25
+    - -25
+    - -25
+    - -25
+    - -25
+    - -3
+    - -3
+    - -3
+    - -3
+    - -3
+    - -3
+  attenuation:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 22
+    - 22
+    - 22
+    - 22
+    - 22
+    - 22
   sample_rate: 14e6
 # Acquisition settings (3540-3700 MHz in 10 MHz steps, each 4s long)
   duration_ms: 4000
