@@ -273,6 +273,11 @@ class TekRSASigan(SignalAnalyzerInterface):
         else:
             logger.debug("Tektronix RSA 300 series device has no built-in preamp.")
 
+    @property
+    def temperature(self) -> float:
+        """Read-only attribute: internal temperature, in Celsius."""
+        return self.rsa.DEVICE_GetTemperature()
+
     def acquire_time_domain_samples(
         self,
         num_samples,
