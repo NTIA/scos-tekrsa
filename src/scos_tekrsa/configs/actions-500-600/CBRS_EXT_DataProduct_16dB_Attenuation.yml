@@ -55,7 +55,7 @@ nasctn_sea_data_product:
     - 16
     - 16
   sample_rate: 14e6
-# Acquisition settings (3540-3700 MHz in 10 MHz steps, each 4s long)
+# Acquisition settings (3540-3710 MHz in 10 MHz steps, each 4s long)
   duration_ms: 4000
   nskip: 0
   frequency:
