@@ -6,67 +6,37 @@
 		"preamp_enable",
 		"attenuation"
 	],
-	"calibration_datetime": "2020-11-18T23:13:09.156274Z",
+	"last_calibration_datetime": "2020-11-18T23:13:09.156274Z",
 	"calibration_data": {
 		"14000000.0":{
+			"3545000000": {
+				"-25":{
+					"1": {
+						"0": {
+							"noise_figure_sensor": 5.0,
+							"enbw_sensor": 15723428.858731967,
+							"gain_sensor": 30.0,
+							"gain_preselector": 0,
+							"noise_figure_preselector": 0,
+							"1db_compression_sensor": -12.0,
+							"datetime": "2020-11-18T23:13:09.156274Z",
+							"temperature": 20.0
+						}
+					}
+				}
+			},
 			"3555000000":{
 				"-25":{
 					"1": {
 						"0": {
-							"noise_figure_sensor": 46.03993010994134,
+							"noise_figure_sensor": 5.0,
 							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
+							"gain_sensor": 30.0,
 							"gain_preselector": 0,
 							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"5": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"10": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"15": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"20": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"25": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"30": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
+							"1db_compression_sensor": -12.0,
+							"datetime": "2020-11-18T23:13:09.156274Z",
+							"temperature": 20.0
 						}
 					}
 				}
@@ -75,883 +45,245 @@
 				"-25":{
 					"1": {
 						"0": {
-							"noise_figure_sensor": 46.03993010994134,
+							"noise_figure_sensor": 5.0,
 							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
+							"gain_sensor": 30.0,
 							"gain_preselector": 0,
 							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"5": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"10": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"15": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"20": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"25": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"30": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
+							"1db_compression_sensor": -12.0,
+							"datetime": "2020-11-18T23:13:09.156274Z",
+							"temperature": 20.0
 						}
 					}
 				}
 			},
-			"3575000000":{
-
+			"3575000000": {
 				"-25":{
 					"1": {
 						"0": {
-							"noise_figure_sensor": 46.03993010994134,
+							"noise_figure_sensor": 5.0,
 							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
+							"gain_sensor": 30.0,
 							"gain_preselector": 0,
 							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"5": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"10": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"15": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"20": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"25": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"30": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
+							"1db_compression_sensor": -12.0,
+							"datetime": "2020-11-18T23:13:09.156274Z",
+							"temperature": 20.0
 						}
 					}
 				}
 			},
-			"3585000000":{
+			"3585000000": {
 				"-25":{
 					"1": {
 						"0": {
-							"noise_figure_sensor": 46.03993010994134,
+							"noise_figure_sensor": 5.0,
 							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
+							"gain_sensor": 30.0,
 							"gain_preselector": 0,
 							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"5": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"10": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"15": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"20": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"25": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"30": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
+							"1db_compression_sensor": -12.0,
+							"datetime": "2020-11-18T23:13:09.156274Z",
+							"temperature": 20.0
 						}
 					}
 				}
 			},
-			"3595000000":{
+			"3595000000": {
 				"-25":{
 					"1": {
 						"0": {
-							"noise_figure_sensor": 46.03993010994134,
+							"noise_figure_sensor": 5.0,
 							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
+							"gain_sensor": 30.0,
 							"gain_preselector": 0,
 							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"5": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"10": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"15": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"20": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"25": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"30": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
+							"1db_compression_sensor": -12.0,
+							"datetime": "2020-11-18T23:13:09.156274Z",
+							"temperature": 20.0
 						}
 					}
 				}
 			},
-			"3605000000":{
+			"3605000000": {
 				"-25":{
 					"1": {
 						"0": {
-							"noise_figure_sensor": 46.03993010994134,
+							"noise_figure_sensor": 5.0,
 							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
+							"gain_sensor": 30.0,
 							"gain_preselector": 0,
 							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"5": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"10": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"15": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"20": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"25": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"30": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
+							"1db_compression_sensor": -12.0,
+							"datetime": "2020-11-18T23:13:09.156274Z",
+							"temperature": 20.0
 						}
 					}
 				}
 			},
-			"3615000000":{
+			"3615000000": {
 				"-25":{
 					"1": {
 						"0": {
-							"noise_figure_sensor": 46.03993010994134,
+							"noise_figure_sensor": 5.0,
 							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
+							"gain_sensor": 30.0,
 							"gain_preselector": 0,
 							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"5": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"10": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"15": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"20": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"25": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"30": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
+							"1db_compression_sensor": -12.0,
+							"datetime": "2020-11-18T23:13:09.156274Z",
+							"temperature": 20.0
 						}
 					}
 				}
 			},
-			"3625000000":{
+			"3625000000": {
 				"-25":{
 					"1": {
 						"0": {
-							"noise_figure_sensor": 46.03993010994134,
+							"noise_figure_sensor": 5.0,
 							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
+							"gain_sensor": 30.0,
 							"gain_preselector": 0,
 							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"5": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"10": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"15": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"20": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"25": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"30": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
+							"1db_compression_sensor": -12.0,
+							"datetime": "2020-11-18T23:13:09.156274Z",
+							"temperature": 20.0
 						}
 					}
 				}
 			},
-			"3635000000":{
+			"3635000000": {
 				"-25":{
 					"1": {
 						"0": {
-							"noise_figure_sensor": 46.03993010994134,
+							"noise_figure_sensor": 5.0,
 							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
+							"gain_sensor": 30.0,
 							"gain_preselector": 0,
 							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"5": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"10": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"15": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"20": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"25": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"30": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
+							"1db_compression_sensor": -12.0,
+							"datetime": "2020-11-18T23:13:09.156274Z",
+							"temperature": 20.0
 						}
 					}
 				}
 			},
-			"3645000000":{
+			"3645000000": {
 				"-25":{
 					"1": {
 						"0": {
-							"noise_figure_sensor": 46.03993010994134,
+							"noise_figure_sensor": 5.0,
 							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
+							"gain_sensor": 30.0,
 							"gain_preselector": 0,
 							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"5": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"10": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"15": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"20": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"25": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"30": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
+							"1db_compression_sensor": -12.0,
+							"datetime": "2020-11-18T23:13:09.156274Z",
+							"temperature": 20.0
 						}
 					}
 				}
 			},
-			"3655000000":{
+			"3655000000": {
 				"-25":{
 					"1": {
 						"0": {
-							"noise_figure_sensor": 46.03993010994134,
+							"noise_figure_sensor": 5.0,
 							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
+							"gain_sensor": 30.0,
 							"gain_preselector": 0,
 							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"5": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"10": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"15": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"20": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"25": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"30": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
+							"1db_compression_sensor": -12.0,
+							"datetime": "2020-11-18T23:13:09.156274Z",
+							"temperature": 20.0
 						}
 					}
 				}
 			},
-			"3665000000":{
+			"3665000000": {
 				"-25":{
 					"1": {
 						"0": {
-							"noise_figure_sensor": 46.03993010994134,
+							"noise_figure_sensor": 5.0,
 							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
+							"gain_sensor": 30.0,
 							"gain_preselector": 0,
 							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"5": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"10": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"15": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"20": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"25": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"30": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
+							"1db_compression_sensor": -12.0,
+							"datetime": "2020-11-18T23:13:09.156274Z",
+							"temperature": 20.0
 						}
 					}
 				}
 			},
-			"3675000000":{
+			"3675000000": {
 				"-25":{
 					"1": {
 						"0": {
-							"noise_figure_sensor": 46.03993010994134,
+							"noise_figure_sensor": 5.0,
 							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
+							"gain_sensor": 30.0,
 							"gain_preselector": 0,
 							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"5": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"10": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"15": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"20": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"25": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"30": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
+							"1db_compression_sensor": -12.0,
+							"datetime": "2020-11-18T23:13:09.156274Z",
+							"temperature": 20.0
 						}
 					}
 				}
 			},
-			"3685000000":{
+			"3685000000": {
 				"-25":{
 					"1": {
 						"0": {
-							"noise_figure_sensor": 46.03993010994134,
+							"noise_figure_sensor": 5.0,
 							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
+							"gain_sensor": 30.0,
 							"gain_preselector": 0,
 							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"5": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"10": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"15": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"20": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"25": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"30": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
+							"1db_compression_sensor": -12.0,
+							"datetime": "2020-11-18T23:13:09.156274Z",
+							"temperature": 20.0
 						}
 					}
 				}
 			},
-			"3695000000":{
+			"3695000000": {
 				"-25":{
 					"1": {
 						"0": {
-							"noise_figure_sensor": 46.03993010994134,
+							"noise_figure_sensor": 5.0,
 							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
+							"gain_sensor": 30.0,
 							"gain_preselector": 0,
 							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"5": {
-							"noise_figure_sensor": 46.03993010994134,
+							"1db_compression_sensor": -12.0,
+							"datetime": "2020-11-18T23:13:09.156274Z",
+							"temperature": 20.0
+						}
+					}
+				}
+			},
+			"3705000000": {
+				"-25":{
+					"1": {
+						"0": {
+							"noise_figure_sensor": 5.0,
 							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
+							"gain_sensor": 30.0,
 							"gain_preselector": 0,
 							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"10": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"15": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"20": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"25": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
-						},
-						"30": {
-							"noise_figure_sensor": 46.03993010994134,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 0.40803345928877379,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0
+							"1db_compression_sensor": -12.0,
+							"datetime": "2020-11-18T23:13:09.156274Z",
+							"temperature": 20.0
 						}
 					}
 				}
 			}
 		}
 	},
-	"clock_rate_lookup_by_sample_rate": [
-		{
-			"sample_rate": 3500000.0,
-			"clock_frequency": 3500000.0
-		},
-		{
-			"sample_rate": 28000000.0,
-			"clock_frequency": 28000000.0
-		}
-	],
+	"clock_rate_lookup_by_sample_rate": [],
 	"calibration_frequency_divisions": [],
-	"sensor_uid": "US55120115"
+	"sensor_uid": "EXAMPLE"
 }
