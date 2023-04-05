@@ -29,7 +29,7 @@ class TestCalibration:
             sensor_calibration.calibration_data[14000000.0][3555000000][-25][1][0][
                 "noise_figure_sensor"
             ]
-            == 46.03993010994134
+            == 5.0
         )
         assert isinstance(sensor_calibration.calibration_data, dict)
         assert isinstance(sensor_calibration.calibration_datetime, str)

@@ -48,7 +48,7 @@ For information on adding actions, see the [SCOS Actions Plugin documentation](h
 
 ## Overview of Repo Structure
 
-- `scos_tekrsa/configs`: Contains sample calibration files and the YAML files with the
+- `scos_tekrsa/configs`: Contains example calibration files and the YAML files with the
 parameters used to initialize the Tektronix RSA supported actions
 - `scos_tekrsa/discover`: Includes the code to read YAML files and make actions
 available to `scos-sensor`

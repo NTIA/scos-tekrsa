@@ -242,13 +242,18 @@ class TekRSASigan(SignalAnalyzerInterface):
         else:
             logger.debug("Tektronix RSA 300 series device has no built-in preamp.")
 
+    @property
+    def temperature(self) -> float:
+        """Read-only attribute: internal temperature, in Celsius."""
+        return self.rsa.DEVICE_GetTemperature()
+
     def acquire_time_domain_samples(
         self,
         num_samples: int,
         num_samples_skip: int = 0,
         retries: int = 5,
-        gain_adjust: bool = True,
-    ) -> dict:
+        cal_adjust: bool = True,
+    ):
         """Acquire specific number of time-domain IQ samples."""
         self._capture_time = None
         if isinstance(num_samples, int) or (
@@ -260,7 +265,7 @@ class TekRSASigan(SignalAnalyzerInterface):
         nskip = int(num_samples_skip)  # Requested number of samples to skip
         nsamps = nsamps_req + nskip  # Total number of samples to collect
 
-        if gain_adjust:
+        if cal_adjust:
             # Get calibration data for acquisition
             if not (settings.RUNNING_TESTS or settings.MOCK_SIGAN):
                 cal_params = sensor_calibration.calibration_parameters
@@ -274,7 +279,7 @@ class TekRSASigan(SignalAnalyzerInterface):
                     "One or more required cal parameters is not a valid sigan setting."
                 )
             logger.debug(f"Matched calibration params: {cal_args}")
-            self.recompute_calibration_data(cal_args)
+            self.recompute_sensor_calibration_data(cal_args)
             # Compute the linear gain
             db_gain = self.sensor_calibration_data["gain_sensor"]
             linear_gain = 10.0 ** (db_gain / 20.0)
