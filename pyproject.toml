@@ -40,7 +40,7 @@ classifiers = [
 dependencies = [
     "environs>=9.5.0",
     "tekrsa-api-wrap>=1.3.1",
-    "scos_actions @ git+https://github.com/NTIA/scos-actions@6.2.0",
+    "scos_actions @ git+https://github.com/NTIA/scos-actions@fix-cal-load-and-add-sensor-def-hash",
 ]
 
 [project.optional-dependencies]
