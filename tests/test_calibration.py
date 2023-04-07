@@ -11,12 +11,12 @@ class TestCalibration:
         )
         assert sigan_calibration is not None
         assert isinstance(sigan_calibration.calibration_data, dict)
-        assert isinstance(sigan_calibration.calibration_datetime, str)
+        assert isinstance(sigan_calibration.last_calibration_datetime, str)
         assert isinstance(sigan_calibration.calibration_parameters, list)
         assert (
-            sigan_calibration.calibration_data[14000000.0][3555000000][-25][1][0][
-                "noise_figure_sigan"
-            ]
+            sigan_calibration.calibration_data["14000000.0"]["3555000000"]["-25"][
+                "true"
+            ]["0"]["noise_figure_sigan"]
             == 46.03993010994134
         )
 
@@ -32,5 +32,5 @@ class TestCalibration:
             == 5.0
         )
         assert isinstance(sensor_calibration.calibration_data, dict)
-        assert isinstance(sensor_calibration.calibration_datetime, str)
+        assert isinstance(sensor_calibration.last_calibration_datetime, str)
         assert isinstance(sensor_calibration.calibration_parameters, list)

@@ -150,18 +150,18 @@ class TestTekRSA:
         with pytest.raises(RuntimeError):
             for i in range(TIMES_TO_FAIL):
                 _ = self.rx.acquire_time_domain_samples(
-                    100, retries=TIMES_TO_FAIL - 1, gain_adjust=False
+                    100, retries=TIMES_TO_FAIL - 1, cal_adjust=False
                 )
 
         # Now enough retries are available, should succeed immediately
-        _ = self.rx.acquire_time_domain_samples(100, retries=0, gain_adjust=False)
+        _ = self.rx.acquire_time_domain_samples(100, retries=0, cal_adjust=False)
 
     def test_acquire_samples(self):
         setattr(self.rx, "iq_bandwidth", max(self.CORRECT_ALLOWED_BW))
 
         # Test non-data measurement result components
         r = self.rx.acquire_time_domain_samples(
-            int(self.rx.iq_bandwidth * 0.001), gain_adjust=False
+            int(self.rx.iq_bandwidth * 0.001), cal_adjust=False
         )
         assert r["frequency"] == self.rx.frequency
         assert r["overload"] == False
@@ -175,7 +175,7 @@ class TestTekRSA:
         old_dev_name = self.rx.device_name
         setattr(self.rx, "device_name", "RSA306B")
         r = self.rx.acquire_time_domain_samples(
-            int(self.rx.iq_bandwidth * 0.001), gain_adjust=False
+            int(self.rx.iq_bandwidth * 0.001), cal_adjust=False
         )
         with pytest.raises(KeyError):
             _ = r["attenuation"]
@@ -186,25 +186,25 @@ class TestTekRSA:
         # Acquire n_samps resulting in integer number of milliseconds
         for duration_ms in [1, 2, 3, 7, 10]:
             n_samps = int(self.rx.iq_bandwidth * duration_ms * 0.001)
-            result = self.rx.acquire_time_domain_samples(n_samps, gain_adjust=False)
+            result = self.rx.acquire_time_domain_samples(n_samps, cal_adjust=False)
             assert len(result["data"]) == n_samps
 
         # Acquire n_samps resulting in non-integer milliseconds
         for duration_ms in [1.1, 2.02, 3.3, 7.007, 10.05]:
             n_samps = int(self.rx.iq_bandwidth * duration_ms * 0.001)
-            result = self.rx.acquire_time_domain_samples(n_samps, gain_adjust=False)
+            result = self.rx.acquire_time_domain_samples(n_samps, cal_adjust=False)
             assert len(result["data"]) == n_samps
 
-        # Calibration data is not loaded, gain_adjust should fail
+        # Calibration data is not loaded, cal_adjust should fail
         with pytest.raises(Exception):
             _ = self.rx.acquire_time_domain_samples(100)
 
         # Non-integer n_samps should fail
         with pytest.raises(ValueError):
-            _ = self.rx.acquire_time_domain_samples(1.01, gain_adjust=False)
+            _ = self.rx.acquire_time_domain_samples(1.01, cal_adjust=False)
 
         # Test with skipping samples
         r = self.rx.acquire_time_domain_samples(
-            int(self.rx.iq_bandwidth * 0.001), 100, gain_adjust=False
+            int(self.rx.iq_bandwidth * 0.001), 100, cal_adjust=False
         )
         assert len(r["data"]) == int(self.rx.iq_bandwidth * 0.001)
