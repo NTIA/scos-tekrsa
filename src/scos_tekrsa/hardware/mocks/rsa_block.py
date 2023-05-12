@@ -5,6 +5,9 @@ from scos_tekrsa.hardware.tekrsa_constants import IQSTREAM_BW_SR_MAP
 
 rng = np.random.default_rng()
 
+# For testing IQ capture retry on failure, this parameter controls the
+# number of times that the mocked IQSTREAM_Tempfile_NoConfig() will fail
+# when run consecutively, before working.
 TIMES_TO_FAIL = 3
 
 # Mock Signal Analyzer Constants

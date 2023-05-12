@@ -147,14 +147,24 @@ class TestTekRSA:
 
     def test_acquire_samples_retry(self):
         # Not enough retries = acquisition should fail
-        with pytest.raises(RuntimeError):
-            for i in range(TIMES_TO_FAIL):
+        # The mocked IQ capture function will fail the first
+        # TIMES_TO_FAIL times it is called consecutively.
+
+        # With retries=0, IQ capture should fail TIMES_TO_FAIL times
+        for i in range(TIMES_TO_FAIL):
+            with pytest.raises(RuntimeError):
                 _ = self.rx.acquire_time_domain_samples(
-                    100, retries=TIMES_TO_FAIL - 1, cal_adjust=False
+                    100, retries=0, cal_adjust=False
                 )
 
-        # Now enough retries are available, should succeed immediately
-        _ = self.rx.acquire_time_domain_samples(100, retries=0, cal_adjust=False)
+        # With retries>TIMES_TO_FAIL, IQ capture should succeed
+        # In this case, IQ capture fails TIMES_TO_FAIL times within
+        # acquire_time_domain_samples, which handles the retry logic until
+        # the IQ acquisition succeeds.
+        self.rx.rsa.set_times_to_fail(TIMES_TO_FAIL)  # Reset times_failed
+        _ = self.rx.acquire_time_domain_samples(
+            100, retries=TIMES_TO_FAIL + 1, cal_adjust=False
+        )
 
     def test_acquire_samples(self):
         setattr(self.rx, "iq_bandwidth", max(self.CORRECT_ALLOWED_BW))
