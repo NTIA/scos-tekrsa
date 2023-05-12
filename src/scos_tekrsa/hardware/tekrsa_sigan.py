@@ -7,6 +7,7 @@ from scos_actions.hardware.sigan_iface import (
     sensor_calibration,
 )
 
+import scos_tekrsa.hardware.tekrsa_constants as rsa_constants
 from scos_tekrsa import settings
 from scos_tekrsa.hardware.mocks.rsa_block import MockRSA
 
@@ -24,49 +25,19 @@ class TekRSASigan(SignalAnalyzerInterface):
             self.rsa = None
             self._is_available = False  # should not be set outside of connect method
 
-            # Allowed sample rates and bandwidth settings, ordered from
-            # greatest to least. SR in samples/sec, BW in Hz.
-            self.ALLOWED_SR = [
-                56.0e6,
-                28.0e6,
-                14.0e6,
-                7.0e6,
-                3.5e6,
-                1.75e6,
-                875.0e3,
-                437.5e3,
-                218.75e3,
-                109.375e3,
-                54687.5,
-                24373.75,
-                13671.875,
-            ]
+            # Retrieve constants applicable to ALL supported devices
+            self.ALLOWED_SR = rsa_constants.IQSTREAM_ALLOWED_SR  # Samps/sec
+            self.ALLOWED_BW = rsa_constants.IQSTREAM_ALLOWED_BW  # Hz
+            self.max_sample_rate = max(self.ALLOWED_SR)
+            self.max_reference_level = rsa_constants.MAX_REFERENCE_LEVEL  # dBm
+            self.min_reference_level = rsa_constants.MIN_REFERENCE_LEVEL  # dBm
+            self.max_attenuation = rsa_constants.MAX_ATTENUATION  # dB
+            self.min_attenuation = rsa_constants.MIN_ATTENUATION  # dB
 
-            self.ALLOWED_BW = [
-                40.0e6,
-                20.0e6,
-                10.0e6,
-                5.0e6,
-                2.5e6,
-                1.25e6,
-                625.0e3,
-                312.5e3,
-                156.25e3,
-                78125.0,
-                39062.5,
-                19531.25,
-                9765.625,
-            ]
+            # SR/BW mapping dict, with SR as keys and BW as values.
+            self.SR_BW_MAP = rsa_constants.IQSTREAM_SR_BW_MAP
 
-            # Use values defined above to create SR/BW mapping dict,
-            # with SR as keys and BW as values.
-            self.SR_BW_MAP = dict(zip(self.ALLOWED_SR, self.ALLOWED_BW))
-
-            self.max_sample_rate = self.ALLOWED_SR[0]
-            self.max_reference_level = 30  # dBm, constant
-            self.min_reference_level = -130  # dBm, constant
-            self.max_attenuation = 51
-            self.min_attenuation = 0
+            # These are device-dependent, set in get_constraints()
             self.max_frequency = None
             self.min_frequency = None
 
@@ -96,7 +67,6 @@ class TekRSASigan(SignalAnalyzerInterface):
             logger.warning("Using mock Tektronix RSA.")
             random = settings.MOCK_SIGAN_RANDOM
             self.rsa = MockRSA(randomize_values=random)
-            self.device_name = "RSA306B"  # Mock sigan pretends to be a 306B
         else:
             try:
                 # Load API wrapper
@@ -106,36 +76,29 @@ class TekRSASigan(SignalAnalyzerInterface):
                 logger.warning("API Wrapper not loaded - disabling signal analyzer.")
                 self._is_available = False
                 raise import_error
-
             try:
                 logger.debug("Initializing ")
                 self.rsa = rsa_api.RSA()
                 # Connect to device using API wrapper
                 self.rsa.DEVICE_SearchAndConnect()
-                self.device_name = self.rsa.DEVICE_GetNomenclature()
-                logger.info("Device Name: " + self.device_name)
-                self.get_constraints()
-                logger.info("Using the following Tektronix RSA device:")
-                logger.info(
-                    self.device_name
-                    + " "
-                    + str(self.min_frequency)
-                    + "-"
-                    + str(self.max_frequency)
-                )
-                # Populate instance variables for parameters on connect
-                self._preamp_enable = self.preamp_enable
-                self._attenuation = self.attenuation
-                self._sample_rate = self.sample_rate  # Also sets self._iq_bandwidth
-                self._frequency = self.frequency
-                self._reference_level = self.reference_level
-
             except Exception as e:
                 self._is_available = False
                 self.device_name = "NONE: Failed to connect to TekRSA"
                 logger.exception("Unable to connect to TEKRSA")
                 raise e
-
+        # Finish setup with either real or Mock RSA device
+        self.device_name = self.rsa.DEVICE_GetNomenclature()
+        self.get_constraints()
+        logger.info("Using the following Tektronix RSA device:")
+        logger.info(
+            f"{self.device_name} ({self.min_frequency}-{self.max_frequency} Hz)"
+        )
+        # Populate instance variables for parameters on connect
+        self._preamp_enable = self.preamp_enable
+        self._attenuation = self.attenuation
+        self._sample_rate = self.sample_rate  # Also sets self._iq_bandwidth
+        self._frequency = self.frequency
+        self._reference_level = self.reference_level
         self._is_available = True
 
     @property
@@ -154,7 +117,7 @@ class TekRSASigan(SignalAnalyzerInterface):
         if sample_rate > self.max_sample_rate:
             err_msg = f"Sample rate {sample_rate} too high. Max sample rate is {self.max_sample_rate}."
             logger.error(err_msg)
-            raise Exception(err_msg)
+            raise ValueError(err_msg)
         if sample_rate not in self.ALLOWED_SR:
             # If requested sample rate is not an allowed value
             allowed_sample_rates_str = ", ".join(map(str, self.ALLOWED_SR))
@@ -169,7 +132,7 @@ class TekRSASigan(SignalAnalyzerInterface):
         bw = self.SR_BW_MAP.get(sample_rate)
         self.rsa.IQSTREAM_SetAcqBandwidth(bw)
         self._iq_bandwidth, self._sample_rate = self.rsa.IQSTREAM_GetAcqParameters()
-        msg = "Set Tektronix RSA sample rate: " + f"{self._sample_rate:.1f} samples/sec"
+        msg = "Set Tektronix RSA sample rate: " + f"{self._sample_rate} samples/sec"
         logger.debug(msg)
 
     @property
@@ -181,7 +144,7 @@ class TekRSASigan(SignalAnalyzerInterface):
     def iq_bandwidth(self, iq_bandwidth):
         """Set the device sample rate and bandwidth by specifying the bandwidth."""
         if iq_bandwidth not in self.ALLOWED_BW:
-            allowed_bandwidths_str = ", ".join(map(str, self.allowed_BW))
+            allowed_bandwidths_str = ", ".join(map(str, self.ALLOWED_BW))
             err_msg = (
                 f"Requested IQ bandwidth {iq_bandwidth} not in allowed bandwidths."
                 + f" Allowed IQ bandwidths are {allowed_bandwidths_str}"
@@ -193,8 +156,8 @@ class TekRSASigan(SignalAnalyzerInterface):
         self._iq_bandwidth, self._sample_rate = self.rsa.IQSTREAM_GetAcqParameters()
         msg = (
             "Set Tektronix RSA IQ Bandwidth: "
-            + f"{self._iq_bandwidth:.1f} Hz, resulting in sample rate: "
-            + f"{self._sample_rate:.1f} samples/sec"
+            + f"{self._iq_bandwidth} Hz, resulting in sample rate: "
+            + f"{self._sample_rate} samples/sec"
         )
         logger.debug(msg)
 
@@ -208,7 +171,7 @@ class TekRSASigan(SignalAnalyzerInterface):
         """Set the device center frequency."""
         self.rsa.CONFIG_SetCenterFreq(freq)
         self._frequency = self.rsa.CONFIG_GetCenterFreq()
-        msg = f"Set Tektronix RSA center frequency: {self._frequency:.1f} Hz"
+        msg = f"Set Tektronix RSA center frequency: {self._frequency} Hz"
         logger.debug(msg)
 
     @property
@@ -221,7 +184,7 @@ class TekRSASigan(SignalAnalyzerInterface):
         """Set the device reference level."""
         self.rsa.CONFIG_SetReferenceLevel(reference_level)
         self._reference_level = self.rsa.CONFIG_GetReferenceLevel()
-        msg = f"Set Tektronix RSA reference level: {self._reference_level:.1f} dBm"
+        msg = f"Set Tektronix RSA reference level: {self._reference_level} dBm"
         logger.debug(msg)
 
     @property
@@ -238,13 +201,19 @@ class TekRSASigan(SignalAnalyzerInterface):
     def attenuation(self, attenuation):
         """Set device attenuation, in dB, for RSA 500/600 series devices"""
         if self.device_name not in ["RSA306B", "RSA306"]:
-            self.rsa.CONFIG_SetAutoAttenuationEnable(False)
-            # API requires attenuation set as a negative number. Convert to negative.
-            self.rsa.CONFIG_SetRFAttenuator(
-                -1 * abs(attenuation)
-            )  # rounded to nearest integer
-            self._attenuation = abs(self.rsa.CONFIG_GetRFAttenuator())
-            logger.debug(f"Set Tektronix RSA attenuation: {self._attenuation:.1} dB")
+            if self.min_attenuation <= abs(attenuation) <= self.max_attenuation:
+                self.rsa.CONFIG_SetAutoAttenuationEnable(False)
+                # API requires attenuation set as a negative number. Convert to negative.
+                self.rsa.CONFIG_SetRFAttenuator(
+                    -1 * abs(attenuation)
+                )  # rounded to nearest integer
+                self._attenuation = abs(self.rsa.CONFIG_GetRFAttenuator())
+                logger.debug(f"Set Tektronix RSA attenuation: {self._attenuation} dB")
+            else:
+                raise ValueError(
+                    f"Attenuation setting must be between {self.min_attenuation}"
+                    + f" and {self.max_attenuation} dB."
+                )
         else:
             logger.debug("Tektronix RSA 300 series device has no attenuator.")
 
@@ -280,20 +249,29 @@ class TekRSASigan(SignalAnalyzerInterface):
 
     def acquire_time_domain_samples(
         self,
-        num_samples,
-        num_samples_skip=0,
-        retries=5,
-        cal_adjust=True,
+        num_samples: int,
+        num_samples_skip: int = 0,
+        retries: int = 5,
+        cal_adjust: bool = True,
     ):
         """Acquire specific number of time-domain IQ samples."""
         self._capture_time = None
-        nsamps_req = int(num_samples)  # Requested number of samples
+        if isinstance(num_samples, int) or (
+            isinstance(num_samples, float) and num_samples.is_integer()
+        ):
+            nsamps_req = int(num_samples)  # Requested number of samples
+        else:
+            raise ValueError("Requested number of samples must be an integer.")
         nskip = int(num_samples_skip)  # Requested number of samples to skip
         nsamps = nsamps_req + nskip  # Total number of samples to collect
 
         if cal_adjust:
             # Get calibration data for acquisition
-            cal_params = sensor_calibration.calibration_parameters
+            if not (settings.RUNNING_TESTS or settings.MOCK_SIGAN):
+                cal_params = sensor_calibration.calibration_parameters
+            else:
+                # Make it work for mock sigan/testing. Just match frequency.
+                cal_params = [vars(self)["_frequency"]]
             try:
                 cal_args = [vars(self)[f"_{p}"] for p in cal_params]
             except KeyError:
@@ -330,7 +308,7 @@ class TekRSASigan(SignalAnalyzerInterface):
             with sigan_lock:
                 data, status = self.rsa.IQSTREAM_Tempfile_NoConfig(durationMsec, True)
 
-            data = data[nskip:]  # Remove extra samples, if any
+            data = data[nskip : nskip + nsamps_req]  # Remove extra samples, if any
             data_len = len(data)
 
             logger.debug(f"IQ Stream status: {status}")

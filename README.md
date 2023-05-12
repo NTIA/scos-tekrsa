@@ -1,13 +1,25 @@
 # NTIA/ITS SCOS Tektronix® RSA Plugin
 
-![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/NTIA/scos-tekrsa?display_name=tag&sort=semver)
-![GitHub all releases](https://img.shields.io/github/downloads/NTIA/scos-tekrsa/total)
-![GitHub issues](https://img.shields.io/github/issues/NTIA/scos-tekrsa)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![GitHub release (latest SemVer)][latest-release-semver-badge]][github-releases]
+[![GitHub Actions Test Status][github-actions-test-badge]][github-actions-tox-link]
+[![GitHub all releases][github-download-count-badge]][github-releases]
+[![GitHub issues][github-issue-count-badge]][github-issues]
+[![Code style: black][code-style-badge]][code-style-repo]
+
+[NTIA/ITS]: https://its.ntia.gov/
+[github-actions-tox-link]: https://github.com/NTIA/scos-tekrsa/actions/workflows/tox.yaml
+[github-actions-test-badge]: https://github.com/NTIA/scos-tekrsa/actions/workflows/tox.yaml/badge.svg
+[code-style-badge]: https://img.shields.io/badge/code%20style-black-000000.svg
+[code-style-repo]: https://github.com/psf/black
+[latest-release-semver-badge]: https://img.shields.io/github/v/release/NTIA/scos-tekrsa?display_name=tag&sort=semver
+[github-releases]: https://github.com/NTIA/scos-tekrsa/releases
+[github-download-count-badge]: https://img.shields.io/github/downloads/NTIA/scos-tekrsa/total
+[github-issue-count-badge]: https://img.shields.io/github/issues/NTIA/scos-tekrsa
+[github-issues]: https://github.com/NTIA/scos-tekrsa/issues
 
 This repository is a plugin to add support for the Tektronix RSA306, RSA306B, RSA503A,
 RSA507A, RSA513A, RSA518A, RSA603A, and RSA607A real-time spectrum analyzers to
-SCOS Sensor. See the
+SCOS Sensor, developed by [NTIA/ITS]. See the
 [SCOS Sensor documentation](https://github.com/NTIA/scos-sensor/blob/master/README.md)
 for more information about SCOS Sensor, especially the section about
 [Actions and Hardware Support](https://github.com/NTIA/scos-sensor/blob/master/README.md#actions-and-hardware-support).
@@ -77,7 +89,7 @@ file:
 1. In the newly-created `env` file, set the `BASE_IMAGE`:
 
     ```text
-    BASE_IMAGE=ghcr.io/ntia/scos-tekrsa/tekrsa_usb:0.2.1
+    BASE_IMAGE=ghcr.io/ntia/scos-tekrsa/tekrsa_usb:latest
     ```
 
 1. Get environment variables:
@@ -90,7 +102,7 @@ file:
 (such as `scos_usrp`), then add the `scos_tekrsa` dependency:
 
     ```text
-    scos_tekrsa @ git+https://github.com/NTIA/scos-tekrsa@1.0.1
+    scos_tekrsa @ git+https://github.com/NTIA/scos-tekrsa@3.0.1
     ```
 
 1. Compile requirements by running:
@@ -183,20 +195,13 @@ docker push ghcr.io/ntia/scos-tekrsa/tekrsa_usb:X.X.X
 
 ### Running Tests
 
-A Docker container is used for testing the `tekrsa_usb` base image provided in this
-repository. [Install Docker](https://docs.docker.com/get-docker/) in order to run tests.
+The `scos_tekrsa` plugin is tested using [`tox`](https://tox.wiki/en/latest/) and the [`pytest`](https://docs.pytest.org/en/7.1.x/)
+framework. The following commands can be used to run tests and show coverage reports.
 
 ```bash
-docker build -f docker/Dockerfile-test -t rsa_test .
-docker run rsa_test
-```
-
-The `scos_tekrsa` plugin is tested using the [`pytest`](https://docs.pytest.org/en/7.1.x/)
-framework. Run tests, and view test coverage, by running the following command from the
-top-level directory of this repository.
-
-```bash
-pytest --cov
+pytest          # faster, but less thorough
+tox             # test code in virtual environments for multiple versions of Python
+tox --recreate  # To recreate the virtual environments used for testing
 ```
 
 ## License
