@@ -1,5 +1,5 @@
 single_frequency_time_domain_iq:
-  name: test_single_freq_iq
+  name: Example_Single_IQ
   frequency: 3555e6
   reference_level: -25
   attenuation: 0

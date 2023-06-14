@@ -1,5 +1,5 @@
 stepped_frequency_time_domain_iq:
-  name: test_stepped_freq_iq
+  name: Example_Stepped_IQ
   frequency:
     - 3555e6
     - 3565e6

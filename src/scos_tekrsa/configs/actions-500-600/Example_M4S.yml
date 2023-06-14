@@ -1,5 +1,5 @@
 single_frequency_fft:
-  name: test_m4s_action
+  name: Example_M4S
   frequency: 3595e6
   attenuation: 0
   reference_level: -25
