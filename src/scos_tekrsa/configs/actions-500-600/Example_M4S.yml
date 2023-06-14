@@ -10,3 +10,4 @@ single_frequency_fft:
   nskip: 0
   calibration_adjust: True
   classification: UNCLASSIFIED
+  rf_path: antenna

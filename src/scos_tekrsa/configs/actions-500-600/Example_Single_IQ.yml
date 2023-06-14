@@ -9,3 +9,4 @@ single_frequency_time_domain_iq:
   nskip: 0
   classification: UNCLASSIFIED
   calibration_adjust: True
+  rf_path: antenna
