@@ -1,0 +1,14 @@
+stepped_frequency_time_domain_iq:
+  name: test_stepped_freq_iq
+  frequency:
+    - 3555e6
+    - 3565e6
+    - 3575e6
+  attenuation: 0
+  reference_level: -25
+  preamp_enable: True
+  sample_rate: 14e6
+  duration_ms: 100
+  nskip: 0
+  calibration_adjust: True
+  classification: UNCLASSIFIED

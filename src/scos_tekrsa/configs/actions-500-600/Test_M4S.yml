@@ -1,0 +1,12 @@
+single_frequency_fft:
+  name: test_m4s_action
+  frequency: 3595e6
+  attenuation: 0
+  reference_level: -25
+  preamp_enable: True
+  sample_rate: 14e6
+  fft_size: 875
+  nffts: 1600
+  nskip: 0
+  calibration_adjust: True
+  classification: UNCLASSIFIED

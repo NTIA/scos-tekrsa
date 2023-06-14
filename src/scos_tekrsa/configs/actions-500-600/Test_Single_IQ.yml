@@ -1,0 +1,11 @@
+single_frequency_time_domain_iq:
+  name: test_single_freq_iq
+  frequency: 3555e6
+  reference_level: -25
+  attenuation: 0
+  preamp_enable: True
+  sample_rate: 14e6
+  duration_ms: 100
+  nskip: 0
+  classification: UNCLASSIFIED
+  calibration_adjust: True
