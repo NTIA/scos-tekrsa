@@ -6,20 +6,18 @@
 		"preamp_enable",
 		"attenuation"
 	],
-	"last_calibration_datetime": "2020-11-18T23:13:09.156274Z",
+	"last_calibration_datetime": "1970-01-01T00:00:00.000000Z",
 	"calibration_data": {
 		"14000000.0":{
 			"3545000000": {
 				"-25":{
 					"true": {
 						"0": {
-							"noise_figure_sensor": 5.0,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 30.0,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0,
-							"datetime": "2020-11-18T23:13:09.156274Z",
+							"datetime": "1970-01-01T00:00:00.000000Z",
+							"gain": 30.0,
+							"noise_figure": 5.0,
+							"1db_compression_point": -12.0,
+							"enbw": 15723428.858731967,
 							"temperature": 20.0
 						}
 					}
@@ -29,13 +27,11 @@
 				"-25":{
 					"true": {
 						"0": {
-							"noise_figure_sensor": 5.0,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 30.0,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0,
-							"datetime": "2020-11-18T23:13:09.156274Z",
+							"datetime": "1970-01-01T00:00:00.000000Z",
+							"gain": 30.0,
+							"noise_figure": 5.0,
+							"1db_compression_point": -12.0,
+							"enbw": 15723428.858731967,
 							"temperature": 20.0
 						}
 					}
@@ -45,13 +41,11 @@
 				"-25":{
 					"true": {
 						"0": {
-							"noise_figure_sensor": 5.0,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 30.0,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0,
-							"datetime": "2020-11-18T23:13:09.156274Z",
+							"datetime": "1970-01-01T00:00:00.000000Z",
+							"gain": 30.0,
+							"noise_figure": 5.0,
+							"1db_compression_point": -12.0,
+							"enbw": 15723428.858731967,
 							"temperature": 20.0
 						}
 					}
@@ -61,13 +55,11 @@
 				"-25":{
 					"true": {
 						"0": {
-							"noise_figure_sensor": 5.0,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 30.0,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0,
-							"datetime": "2020-11-18T23:13:09.156274Z",
+							"datetime": "1970-01-01T00:00:00.000000Z",
+							"gain": 30.0,
+							"noise_figure": 5.0,
+							"1db_compression_point": -12.0,
+							"enbw": 15723428.858731967,
 							"temperature": 20.0
 						}
 					}
@@ -77,13 +69,11 @@
 				"-25":{
 					"true": {
 						"0": {
-							"noise_figure_sensor": 5.0,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 30.0,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0,
-							"datetime": "2020-11-18T23:13:09.156274Z",
+							"datetime": "1970-01-01T00:00:00.000000Z",
+							"gain": 30.0,
+							"noise_figure": 5.0,
+							"1db_compression_point": -12.0,
+							"enbw": 15723428.858731967,
 							"temperature": 20.0
 						}
 					}
@@ -93,13 +83,11 @@
 				"-25":{
 					"true": {
 						"0": {
-							"noise_figure_sensor": 5.0,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 30.0,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0,
-							"datetime": "2020-11-18T23:13:09.156274Z",
+							"datetime": "1970-01-01T00:00:00.000000Z",
+							"gain": 30.0,
+							"noise_figure": 5.0,
+							"1db_compression_point": -12.0,
+							"enbw": 15723428.858731967,
 							"temperature": 20.0
 						}
 					}
@@ -109,13 +97,11 @@
 				"-25":{
 					"true": {
 						"0": {
-							"noise_figure_sensor": 5.0,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 30.0,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0,
-							"datetime": "2020-11-18T23:13:09.156274Z",
+							"datetime": "1970-01-01T00:00:00.000000Z",
+							"gain": 30.0,
+							"noise_figure": 5.0,
+							"1db_compression_point": -12.0,
+							"enbw": 15723428.858731967,
 							"temperature": 20.0
 						}
 					}
@@ -125,13 +111,11 @@
 				"-25":{
 					"true": {
 						"0": {
-							"noise_figure_sensor": 5.0,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 30.0,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0,
-							"datetime": "2020-11-18T23:13:09.156274Z",
+							"datetime": "1970-01-01T00:00:00.000000Z",
+							"gain": 30.0,
+							"noise_figure": 5.0,
+							"1db_compression_point": -12.0,
+							"enbw": 15723428.858731967,
 							"temperature": 20.0
 						}
 					}
@@ -141,13 +125,11 @@
 				"-25":{
 					"true": {
 						"0": {
-							"noise_figure_sensor": 5.0,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 30.0,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0,
-							"datetime": "2020-11-18T23:13:09.156274Z",
+							"datetime": "1970-01-01T00:00:00.000000Z",
+							"gain": 30.0,
+							"noise_figure": 5.0,
+							"1db_compression_point": -12.0,
+							"enbw": 15723428.858731967,
 							"temperature": 20.0
 						}
 					}
@@ -157,13 +139,11 @@
 				"-25":{
 					"true": {
 						"0": {
-							"noise_figure_sensor": 5.0,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 30.0,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0,
-							"datetime": "2020-11-18T23:13:09.156274Z",
+							"datetime": "1970-01-01T00:00:00.000000Z",
+							"gain": 30.0,
+							"noise_figure": 5.0,
+							"1db_compression_point": -12.0,
+							"enbw": 15723428.858731967,
 							"temperature": 20.0
 						}
 					}
@@ -173,13 +153,11 @@
 				"-25":{
 					"true": {
 						"0": {
-							"noise_figure_sensor": 5.0,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 30.0,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0,
-							"datetime": "2020-11-18T23:13:09.156274Z",
+							"datetime": "1970-01-01T00:00:00.000000Z",
+							"gain": 30.0,
+							"noise_figure": 5.0,
+							"1db_compression_point": -12.0,
+							"enbw": 15723428.858731967,
 							"temperature": 20.0
 						}
 					}
@@ -189,13 +167,11 @@
 				"-25":{
 					"true": {
 						"0": {
-							"noise_figure_sensor": 5.0,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 30.0,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0,
-							"datetime": "2020-11-18T23:13:09.156274Z",
+							"datetime": "1970-01-01T00:00:00.000000Z",
+							"gain": 30.0,
+							"noise_figure": 5.0,
+							"1db_compression_point": -12.0,
+							"enbw": 15723428.858731967,
 							"temperature": 20.0
 						}
 					}
@@ -205,13 +181,11 @@
 				"-25":{
 					"true": {
 						"0": {
-							"noise_figure_sensor": 5.0,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 30.0,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0,
-							"datetime": "2020-11-18T23:13:09.156274Z",
+							"datetime": "1970-01-01T00:00:00.000000Z",
+							"gain": 30.0,
+							"noise_figure": 5.0,
+							"1db_compression_point": -12.0,
+							"enbw": 15723428.858731967,
 							"temperature": 20.0
 						}
 					}
@@ -221,13 +195,11 @@
 				"-25":{
 					"true": {
 						"0": {
-							"noise_figure_sensor": 5.0,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 30.0,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0,
-							"datetime": "2020-11-18T23:13:09.156274Z",
+							"datetime": "1970-01-01T00:00:00.000000Z",
+							"gain": 30.0,
+							"noise_figure": 5.0,
+							"1db_compression_point": -12.0,
+							"enbw": 15723428.858731967,
 							"temperature": 20.0
 						}
 					}
@@ -237,13 +209,11 @@
 				"-25":{
 					"true": {
 						"0": {
-							"noise_figure_sensor": 5.0,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 30.0,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0,
-							"datetime": "2020-11-18T23:13:09.156274Z",
+							"datetime": "1970-01-01T00:00:00.000000Z",
+							"gain": 30.0,
+							"noise_figure": 5.0,
+							"1db_compression_point": -12.0,
+							"enbw": 15723428.858731967,
 							"temperature": 20.0
 						}
 					}
@@ -253,13 +223,11 @@
 				"-25":{
 					"true": {
 						"0": {
-							"noise_figure_sensor": 5.0,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 30.0,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0,
-							"datetime": "2020-11-18T23:13:09.156274Z",
+							"datetime": "1970-01-01T00:00:00.000000Z",
+							"gain": 30.0,
+							"noise_figure": 5.0,
+							"1db_compression_point": -12.0,
+							"enbw": 15723428.858731967,
 							"temperature": 20.0
 						}
 					}
@@ -269,13 +237,11 @@
 				"-25":{
 					"true": {
 						"0": {
-							"noise_figure_sensor": 5.0,
-							"enbw_sensor": 15723428.858731967,
-							"gain_sensor": 30.0,
-							"gain_preselector": 0,
-							"noise_figure_preselector": 0,
-							"1db_compression_sensor": -12.0,
-							"datetime": "2020-11-18T23:13:09.156274Z",
+							"datetime": "1970-01-01T00:00:00.000000Z",
+							"gain": 30.0,
+							"noise_figure": 5.0,
+							"1db_compression_point": -12.0,
+							"enbw": 15723428.858731967,
 							"temperature": 20.0
 						}
 					}
