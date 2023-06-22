@@ -281,7 +281,7 @@ class TekRSASigan(SignalAnalyzerInterface):
             logger.debug(f"Matched calibration params: {cal_args}")
             self.recompute_sensor_calibration_data(cal_args)
             # Compute the linear gain
-            db_gain = self.sensor_calibration_data["gain_sensor"]
+            db_gain = self.sensor_calibration_data["gain"]
             linear_gain = 10.0 ** (db_gain / 20.0)
         else:
             linear_gain = 1

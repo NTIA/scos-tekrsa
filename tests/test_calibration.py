@@ -16,8 +16,8 @@ class TestCalibration:
         assert (
             sigan_calibration.calibration_data["14000000.0"]["3555000000"]["-25"][
                 "true"
-            ]["0"]["noise_figure_sigan"]
-            == 46.03993010994134
+            ]["0"]["noise_figure"]
+            == 5.0
         )
 
     def test_sensor_calibration(self):
@@ -28,7 +28,7 @@ class TestCalibration:
         assert (
             sensor_calibration.calibration_data["14000000.0"]["3555000000"]["-25"][
                 "true"
-            ]["0"]["noise_figure_sensor"]
+            ]["0"]["noise_figure"]
             == 5.0
         )
         assert isinstance(sensor_calibration.calibration_data, dict)
