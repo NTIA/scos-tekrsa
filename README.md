@@ -212,7 +212,7 @@ TEKTRONIX and TEK are registered trademarks of Tektronix, Inc.
 
 ## Contact
 
-For technical questions about `scos_tekrsa`, contact Anthony Romaniello, aromaniello@ntia.gov
+For technical questions about `scos_tekrsa`, contact Anthony Romaniello, <aromaniello@ntia.gov>
 
 ## Disclaimer
 
