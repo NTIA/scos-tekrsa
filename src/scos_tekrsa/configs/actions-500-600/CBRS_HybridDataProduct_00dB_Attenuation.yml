@@ -1,4 +1,4 @@
-nasctn_sea_data_product:
+hybrid_sea_data_product:
   name: CBRS_HybridDataProduct_00dB_Attenuation
   rf_path: antenna
 # IIR filter settings
