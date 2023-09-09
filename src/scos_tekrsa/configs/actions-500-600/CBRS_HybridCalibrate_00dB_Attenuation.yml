@@ -9,7 +9,22 @@ hybrid_y_factor_cal:
   preamp_enable: True
   reference_level: -25
   attenuation: 0
-  sample_rate: 14e6
+  sample_rate:
+    - 14e6
+    - 14e6
+    - 14e6
+    - 14e6
+    - 14e6
+    - 14e6
+    - 14e6
+    - 14e6
+    - 14e6
+    - 14e6
+    - 14e6
+    - 14e6
+    - 14e6
+    - 56e6
+    - 56e6
   duration_ms: 1000
   nskip: 0
   frequency:
