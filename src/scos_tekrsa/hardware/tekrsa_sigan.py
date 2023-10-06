@@ -13,6 +13,8 @@ from scos_tekrsa.hardware.mocks.rsa_block import MockRSA
 
 logger = logging.getLogger(__name__)
 
+sigan_lock = threading.Lock()
+
 
 class TekRSASigan(SignalAnalyzerInterface):
     def __init__(self):
@@ -253,8 +255,7 @@ class TekRSASigan(SignalAnalyzerInterface):
         cal_adjust: bool = True,
     ):
         """Acquire specific number of time-domain IQ samples."""
-        iq_capture_lock = threading.Lock()
-        with iq_capture_lock:
+        with sigan_lock:
             self._capture_time = None
             if isinstance(num_samples, int) or (
                 isinstance(num_samples, float) and num_samples.is_integer()
