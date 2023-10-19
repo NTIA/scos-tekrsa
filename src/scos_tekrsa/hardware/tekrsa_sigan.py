@@ -8,7 +8,7 @@ from scos_actions.hardware.sigan_iface import (
 )
 
 import scos_tekrsa.hardware.tekrsa_constants as rsa_constants
-from scos_tekrsa import __version__ as SCOS_TEKRSA_PLUGIN_VERSION
+from scos_tekrsa import __version__ as SCOS_TEKRSA_VERSION
 from scos_tekrsa import settings
 from scos_tekrsa.hardware.mocks.rsa_block import MockRSA
 
@@ -22,7 +22,7 @@ class TekRSASigan(SignalAnalyzerInterface):
         try:
             super().__init__()
             logger.info("Initializing Tektronix RSA Signal Analyzer")
-            self.plugin_version = SCOS_TEKRSA_PLUGIN_VERSION
+            self._plugin_version = SCOS_TEKRSA_VERSION
 
             self.rsa = None
             self._is_available = False  # should not be set outside of connect method
@@ -107,6 +107,11 @@ class TekRSASigan(SignalAnalyzerInterface):
     def is_available(self):
         """Returns True if initialized and ready for measurements"""
         return self._is_available
+
+    @property
+    def plugin_version(self):
+        """Returns the current version of scos-tekrsa."""
+        return self._plugin_version
 
     @property
     def sample_rate(self):
