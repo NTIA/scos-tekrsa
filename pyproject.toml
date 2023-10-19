@@ -41,7 +41,7 @@ classifiers = [
 dependencies = [
     "environs>=9.5.0",
     "tekrsa-api-wrap>=1.3.2",
-    "scos_actions @ git+https://github.com/NTIA/scos-actions@6.4.0",
+    "scos_actions @ git+https://github.com/NTIA/scos-actions@add-sea-action-cui-markings",
 ]
 
 [project.optional-dependencies]
