@@ -8,6 +8,7 @@ from scos_actions.hardware.sigan_iface import (
 )
 
 import scos_tekrsa.hardware.tekrsa_constants as rsa_constants
+from scos_tekrsa import __version__ as SCOS_TEKRSA_VERSION
 from scos_tekrsa import settings
 from scos_tekrsa.hardware.mocks.rsa_block import MockRSA
 
@@ -21,6 +22,7 @@ class TekRSASigan(SignalAnalyzerInterface):
         try:
             super().__init__()
             logger.info("Initializing Tektronix RSA Signal Analyzer")
+            self._plugin_version = SCOS_TEKRSA_VERSION
 
             self.rsa = None
             self._is_available = False  # should not be set outside of connect method
@@ -105,6 +107,11 @@ class TekRSASigan(SignalAnalyzerInterface):
     def is_available(self):
         """Returns True if initialized and ready for measurements"""
         return self._is_available
+
+    @property
+    def plugin_version(self):
+        """Returns the current version of scos-tekrsa."""
+        return self._plugin_version
 
     @property
     def sample_rate(self):
@@ -255,109 +262,112 @@ class TekRSASigan(SignalAnalyzerInterface):
         cal_adjust: bool = True,
     ):
         """Acquire specific number of time-domain IQ samples."""
-        self._capture_time = None
-        if isinstance(num_samples, int) or (
-            isinstance(num_samples, float) and num_samples.is_integer()
-        ):
-            nsamps_req = int(num_samples)  # Requested number of samples
-        else:
-            raise ValueError("Requested number of samples must be an integer.")
-        nskip = int(num_samples_skip)  # Requested number of samples to skip
-        nsamps = nsamps_req + nskip  # Total number of samples to collect
-
-        if cal_adjust:
-            # Get calibration data for acquisition
-            if not (settings.RUNNING_TESTS or settings.MOCK_SIGAN):
-                cal_params = sensor_calibration.calibration_parameters
+        with sigan_lock:
+            self._capture_time = None
+            if isinstance(num_samples, int) or (
+                isinstance(num_samples, float) and num_samples.is_integer()
+            ):
+                nsamps_req = int(num_samples)  # Requested number of samples
             else:
-                # Make it work for mock sigan/testing. Just match frequency.
-                cal_params = [vars(self)["_frequency"]]
-            try:
-                cal_args = [vars(self)[f"_{p}"] for p in cal_params]
-            except KeyError:
-                raise Exception(
-                    "One or more required cal parameters is not a valid sigan setting."
-                )
-            logger.debug(f"Matched calibration params: {cal_args}")
-            self.recompute_sensor_calibration_data(cal_args)
-            # Compute the linear gain
-            db_gain = self.sensor_calibration_data["gain"]
-            linear_gain = 10.0 ** (db_gain / 20.0)
-        else:
-            linear_gain = 1
+                raise ValueError("Requested number of samples must be an integer.")
+            nskip = int(num_samples_skip)  # Requested number of samples to skip
+            nsamps = nsamps_req + nskip  # Total number of samples to collect
 
-        # Determine correct time length (round up, integer ms)
-        durationMsec = int(1000 * (nsamps / self.sample_rate)) + (
-            1000 * nsamps % self.sample_rate > 0
-        )
-
-        if durationMsec == 0:
-            # Num. samples requested is less than minimum duration for IQ stream.
-            # Handle this by skipping more samples than requested
-            durationMsec = 1  # Minimum allowed IQ stream duration
-            nskip = int((self.sample_rate / 1000) - nsamps_req)
-            nsamps = nskip + nsamps_req
-
-        logger.debug(f"acquire_time_domain_samples starting, num_samples = {nsamps}")
-        logger.debug(f"Number of retries = {retries}")
-
-        max_retries = retries
-
-        while True:
-            self._capture_time = utils.get_datetime_str_now()
-            with sigan_lock:
-                data, status = self.rsa.IQSTREAM_Tempfile_NoConfig(durationMsec, True)
-
-            data = data[nskip : nskip + nsamps_req]  # Remove extra samples, if any
-            data_len = len(data)
-
-            logger.debug(f"IQ Stream status: {status}")
-
-            # Check status string for overload / data loss
-            self.overload = False
-            if "Input overrange" in status:
-                self.overload = True
-                logger.warning("IQ stream: ADC overrange event occurred.")
-
-            if "data loss" in status or "discontinuity" in status:  # Invalid data
-                if retries > 0:
-                    logger.warning(
-                        f"Data loss occurred during IQ streaming. Retrying {retries} more times."
+            if cal_adjust:
+                # Get calibration data for acquisition
+                if not (settings.RUNNING_TESTS or settings.MOCK_SIGAN):
+                    cal_params = sensor_calibration.calibration_parameters
+                else:
+                    # Make it work for mock sigan/testing. Just match frequency.
+                    cal_params = [vars(self)["_frequency"]]
+                try:
+                    cal_args = [vars(self)[f"_{p}"] for p in cal_params]
+                except KeyError:
+                    raise Exception(
+                        "One or more required cal parameters is not a valid sigan setting."
                     )
-                    retries -= 1
-                    continue
-                else:
-                    err = "Data loss occurred with no retries remaining."
-                    err += f" (tried {max_retries} times.)"
-                    raise RuntimeError(err)
-            elif (
-                not data_len == nsamps_req
-            ):  # Invalid data: incorrect number of samples
-                if retries > 0:
-                    msg = f"RSA error: requested {nsamps_req + nskip} samples, but got {data_len}."
-                    logger.warning(msg)
-                    logger.warning(f"Retrying {retries} more times.")
-                    retries -= 1
-                    continue
-                else:
-                    err = "Failed to acquire correct number of samples "
-                    err += f"{max_retries} times in a row."
-                    raise RuntimeError(err)
+                logger.debug(f"Matched calibration params: {cal_args}")
+                self.recompute_sensor_calibration_data(cal_args)
+                # Compute the linear gain
+                db_gain = self.sensor_calibration_data["gain"]
+                linear_gain = 10.0 ** (db_gain / 20.0)
             else:
-                logger.debug(f"IQ stream: successfully acquired {data_len} samples.")
-                # Scale data to RF power and return
-                logger.debug(f"Applying gain of {linear_gain}")
-                data /= linear_gain
+                linear_gain = 1
 
-                measurement_result = {
-                    "data": data,
-                    "overload": self.overload,
-                    "frequency": self.frequency,
-                    "reference_level": self.reference_level,
-                    "sample_rate": self.rsa.IQSTREAM_GetAcqParameters()[1],
-                    "capture_time": self._capture_time,
-                }
-                if self.device_name not in ["RSA306B", "RSA306"]:
-                    measurement_result["attenuation"] = self.attenuation
-                    measurement_result["preamp_enable"] = self.preamp_enable
-                return measurement_result
+            # Determine correct time length (round up, integer ms)
+            durationMsec = int(1000 * (nsamps / self.sample_rate)) + (
+                1000 * nsamps % self.sample_rate > 0
+            )
+
+            if durationMsec == 0:
+                # Num. samples requested is less than minimum duration for IQ stream.
+                # Handle this by skipping more samples than requested
+                durationMsec = 1  # Minimum allowed IQ stream duration
+                nskip = int((self.sample_rate / 1000) - nsamps_req)
+                nsamps = nskip + nsamps_req
+
+            logger.debug(
+                f"acquire_time_domain_samples starting, num_samples = {nsamps}"
+            )
+            logger.debug(f"Number of retries = {retries}")
+
+            max_retries = retries
+
+            while True:
+                self._capture_time = utils.get_datetime_str_now()
+                data, status = self.rsa.IQSTREAM_Tempfile_NoConfig(durationMsec, True)
+                data = data[nskip : nskip + nsamps_req]  # Remove extra samples, if any
+                data_len = len(data)
+
+                logger.debug(f"IQ Stream status: {status}")
+
+                # Check status string for overload / data loss
+                self.overload = False
+                if "Input overrange" in status:
+                    self.overload = True
+                    logger.warning("IQ stream: ADC overrange event occurred.")
+
+                if "data loss" in status or "discontinuity" in status:  # Invalid data
+                    if retries > 0:
+                        logger.warning(
+                            f"Data loss occurred during IQ streaming. Retrying {retries} more times."
+                        )
+                        retries -= 1
+                        continue
+                    else:
+                        err = "Data loss occurred with no retries remaining."
+                        err += f" (tried {max_retries} times.)"
+                        raise RuntimeError(err)
+                elif (
+                    not data_len == nsamps_req
+                ):  # Invalid data: incorrect number of samples
+                    if retries > 0:
+                        msg = f"RSA error: requested {nsamps_req + nskip} samples, but got {data_len}."
+                        logger.warning(msg)
+                        logger.warning(f"Retrying {retries} more times.")
+                        retries -= 1
+                        continue
+                    else:
+                        err = "Failed to acquire correct number of samples "
+                        err += f"{max_retries} times in a row."
+                        raise RuntimeError(err)
+                else:
+                    logger.debug(
+                        f"IQ stream: successfully acquired {data_len} samples."
+                    )
+                    # Scale data to RF power and return
+                    logger.debug(f"Applying gain of {linear_gain}")
+                    data /= linear_gain
+
+                    measurement_result = {
+                        "data": data,
+                        "overload": self.overload,
+                        "frequency": self.frequency,
+                        "reference_level": self.reference_level,
+                        "sample_rate": self.rsa.IQSTREAM_GetAcqParameters()[1],
+                        "capture_time": self._capture_time,
+                    }
+                    if self.device_name not in ["RSA306B", "RSA306"]:
+                        measurement_result["attenuation"] = self.attenuation
+                        measurement_result["preamp_enable"] = self.preamp_enable
+                    return measurement_result
