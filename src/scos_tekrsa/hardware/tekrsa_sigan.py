@@ -49,7 +49,9 @@ class TekRSASigan(SignalAnalyzerInterface):
             self.connect()
 
         except Exception as error:
-            logger.error(f"Unable to initialize sigan: {error}.\nAttempting to power cycle and reconnect...")
+            logger.error(
+                f"Unable to initialize sigan: {error}.\nAttempting to power cycle and reconnect..."
+            )
             self.power_cycle_and_connect()
 
     def get_constraints(self):

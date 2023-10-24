@@ -25,7 +25,9 @@ if sigan:
     ]:
         ACTION_DEFINITIONS_DIR = CONFIG_DIR / "actions-500-600"
     else:
-        logger.error("Unable to determine RSA model. Defaulting to use RSA500/600 action configs")
+        logger.error(
+            "Unable to determine RSA model. Defaulting to use RSA500/600 action configs"
+        )
         ACTION_DEFINITIONS_DIR = CONFIG_DIR / "actions-500-600"
     logger.debug(f"Action configs directory: {ACTION_DEFINITIONS_DIR}")
     actions["monitor_tekrsa"] = MonitorSignalAnalyzer(
