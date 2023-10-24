@@ -6,7 +6,7 @@ from scos_tekrsa.hardware.tekrsa_sigan import TekRSASigan
 
 logger = logging.getLogger(__name__)
 try:
-    logger.info(
+    logger.debug(
         "*********************Creating TekRSASigan******************************"
     )
     sigan = TekRSASigan()
