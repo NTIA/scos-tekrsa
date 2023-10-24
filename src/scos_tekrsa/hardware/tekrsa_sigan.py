@@ -49,7 +49,7 @@ class TekRSASigan(SignalAnalyzerInterface):
             self.connect()
 
         except Exception as error:
-            logger.error(f"Unable to initialize sigan: {error}")
+            logger.error(f"Unable to initialize sigan: {error}.\nAttempting to power cycle and reconnect...")
             self.power_cycle_and_connect()
 
     def get_constraints(self):
@@ -66,7 +66,7 @@ class TekRSASigan(SignalAnalyzerInterface):
 
         if settings.RUNNING_TESTS or settings.MOCK_SIGAN:
             # Mock signal analyzer if desired
-            logger.warning("Using mock Tektronix RSA.")
+            logger.warning("Using mock Tektronix RSA signal analyzer.")
             random = settings.MOCK_SIGAN_RANDOM
             self.rsa = MockRSA(randomize_values=random)
         else:
@@ -75,7 +75,7 @@ class TekRSASigan(SignalAnalyzerInterface):
                 logger.debug("Loading RSA API wrapper")
                 import rsa_api
             except ImportError as import_error:
-                logger.warning("API Wrapper not loaded - disabling signal analyzer.")
+                logger.exception("API Wrapper not loaded - disabling signal analyzer.")
                 self._is_available = False
                 raise import_error
             try:
