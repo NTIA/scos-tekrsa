@@ -327,7 +327,7 @@ class TekRSASigan(SignalAnalyzerInterface):
                 self.overload = False
                 if "Input overrange" in status:
                     self.overload = True
-                    logger.info("IQ stream: ADC overrange event occurred.")
+                    logger.debug("IQ stream: ADC overrange event occurred.")
 
                 if "data loss" in status or "discontinuity" in status:  # Invalid data
                     if retries > 0:
