@@ -21,7 +21,7 @@ class TekRSASigan(SignalAnalyzerInterface):
     def __init__(self):
         try:
             super().__init__()
-            logger.info("Initializing Tektronix RSA Signal Analyzer")
+            logger.debug("Initializing Tektronix RSA Signal Analyzer")
             self._plugin_version = SCOS_TEKRSA_VERSION
 
             self.rsa = None
@@ -49,7 +49,9 @@ class TekRSASigan(SignalAnalyzerInterface):
             self.connect()
 
         except Exception as error:
-            logger.error(f"Unable to initialize sigan: {error}")
+            logger.error(
+                f"Unable to initialize sigan: {error}.\nAttempting to power cycle and reconnect..."
+            )
             self.power_cycle_and_connect()
 
     def get_constraints(self):
@@ -59,23 +61,23 @@ class TekRSASigan(SignalAnalyzerInterface):
         self.max_iq_bandwidth = self.rsa.IQSTREAM_GetMaxAcqBandwidth()
 
     def connect(self):
-        logger.info("Connecting to TEKRSA")
+        logger.debug("Connecting to TEKRSA")
         # Device already connected
         if self._is_available:
             return True
 
         if settings.RUNNING_TESTS or settings.MOCK_SIGAN:
             # Mock signal analyzer if desired
-            logger.warning("Using mock Tektronix RSA.")
+            logger.warning("Using mock Tektronix RSA signal analyzer.")
             random = settings.MOCK_SIGAN_RANDOM
             self.rsa = MockRSA(randomize_values=random)
         else:
             try:
                 # Load API wrapper
-                logger.info("Loading RSA API wrapper")
+                logger.debug("Loading RSA API wrapper")
                 import rsa_api
             except ImportError as import_error:
-                logger.warning("API Wrapper not loaded - disabling signal analyzer.")
+                logger.exception("API Wrapper not loaded - disabling signal analyzer.")
                 self._is_available = False
                 raise import_error
             try:
@@ -91,8 +93,8 @@ class TekRSASigan(SignalAnalyzerInterface):
         # Finish setup with either real or Mock RSA device
         self.device_name = self.rsa.DEVICE_GetNomenclature()
         self.get_constraints()
-        logger.info("Using the following Tektronix RSA device:")
-        logger.info(
+        logger.debug("Using the following Tektronix RSA device:")
+        logger.debug(
             f"{self.device_name} ({self.min_frequency}-{self.max_frequency} Hz)"
         )
         # Populate instance variables for parameters on connect
@@ -325,11 +327,11 @@ class TekRSASigan(SignalAnalyzerInterface):
                 self.overload = False
                 if "Input overrange" in status:
                     self.overload = True
-                    logger.warning("IQ stream: ADC overrange event occurred.")
+                    logger.debug("IQ stream: ADC overrange event occurred.")
 
                 if "data loss" in status or "discontinuity" in status:  # Invalid data
                     if retries > 0:
-                        logger.warning(
+                        logger.info(
                             f"Data loss occurred during IQ streaming. Retrying {retries} more times."
                         )
                         retries -= 1
@@ -343,8 +345,8 @@ class TekRSASigan(SignalAnalyzerInterface):
                 ):  # Invalid data: incorrect number of samples
                     if retries > 0:
                         msg = f"RSA error: requested {nsamps_req + nskip} samples, but got {data_len}."
-                        logger.warning(msg)
-                        logger.warning(f"Retrying {retries} more times.")
+                        logger.debug(msg)
+                        logger.debug(f"Retrying {retries} more times.")
                         retries -= 1
                         continue
                     else:
