@@ -6,8 +6,8 @@ nasctn_sea_data_product:
   iir_gstop_dB: 40  # Minimum stopband attenuation
   iir_pb_edge_Hz: 5e6  # Passband edge frequency
   iir_sb_edge_Hz: 5.008e6  # Stopband edge frequency
-# Mean/Max FFT settings
-  nffts: 64e3
+# FFT settings
+  nffts: 320e3
 # PFP frame
   pfp_frame_period_ms: 10
 # APD downsampling settings
