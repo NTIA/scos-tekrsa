@@ -5,6 +5,7 @@ from collections import Counter
 import numpy as np
 import pytest
 
+from scos_tekrsa import __version__ as SCOS_TEKRSA_VERSION
 import scos_tekrsa.hardware.tekrsa_constants as rsa_constants
 from scos_tekrsa.hardware import sigan
 from scos_tekrsa.hardware.mocks.rsa_block import (
@@ -63,6 +64,16 @@ class TestTekRSA:
     def test_is_available(self):
         assert self.rx.is_available == True
         assert isinstance(self.rx.is_available, bool)
+
+    def test_plugin_version(self):
+        assert isinstance(self.rx.plugin_version, str)
+        assert self.rx.plugin_version == SCOS_TEKRSA_VERSION
+
+    def test_firmware_version(self):
+        assert isinstance(self.rx.firmware_version, str)
+
+    def test_api_version(self):
+        assert isinstance(self.rx.api_version, str)
 
     def test_sample_rate(self):
         assert isinstance(self.rx.sample_rate, (float, int))

@@ -92,6 +92,8 @@ class TekRSASigan(SignalAnalyzerInterface):
                 raise e
         # Finish setup with either real or Mock RSA device
         self.device_name = self.rsa.DEVICE_GetNomenclature()
+        self._firmware_version = self.rsa.DEVICE_GetFWVersion()
+        self._api_version = self.rsa.DEVICE_GetAPIVersion()
         self.get_constraints()
         logger.debug("Using the following Tektronix RSA device:")
         logger.debug(
@@ -106,14 +108,24 @@ class TekRSASigan(SignalAnalyzerInterface):
         self._is_available = True
 
     @property
-    def is_available(self):
+    def is_available(self) -> bool:
         """Returns True if initialized and ready for measurements"""
         return self._is_available
 
     @property
-    def plugin_version(self):
+    def plugin_version(self) -> str:
         """Returns the current version of scos-tekrsa."""
         return self._plugin_version
+    
+    @property
+    def firmware_version(self) -> str:
+        """Returns the current firmware version of the connected RSA device."""
+        return self._firmware_version
+    
+    @property
+    def api_version(self) -> str:
+        """Returns the version of the Tektronix RSA API for Linux currently in use."""
+        return self._api_version
 
     @property
     def sample_rate(self):
