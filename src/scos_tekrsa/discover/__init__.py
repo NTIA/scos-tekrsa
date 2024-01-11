@@ -11,7 +11,9 @@ logger = logging.getLogger(__name__)
 actions = {}
 logger.debug("scos-tekrsa: discovering actions")
 # Adjust ACTION_DEFINITIONS_DIR for specific Tektronix analyzer in use
+signal_analyzer = None
 if sigan:
+    signal_analyzer = sigan
     logger.debug(f"Device Name: {sigan.device_name}")
     if sigan.device_name in ["RSA306B", "RSA306"]:
         ACTION_DEFINITIONS_DIR = CONFIG_DIR / "actions-300"
