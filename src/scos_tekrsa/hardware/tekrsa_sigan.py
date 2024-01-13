@@ -2,6 +2,7 @@ import logging
 import threading
 
 from scos_actions import utils
+from scos_actions.calibration.calibration import Calibration
 from scos_actions.hardware.sigan_iface import (
     SignalAnalyzerInterface,
     sensor_calibration,
@@ -18,9 +19,9 @@ sigan_lock = threading.Lock()
 
 
 class TekRSASigan(SignalAnalyzerInterface):
-    def __init__(self):
+    def __init__(self, sensor_cal: Calibration = None, sigan_cal: Calibration = None):
         try:
-            super().__init__()
+            super().__init__(sensor_cal, sigan_cal)
             logger.debug("Initializing Tektronix RSA Signal Analyzer")
             self._plugin_version = SCOS_TEKRSA_VERSION
 
