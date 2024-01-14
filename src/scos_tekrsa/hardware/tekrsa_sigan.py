@@ -4,8 +4,7 @@ import threading
 from scos_actions import utils
 from scos_actions.calibration.calibration import Calibration
 from scos_actions.hardware.sigan_iface import (
-    SignalAnalyzerInterface,
-    sensor_calibration,
+    SignalAnalyzerInterface
 )
 
 import scos_tekrsa.hardware.tekrsa_constants as rsa_constants
@@ -291,7 +290,7 @@ class TekRSASigan(SignalAnalyzerInterface):
             if cal_adjust:
                 # Get calibration data for acquisition
                 if not (settings.RUNNING_TESTS or settings.MOCK_SIGAN):
-                    cal_params = sensor_calibration.calibration_parameters
+                    cal_params = self.sensor_calibration.calibration_parameters
                 else:
                     # Make it work for mock sigan/testing. Just match frequency.
                     cal_params = [vars(self)["_frequency"]]
