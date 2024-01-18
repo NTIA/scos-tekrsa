@@ -11,6 +11,7 @@ try:
         )
         sigan = TekRSASigan()
     else:
+        logger.debug("Running migrations. Not creating signal analyzer.")
         sigan = None
 except Exception as err:
     logger.error(f"Unable to create TekRSASigan: {err}")
