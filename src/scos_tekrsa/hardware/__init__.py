@@ -10,6 +10,8 @@ try:
             "*********************Creating TekRSASigan******************************"
         )
         sigan = TekRSASigan()
+    else:
+        sigan = None
 except Exception as err:
     logger.error(f"Unable to create TekRSASigan: {err}")
     sigan = None
