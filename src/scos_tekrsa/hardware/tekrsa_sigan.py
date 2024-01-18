@@ -1,6 +1,7 @@
 import logging
 import threading
-
+from typing import Dict,Optional
+from its_preselector.web_relay import WebRelay
 from scos_actions import utils
 from scos_actions.calibration.calibration import Calibration
 from scos_actions.hardware.sigan_iface import (
@@ -18,9 +19,9 @@ sigan_lock = threading.Lock()
 
 
 class TekRSASigan(SignalAnalyzerInterface):
-    def __init__(self, sensor_cal: Calibration = None, sigan_cal: Calibration = None):
+    def __init__(self, sensor_cal: Calibration = None, sigan_cal: Calibration = None, switches: Optional[Dict[str, WebRelay]] = None  ):
         try:
-            super().__init__(sensor_cal, sigan_cal)
+            super().__init__(sensor_cal, sigan_cal, switches)
             logger.debug("Initializing Tektronix RSA Signal Analyzer")
             self._plugin_version = SCOS_TEKRSA_VERSION
 
@@ -52,7 +53,7 @@ class TekRSASigan(SignalAnalyzerInterface):
             logger.error(
                 f"Unable to initialize sigan: {error}.\nAttempting to power cycle and reconnect..."
             )
-            self.power_cycle_and_connect()
+            self.power_cycle_and_connect(self.switches)
 
     def get_constraints(self):
         self.min_frequency = self.rsa.CONFIG_GetMinCenterFreq()
