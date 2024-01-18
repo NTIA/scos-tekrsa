@@ -2,7 +2,6 @@ import logging
 
 from scos_actions.actions.monitor_sigan import MonitorSignalAnalyzer
 from scos_actions.discover import init
-from scos_tekrsa.hardware import sigan
 from scos_tekrsa.settings import CONFIG_DIR
 from scos_tekrsa.settings import DEVICE_MODEL
 
