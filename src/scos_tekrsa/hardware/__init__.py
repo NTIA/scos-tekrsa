@@ -1,5 +1,6 @@
 import logging
 
+from scos_actions.hardware.utils import load_switches
 from scos_tekrsa.hardware.tekrsa_sigan import TekRSASigan
 from scos_tekrsa import settings
 
@@ -9,7 +10,9 @@ try:
         logger.debug(
             "*********************Creating TekRSASigan******************************"
         )
-        sigan = TekRSASigan()
+        logger.debug("Tekrsa: loading switches")
+        switches = load_switches(settings.SWITCH_CONFIGS_DIR)
+        sigan = TekRSASigan(switches = switches)
     else:
         logger.debug("Running migrations. Not creating signal analyzer.")
         sigan = None
