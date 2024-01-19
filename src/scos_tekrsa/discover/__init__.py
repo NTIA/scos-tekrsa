@@ -37,5 +37,4 @@ logger.debug("Initializing yaml actions")
 yaml_actions, yaml_test_actions = init( yaml_dir=ACTION_DEFINITIONS_DIR)
 logger.debug(f"Created {len(yaml_actions)} actions")
 actions.update(yaml_actions)
-logger.debug(f"signal_analyzer: {sigan}")
-signal_analyzer = sigan
+
