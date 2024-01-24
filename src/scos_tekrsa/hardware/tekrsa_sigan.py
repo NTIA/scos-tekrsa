@@ -4,7 +4,6 @@ from typing import Dict, Optional
 
 from its_preselector.web_relay import WebRelay
 from scos_actions import utils
-from scos_actions.calibration.calibration import Calibration
 from scos_actions.hardware.sigan_iface import SignalAnalyzerInterface
 
 import scos_tekrsa.hardware.tekrsa_constants as rsa_constants
@@ -20,11 +19,10 @@ sigan_lock = threading.Lock()
 class TekRSASigan(SignalAnalyzerInterface):
     def __init__(
         self,
-        sensor_cal: Calibration = None,
         switches: Optional[Dict[str, WebRelay]] = None,
     ):
         try:
-            super().__init__(sensor_cal, switches)
+            super().__init__(switches)
             logger.debug("Initializing Tektronix RSA Signal Analyzer")
             self._plugin_version = SCOS_TEKRSA_VERSION
 
@@ -47,7 +45,6 @@ class TekRSASigan(SignalAnalyzerInterface):
             self.max_frequency = None
             self.min_frequency = None
 
-            self.sensor_calibration_data = None
             self._capture_time = None
             self.connect()
 
@@ -276,7 +273,6 @@ class TekRSASigan(SignalAnalyzerInterface):
         num_samples: int,
         num_samples_skip: int = 0,
         retries: int = 5,
-        cal_adjust: bool = True,
     ):
         """Acquire specific number of time-domain IQ samples."""
         with sigan_lock:
@@ -289,27 +285,6 @@ class TekRSASigan(SignalAnalyzerInterface):
                 raise ValueError("Requested number of samples must be an integer.")
             nskip = int(num_samples_skip)  # Requested number of samples to skip
             nsamps = nsamps_req + nskip  # Total number of samples to collect
-
-            if cal_adjust:
-                # Get calibration data for acquisition
-                if not (settings.RUNNING_TESTS or settings.MOCK_SIGAN):
-                    cal_params = self.sensor_calibration.calibration_parameters
-                else:
-                    # Make it work for mock sigan/testing. Just match frequency.
-                    cal_params = [vars(self)["_frequency"]]
-                try:
-                    cal_args = [vars(self)[f"_{p}"] for p in cal_params]
-                except KeyError:
-                    raise Exception(
-                        "One or more required cal parameters is not a valid sigan setting."
-                    )
-                logger.debug(f"Matched calibration params: {cal_args}")
-                self.recompute_sensor_calibration_data(cal_args)
-                # Compute the linear gain
-                db_gain = self.sensor_calibration_data["gain"]
-                linear_gain = 10.0 ** (db_gain / 20.0)
-            else:
-                linear_gain = 1
 
             # Determine correct time length (round up, integer ms)
             durationMsec = int(1000 * (nsamps / self.sample_rate)) + (
@@ -372,9 +347,6 @@ class TekRSASigan(SignalAnalyzerInterface):
                     logger.debug(
                         f"IQ stream: successfully acquired {data_len} samples."
                     )
-                    # Scale data to RF power and return
-                    logger.debug(f"Applying gain of {linear_gain}")
-                    data /= linear_gain
 
                     measurement_result = {
                         "data": data,
