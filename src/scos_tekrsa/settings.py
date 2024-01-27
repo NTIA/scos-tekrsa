@@ -15,6 +15,5 @@ DEVICE_MODEL = env("DEVICE_MODEL", default="RSA507A")
 MOCK_SIGAN = env.bool("MOCK_SIGAN", default=False) or RUNNING_TESTS
 MOCK_SIGAN_RANDOM = env.bool("MOCK_SIGAN_RANDOM", default=False)
 RUNNING_MIGRATIONS = env.bool("RUNNING_MIGRATIONS", default=False)
-SWITCH_CONFIGS_DIR = Path(env.str("SWITCH_CONFIGS_DIR"))
 if RUNNING_TESTS:
     logging.basicConfig(level=logging.DEBUG)
