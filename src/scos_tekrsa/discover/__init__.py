@@ -2,8 +2,8 @@ import logging
 
 from scos_actions.actions.monitor_sigan import MonitorSignalAnalyzer
 from scos_actions.discover import init
-from scos_tekrsa.settings import CONFIG_DIR
-from scos_tekrsa.settings import DEVICE_MODEL
+
+from scos_tekrsa.settings import CONFIG_DIR, DEVICE_MODEL
 
 logger = logging.getLogger(__name__)
 
@@ -28,13 +28,10 @@ else:
     )
     ACTION_DEFINITIONS_DIR = CONFIG_DIR / "actions-500-600"
 logger.debug(f"Action configs directory: {ACTION_DEFINITIONS_DIR}")
-actions["monitor_tekrsa"] = MonitorSignalAnalyzer(
-    parameters={"name": "monitor_tekrsa"}
-)
+actions["monitor_tekrsa"] = MonitorSignalAnalyzer(parameters={"name": "monitor_tekrsa"})
 logger.debug("Created Monitor SIGAN action")
 # Pass new radio to existing action classes with new SDR specific yaml files
 logger.debug("Initializing yaml actions")
-yaml_actions, yaml_test_actions = init( yaml_dir=ACTION_DEFINITIONS_DIR)
+yaml_actions, yaml_test_actions = init(yaml_dir=ACTION_DEFINITIONS_DIR)
 logger.debug(f"Created {len(yaml_actions)} actions")
 actions.update(yaml_actions)
-
