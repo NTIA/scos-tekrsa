@@ -129,3 +129,9 @@ class MockRSA:
     def set_times_to_fail(self, n):
         self.times_to_fail = n
         self.times_failed = 0
+
+    def DEVICE_GetFWVersion(self):
+        return "mock_rsa"
+
+    def DEVICE_GetAPIVersion(self):
+        return "mock_rsa"

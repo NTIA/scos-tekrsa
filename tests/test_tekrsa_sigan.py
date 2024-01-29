@@ -7,7 +7,7 @@ import pytest
 
 import scos_tekrsa.hardware.tekrsa_constants as rsa_constants
 from scos_tekrsa import __version__ as SCOS_TEKRSA_VERSION
-from scos_tekrsa.hardware import sigan
+from scos_tekrsa.hardware.tekrsa_sigan import TekRSASigan
 from scos_tekrsa.hardware.mocks.rsa_block import (
     MAX_CENTER_FREQ,
     MAX_IQ_BW,
@@ -26,7 +26,7 @@ class TestTekRSA:
         """Create mock Tektronix RSA 507A"""
         if self.setup_complete:
             return
-        self.rx = sigan
+        self.rx = TekRSASigan()
         self.CORRECT_ALLOWED_SR = rsa_constants.IQSTREAM_ALLOWED_SR
         self.CORRECT_ALLOWED_BW = rsa_constants.IQSTREAM_ALLOWED_BW
         self.CORRECT_SR_BW_MAP = rsa_constants.IQSTREAM_SR_BW_MAP
