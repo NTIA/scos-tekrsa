@@ -92,18 +92,16 @@ class TekRSASigan(SignalAnalyzerInterface):
                 self.rsa.DEVICE_SearchAndConnect()
             except Exception as e:
                 self._is_available = False
-                self.device_name = "NONE: Failed to connect to TekRSA"
+                self._model = "NONE: Failed to connect to TekRSA"
                 logger.exception("Unable to connect to TEKRSA")
                 raise e
         # Finish setup with either real or Mock RSA device
-        self.device_name = self.rsa.DEVICE_GetNomenclature()
+        self._model = self.rsa.DEVICE_GetNomenclature()
         self._firmware_version = self.rsa.DEVICE_GetFWVersion()
         self._api_version = self.rsa.DEVICE_GetAPIVersion()
         self.get_constraints()
         logger.debug("Using the following Tektronix RSA device:")
-        logger.debug(
-            f"{self.device_name} ({self.min_frequency}-{self.max_frequency} Hz)"
-        )
+        logger.debug(f"{self._model} ({self.min_frequency}-{self.max_frequency} Hz)")
         # Populate instance variables for parameters on connect
         self._preamp_enable = self.preamp_enable
         self._attenuation = self.attenuation
@@ -215,7 +213,7 @@ class TekRSASigan(SignalAnalyzerInterface):
 
     @property
     def attenuation(self):
-        if self.device_name not in ["RSA306B", "RSA306"]:
+        if self._model not in ["RSA306B", "RSA306"]:
             # API returns attenuation as negative value. Convert to positive.
             self._attenuation = abs(self.rsa.CONFIG_GetRFAttenuator())
         else:
@@ -226,7 +224,7 @@ class TekRSASigan(SignalAnalyzerInterface):
     @attenuation.setter
     def attenuation(self, attenuation):
         """Set device attenuation, in dB, for RSA 500/600 series devices"""
-        if self.device_name not in ["RSA306B", "RSA306"]:
+        if self._model not in ["RSA306B", "RSA306"]:
             if self.min_attenuation <= abs(attenuation) <= self.max_attenuation:
                 self.rsa.CONFIG_SetAutoAttenuationEnable(False)
                 # API requires attenuation set as a negative number. Convert to negative.
@@ -245,7 +243,7 @@ class TekRSASigan(SignalAnalyzerInterface):
 
     @property
     def preamp_enable(self):
-        if self.device_name not in ["RSA306B", "RSA306"]:
+        if self._model not in ["RSA306B", "RSA306"]:
             self._preamp_enable = self.rsa.CONFIG_GetRFPreampEnable()
         else:
             logger.debug("Tektronix RSA 300 series device has no built-in preamp.")
@@ -254,7 +252,7 @@ class TekRSASigan(SignalAnalyzerInterface):
 
     @preamp_enable.setter
     def preamp_enable(self, preamp_enable):
-        if self.device_name not in ["RSA306B", "RSA306"]:
+        if self._model not in ["RSA306B", "RSA306"]:
             if self.preamp_enable != preamp_enable:
                 logger.debug("Switching preamp to " + str(preamp_enable))
                 self.rsa.CONFIG_SetRFPreampEnable(preamp_enable)
@@ -386,7 +384,7 @@ class TekRSASigan(SignalAnalyzerInterface):
                         "sample_rate": self.rsa.IQSTREAM_GetAcqParameters()[1],
                         "capture_time": self._capture_time,
                     }
-                    if self.device_name not in ["RSA306B", "RSA306"]:
+                    if self._model not in ["RSA306B", "RSA306"]:
                         measurement_result["attenuation"] = self.attenuation
                         measurement_result["preamp_enable"] = self.preamp_enable
                     return measurement_result
