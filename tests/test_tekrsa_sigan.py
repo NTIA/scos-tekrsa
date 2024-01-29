@@ -7,7 +7,6 @@ import pytest
 
 import scos_tekrsa.hardware.tekrsa_constants as rsa_constants
 from scos_tekrsa import __version__ as SCOS_TEKRSA_VERSION
-from scos_tekrsa.hardware.tekrsa_sigan import TekRSASigan
 from scos_tekrsa.hardware.mocks.rsa_block import (
     MAX_CENTER_FREQ,
     MAX_IQ_BW,
@@ -15,6 +14,7 @@ from scos_tekrsa.hardware.mocks.rsa_block import (
     MIN_IQ_BW,
     TIMES_TO_FAIL,
 )
+from scos_tekrsa.hardware.tekrsa_sigan import TekRSASigan
 
 
 class TestTekRSA:
