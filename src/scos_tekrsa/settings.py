@@ -1,6 +1,7 @@
 import logging
 import sys
 from pathlib import Path
+
 from environs import Env
 from scos_actions.settings import *
 

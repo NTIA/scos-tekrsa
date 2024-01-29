@@ -5,8 +5,8 @@ from collections import Counter
 import numpy as np
 import pytest
 
-from scos_tekrsa import __version__ as SCOS_TEKRSA_VERSION
 import scos_tekrsa.hardware.tekrsa_constants as rsa_constants
+from scos_tekrsa import __version__ as SCOS_TEKRSA_VERSION
 from scos_tekrsa.hardware import sigan
 from scos_tekrsa.hardware.mocks.rsa_block import (
     MAX_CENTER_FREQ,

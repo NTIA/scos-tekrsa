@@ -1,12 +1,11 @@
 import logging
 import threading
-from typing import Dict,Optional
+from typing import Dict, Optional
+
 from its_preselector.web_relay import WebRelay
 from scos_actions import utils
 from scos_actions.calibration.calibration import Calibration
-from scos_actions.hardware.sigan_iface import (
-    SignalAnalyzerInterface
-)
+from scos_actions.hardware.sigan_iface import SignalAnalyzerInterface
 
 import scos_tekrsa.hardware.tekrsa_constants as rsa_constants
 from scos_tekrsa import __version__ as SCOS_TEKRSA_VERSION
@@ -19,7 +18,12 @@ sigan_lock = threading.Lock()
 
 
 class TekRSASigan(SignalAnalyzerInterface):
-    def __init__(self, sensor_cal: Calibration = None, sigan_cal: Calibration = None, switches: Optional[Dict[str, WebRelay]] = None  ):
+    def __init__(
+        self,
+        sensor_cal: Calibration = None,
+        sigan_cal: Calibration = None,
+        switches: Optional[Dict[str, WebRelay]] = None,
+    ):
         try:
             super().__init__(sensor_cal, sigan_cal, switches)
             logger.debug("Initializing Tektronix RSA Signal Analyzer")
@@ -117,12 +121,12 @@ class TekRSASigan(SignalAnalyzerInterface):
     def plugin_version(self) -> str:
         """Returns the current version of scos-tekrsa."""
         return self._plugin_version
-    
+
     @property
     def firmware_version(self) -> str:
         """Returns the current firmware version of the connected RSA device."""
         return self._firmware_version
-    
+
     @property
     def api_version(self) -> str:
         """Returns the version of the Tektronix RSA API for Linux currently in use."""
