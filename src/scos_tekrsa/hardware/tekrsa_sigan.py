@@ -272,7 +272,6 @@ class TekRSASigan(SignalAnalyzerInterface):
         self,
         num_samples: int,
         num_samples_skip: int = 0,
-        retries: int = 5,
     ):
         """Acquire specific number of time-domain IQ samples."""
         with sigan_lock:
@@ -301,9 +300,6 @@ class TekRSASigan(SignalAnalyzerInterface):
             logger.debug(
                 f"acquire_time_domain_samples starting, num_samples = {nsamps}"
             )
-            logger.debug(f"Number of retries = {retries}")
-
-            max_retries = retries
 
             while True:
                 self._capture_time = utils.get_datetime_str_now()
@@ -320,29 +316,15 @@ class TekRSASigan(SignalAnalyzerInterface):
                     logger.debug("IQ stream: ADC overrange event occurred.")
 
                 if "data loss" in status or "discontinuity" in status:  # Invalid data
-                    if retries > 0:
-                        logger.info(
-                            f"Data loss occurred during IQ streaming. Retrying {retries} more times."
-                        )
-                        retries -= 1
-                        continue
-                    else:
-                        err = "Data loss occurred with no retries remaining."
-                        err += f" (tried {max_retries} times.)"
-                        raise RuntimeError(err)
+                    msg = "Data loss occurred during IQ streaming"
+                    logger.debug(msg)
+                    raise RuntimeError(msg)
                 elif (
                     not data_len == nsamps_req
                 ):  # Invalid data: incorrect number of samples
-                    if retries > 0:
-                        msg = f"RSA error: requested {nsamps_req + nskip} samples, but got {data_len}."
-                        logger.debug(msg)
-                        logger.debug(f"Retrying {retries} more times.")
-                        retries -= 1
-                        continue
-                    else:
-                        err = "Failed to acquire correct number of samples "
-                        err += f"{max_retries} times in a row."
-                        raise RuntimeError(err)
+                    msg = f"RSA error: requested {nsamps_req + nskip} samples, but got {data_len}."
+                    logger.debug(msg)
+                    raise RuntimeError(msg)
                 else:
                     logger.debug(
                         f"IQ stream: successfully acquired {data_len} samples."
