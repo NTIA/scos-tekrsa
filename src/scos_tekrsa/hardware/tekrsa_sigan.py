@@ -1,11 +1,11 @@
 import logging
 import threading
+from typing import Dict, Optional
 
+from its_preselector.web_relay import WebRelay
 from scos_actions import utils
-from scos_actions.hardware.sigan_iface import (
-    SignalAnalyzerInterface,
-    sensor_calibration,
-)
+from scos_actions.calibration.calibration import Calibration
+from scos_actions.hardware.sigan_iface import SignalAnalyzerInterface
 
 import scos_tekrsa.hardware.tekrsa_constants as rsa_constants
 from scos_tekrsa import __version__ as SCOS_TEKRSA_VERSION
@@ -18,9 +18,14 @@ sigan_lock = threading.Lock()
 
 
 class TekRSASigan(SignalAnalyzerInterface):
-    def __init__(self):
+    def __init__(
+        self,
+        sensor_cal: Calibration = None,
+        sigan_cal: Calibration = None,
+        switches: Optional[Dict[str, WebRelay]] = None,
+    ):
         try:
-            super().__init__()
+            super().__init__(sensor_cal, sigan_cal, switches)
             logger.debug("Initializing Tektronix RSA Signal Analyzer")
             self._plugin_version = SCOS_TEKRSA_VERSION
 
@@ -87,16 +92,16 @@ class TekRSASigan(SignalAnalyzerInterface):
                 self.rsa.DEVICE_SearchAndConnect()
             except Exception as e:
                 self._is_available = False
-                self.device_name = "NONE: Failed to connect to TekRSA"
+                self._model = "NONE: Failed to connect to TekRSA"
                 logger.exception("Unable to connect to TEKRSA")
                 raise e
         # Finish setup with either real or Mock RSA device
-        self.device_name = self.rsa.DEVICE_GetNomenclature()
+        self._model = self.rsa.DEVICE_GetNomenclature()
+        self._firmware_version = self.rsa.DEVICE_GetFWVersion()
+        self._api_version = self.rsa.DEVICE_GetAPIVersion()
         self.get_constraints()
         logger.debug("Using the following Tektronix RSA device:")
-        logger.debug(
-            f"{self.device_name} ({self.min_frequency}-{self.max_frequency} Hz)"
-        )
+        logger.debug(f"{self._model} ({self.min_frequency}-{self.max_frequency} Hz)")
         # Populate instance variables for parameters on connect
         self._preamp_enable = self.preamp_enable
         self._attenuation = self.attenuation
@@ -106,14 +111,24 @@ class TekRSASigan(SignalAnalyzerInterface):
         self._is_available = True
 
     @property
-    def is_available(self):
+    def is_available(self) -> bool:
         """Returns True if initialized and ready for measurements"""
         return self._is_available
 
     @property
-    def plugin_version(self):
+    def plugin_version(self) -> str:
         """Returns the current version of scos-tekrsa."""
         return self._plugin_version
+
+    @property
+    def firmware_version(self) -> str:
+        """Returns the current firmware version of the connected RSA device."""
+        return self._firmware_version
+
+    @property
+    def api_version(self) -> str:
+        """Returns the version of the Tektronix RSA API for Linux currently in use."""
+        return self._api_version
 
     @property
     def sample_rate(self):
@@ -198,7 +213,7 @@ class TekRSASigan(SignalAnalyzerInterface):
 
     @property
     def attenuation(self):
-        if self.device_name not in ["RSA306B", "RSA306"]:
+        if self._model not in ["RSA306B", "RSA306"]:
             # API returns attenuation as negative value. Convert to positive.
             self._attenuation = abs(self.rsa.CONFIG_GetRFAttenuator())
         else:
@@ -209,7 +224,7 @@ class TekRSASigan(SignalAnalyzerInterface):
     @attenuation.setter
     def attenuation(self, attenuation):
         """Set device attenuation, in dB, for RSA 500/600 series devices"""
-        if self.device_name not in ["RSA306B", "RSA306"]:
+        if self._model not in ["RSA306B", "RSA306"]:
             if self.min_attenuation <= abs(attenuation) <= self.max_attenuation:
                 self.rsa.CONFIG_SetAutoAttenuationEnable(False)
                 # API requires attenuation set as a negative number. Convert to negative.
@@ -228,7 +243,7 @@ class TekRSASigan(SignalAnalyzerInterface):
 
     @property
     def preamp_enable(self):
-        if self.device_name not in ["RSA306B", "RSA306"]:
+        if self._model not in ["RSA306B", "RSA306"]:
             self._preamp_enable = self.rsa.CONFIG_GetRFPreampEnable()
         else:
             logger.debug("Tektronix RSA 300 series device has no built-in preamp.")
@@ -237,7 +252,7 @@ class TekRSASigan(SignalAnalyzerInterface):
 
     @preamp_enable.setter
     def preamp_enable(self, preamp_enable):
-        if self.device_name not in ["RSA306B", "RSA306"]:
+        if self._model not in ["RSA306B", "RSA306"]:
             if self.preamp_enable != preamp_enable:
                 logger.debug("Switching preamp to " + str(preamp_enable))
                 self.rsa.CONFIG_SetRFPreampEnable(preamp_enable)
@@ -278,7 +293,7 @@ class TekRSASigan(SignalAnalyzerInterface):
             if cal_adjust:
                 # Get calibration data for acquisition
                 if not (settings.RUNNING_TESTS or settings.MOCK_SIGAN):
-                    cal_params = sensor_calibration.calibration_parameters
+                    cal_params = self.sensor_calibration.calibration_parameters
                 else:
                     # Make it work for mock sigan/testing. Just match frequency.
                     cal_params = [vars(self)["_frequency"]]
@@ -369,7 +384,7 @@ class TekRSASigan(SignalAnalyzerInterface):
                         "sample_rate": self.rsa.IQSTREAM_GetAcqParameters()[1],
                         "capture_time": self._capture_time,
                     }
-                    if self.device_name not in ["RSA306B", "RSA306"]:
+                    if self._model not in ["RSA306B", "RSA306"]:
                         measurement_result["attenuation"] = self.attenuation
                         measurement_result["preamp_enable"] = self.preamp_enable
                     return measurement_result
