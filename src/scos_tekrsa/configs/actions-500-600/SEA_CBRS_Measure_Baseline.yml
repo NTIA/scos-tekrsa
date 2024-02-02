@@ -1,13 +1,13 @@
 nasctn_sea_data_product:
-  name: CBRS_EXT_DataProduct_18dB_Attenuation
+  name: SEA_CBRS_Measure_Baseline
   rf_path: antenna
 # IIR filter settings
   iir_gpass_dB: 0.1  # Max passband ripple below unity gain
   iir_gstop_dB: 40  # Minimum stopband attenuation
   iir_pb_edge_Hz: 5e6  # Passband edge frequency
   iir_sb_edge_Hz: 5.008e6  # Stopband edge frequency
-# Mean/Max FFT settings
-  nffts: 64e3
+# FFT settings
+  nffts: 320e3
 # PFP frame
   pfp_frame_period_ms: 10
 # APD downsampling settings
@@ -18,48 +18,13 @@ nasctn_sea_data_product:
   td_bin_size_ms: 10
 # Sigan Settings
   preamp_enable: True
-  reference_level:
-    - -25
-    - -25
-    - -25
-    - -25
-    - -25
-    - -25
-    - -25
-    - -25
-    - -25
-    - -25
-    - -25
-    - -7
-    - -7
-    - -7
-    - -7
-    - -7
-    - -7
-  attenuation:
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 0
-    - 18
-    - 18
-    - 18
-    - 18
-    - 18
-    - 18
+  reference_level: -25
+  attenuation: 0
   sample_rate: 14e6
-# Acquisition settings (3540-3710 MHz in 10 MHz steps, each 4s long)
+# Acquisition settings (3550-3700 MHz in 10 MHz steps, each 4s long)
   duration_ms: 4000
   nskip: 0
   frequency:
-    - 3545e6
     - 3555e6
     - 3565e6
     - 3575e6
@@ -75,4 +40,3 @@ nasctn_sea_data_product:
     - 3675e6
     - 3685e6
     - 3695e6
-    - 3705e6

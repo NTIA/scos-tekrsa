@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 import scos_tekrsa.hardware.tekrsa_constants as rsa_constants
-from scos_tekrsa.hardware import sigan
+from scos_tekrsa import __version__ as SCOS_TEKRSA_VERSION
 from scos_tekrsa.hardware.mocks.rsa_block import (
     MAX_CENTER_FREQ,
     MAX_IQ_BW,
@@ -14,6 +14,7 @@ from scos_tekrsa.hardware.mocks.rsa_block import (
     MIN_IQ_BW,
     TIMES_TO_FAIL,
 )
+from scos_tekrsa.hardware.tekrsa_sigan import TekRSASigan
 
 
 class TestTekRSA:
@@ -25,7 +26,7 @@ class TestTekRSA:
         """Create mock Tektronix RSA 507A"""
         if self.setup_complete:
             return
-        self.rx = sigan
+        self.rx = TekRSASigan()
         self.CORRECT_ALLOWED_SR = rsa_constants.IQSTREAM_ALLOWED_SR
         self.CORRECT_ALLOWED_BW = rsa_constants.IQSTREAM_ALLOWED_BW
         self.CORRECT_SR_BW_MAP = rsa_constants.IQSTREAM_SR_BW_MAP
@@ -63,6 +64,16 @@ class TestTekRSA:
     def test_is_available(self):
         assert self.rx.is_available == True
         assert isinstance(self.rx.is_available, bool)
+
+    def test_plugin_version(self):
+        assert isinstance(self.rx.plugin_version, str)
+        assert self.rx.plugin_version == SCOS_TEKRSA_VERSION
+
+    def test_firmware_version(self):
+        assert isinstance(self.rx.firmware_version, str)
+
+    def test_api_version(self):
+        assert isinstance(self.rx.api_version, str)
 
     def test_sample_rate(self):
         assert isinstance(self.rx.sample_rate, (float, int))
@@ -122,12 +133,12 @@ class TestTekRSA:
             setattr(self.rx, "attenuation", self.rx.max_attenuation + 1)
 
         # Test handling for RSA without manual attenuator
-        old_dev_name = self.rx.device_name
-        setattr(self.rx, "device_name", "RSA306B")
+        old_dev_name = self.rx.model
+        setattr(self.rx, "model", "RSA306B")
         assert self.rx.attenuation is None
         setattr(self.rx, "attenuation", 50)
         assert self.rx.attenuation is None
-        setattr(self.rx, "device_name", old_dev_name)
+        setattr(self.rx, "model", old_dev_name)
 
     def test_preamp_enable(self):
         assert isinstance(self.rx.preamp_enable, bool)
@@ -138,12 +149,12 @@ class TestTekRSA:
         assert self.rx.preamp_enable == True
 
         # Test handling for RSA without preamp
-        old_dev_name = self.rx.device_name
-        setattr(self.rx, "device_name", "RSA306B")
+        old_dev_name = self.rx.model
+        setattr(self.rx, "model", "RSA306B")
         assert self.rx.preamp_enable is None
         setattr(self.rx, "preamp_enable", False)
         assert self.rx.preamp_enable is None
-        setattr(self.rx, "device_name", old_dev_name)
+        setattr(self.rx, "model", old_dev_name)
 
     def test_acquire_samples_retry(self):
         # Not enough retries = acquisition should fail
@@ -182,8 +193,8 @@ class TestTekRSA:
         assert isinstance(r["capture_time"], str)  # Can't predict this value
 
         # Attenuation/preamp keys should not exist for RSA30X
-        old_dev_name = self.rx.device_name
-        setattr(self.rx, "device_name", "RSA306B")
+        old_dev_name = self.rx.model
+        setattr(self.rx, "model", "RSA306B")
         r = self.rx.acquire_time_domain_samples(
             int(self.rx.iq_bandwidth * 0.001), cal_adjust=False
         )
@@ -191,7 +202,7 @@ class TestTekRSA:
             _ = r["attenuation"]
         with pytest.raises(KeyError):
             _ = r["preamp_enable"]
-        setattr(self.rx, "device_name", old_dev_name)
+        setattr(self.rx, "model", old_dev_name)
 
         # Acquire n_samps resulting in integer number of milliseconds
         for duration_ms in [1, 2, 3, 7, 10]:
