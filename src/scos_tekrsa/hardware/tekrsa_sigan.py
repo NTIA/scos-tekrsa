@@ -298,6 +298,8 @@ class TekRSASigan(SignalAnalyzerInterface):
                     # Make it work for mock sigan/testing. Just match frequency.
                     cal_params = [vars(self)["frequency"]]
                 try:
+                    for param in cal_params:
+                        logger.debug(f"scos-tekrsa: cal_param {param}")
                     cal_args = [vars(self)[f"_{p}"] for p in cal_params]
                 except KeyError:
                     raise Exception(
