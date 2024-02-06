@@ -296,7 +296,7 @@ class TekRSASigan(SignalAnalyzerInterface):
                     cal_params = self.sensor_calibration.calibration_parameters
                 else:
                     # Make it work for mock sigan/testing. Just match frequency.
-                    cal_params = [vars(self)["frequency"]]
+                    cal_params = ["_frequency"]
                 try:
                     for param in cal_params:
                         logger.debug(f"scos-tekrsa: cal_param {param}")
