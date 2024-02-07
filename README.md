@@ -86,10 +86,15 @@ file:
     cp env.template ./env
     ```
 
-1. In the newly-created `env` file, set the `BASE_IMAGE`:
+1. In the newly-created `env` file, set the following environment variables:
 
     ```text
+    DEVICE_MODEL=RSA507A  # Or 'RSA306B', 'RSA517A', etc.
+    # These are the same for all supported Tektronix RSA devices:
     BASE_IMAGE=ghcr.io/ntia/scos-tekrsa/tekrsa_usb:latest
+    USB_DEVICE=Tektronix
+    SIGAN_CLASS=TekRSASigan
+    SIGAN_MODULE=scos_tekrsa.hardware.tekrsa_sigan
     ```
 
 1. Get environment variables:
