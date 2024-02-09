@@ -377,7 +377,7 @@ class TekRSASigan(SignalAnalyzerInterface):
                     # Scale data to RF power and return
                     logger.debug(f"Applying gain of {linear_gain}")
                     data /= linear_gain
-
+                    logger.debug("Successfully applied linear gain")
                     measurement_result = {
                         "data": data,
                         "overload": self.overload,
@@ -389,4 +389,5 @@ class TekRSASigan(SignalAnalyzerInterface):
                     if self._model not in ["RSA306B", "RSA306"]:
                         measurement_result["attenuation"] = self.attenuation
                         measurement_result["preamp_enable"] = self.preamp_enable
+                    logger.debug("returning measurement result")
                     return measurement_result
