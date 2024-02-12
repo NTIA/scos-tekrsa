@@ -1,5 +1,5 @@
 stepped_frequency_time_domain_iq:
-  name: test_survey_iq_action
+  name: test_survey_iq_action_sr14
   frequency:
     - 700.5e6
     - 709e6
