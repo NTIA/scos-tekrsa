@@ -53,7 +53,7 @@ class TekRSASigan(SignalAnalyzerInterface):
             self._capture_time = None
             self.connect()
 
-        except Exception as error:
+        except BaseException as error:
             logger.error(
                 f"Unable to initialize sigan: {error}.\nAttempting to power cycle and reconnect..."
             )
