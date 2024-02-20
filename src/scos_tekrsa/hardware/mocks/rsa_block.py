@@ -1,4 +1,5 @@
 """ Mock functions from RSA API that are used in SignalAnalyzerInterface. """
+
 import numpy as np
 
 from scos_tekrsa.hardware.tekrsa_constants import IQSTREAM_BW_SR_MAP
