@@ -40,6 +40,7 @@ logger.debug(f"scos-tekrsa: SIGAN_MODULE = {SIGAN_MODULE}")
 logger.debug(f"scos-tekrsa: SIGAN_CLASS = {SIGAN_CLASS}")
 if SIGAN_MODULE == "scos_tekrsa.hardware.tekrsa_sigan" and SIGAN_CLASS == "TekRSASigan":
     logger.debug("scos-tekrsa: loading test action configs")
+    test_actions["monitor_tekrsa"] = MonitorSignalAnalyzer(parameters={"name": "monitor_tekrsa"})
     TEST_ACTION_DEFINITIONS_DIR = CONFIG_DIR / "test"
     logger.debug(f"scos-tekrsa: TEST_ACTION_DEFINITIONS_DIR = {TEST_ACTION_DEFINITIONS_DIR}")
     _, yaml_test_actions = init(yaml_dir=TEST_ACTION_DEFINITIONS_DIR)

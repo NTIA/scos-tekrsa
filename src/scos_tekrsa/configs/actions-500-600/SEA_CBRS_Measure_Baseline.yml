@@ -43,3 +43,4 @@ nasctn_sea_data_product:
     - 3685e6
     - 3695e6
     - 3705e6
+  calibration_adjust: True
