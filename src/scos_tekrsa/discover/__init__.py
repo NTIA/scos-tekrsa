@@ -1,9 +1,8 @@
 import logging
 
 from scos_actions.actions.monitor_sigan import MonitorSignalAnalyzer
-from scos_actions.actions.runtime_exception import RuntimeException
+from scos_actions.actions.runtime_error_action import RuntimeErrorAction
 from scos_actions.actions.system_exit_action import SystemExitAction
-from scos_actions.actions.seg_fault import SegFault
 from scos_actions.discover import init
 
 from scos_tekrsa.settings import CONFIG_DIR, DEVICE_MODEL
@@ -33,8 +32,7 @@ else:
 logger.debug(f"Action configs directory: {ACTION_DEFINITIONS_DIR}")
 actions["monitor_tekrsa"] = MonitorSignalAnalyzer(parameters={"name": "monitor_tekrsa"})
 actions["system_exit"] = SystemExitAction()
-actions["runtime_exception"] = RuntimeException()
-actions["Segfault"] = SegFault()
+actions["runtime_exception"] = RuntimeErrorAction()
 logger.debug("Created Monitor SIGAN action")
 # Pass new radio to existing action classes with new SDR specific yaml files
 logger.debug("Initializing yaml actions")
