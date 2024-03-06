@@ -24,6 +24,7 @@ class TekRSASigan(SignalAnalyzerInterface):
         sigan_cal: Calibration = None,
         switches: Optional[Dict[str, WebRelay]] = None,
     ):
+
         try:
             super().__init__(sensor_cal, sigan_cal, switches)
             logger.debug("Initializing Tektronix RSA Signal Analyzer")
@@ -51,12 +52,22 @@ class TekRSASigan(SignalAnalyzerInterface):
             self.sensor_calibration_data = None
             self.sigan_calibration_data = None
             self._capture_time = None
+            self._reference_level = None
+            self._frequency = None
+            self._iq_bandwidth = None
+            self._sample_rate = None
+            self._attenuation = None
+            self._preamp_enable = None
+            self._api_version = None
+            self._firmware_version = None
             self.connect()
 
         except BaseException as error:
             logger.error(
-                f"Unable to initialize sigan: {error}.\nAttempting to power cycle and reconnect..."
+                f"Unable to initialize sigan: {error}."
             )
+            self._is_available = False
+            self._model = "NONE: Failed to connect to TekRSA"
 
     def get_constraints(self):
         self.min_frequency = self.rsa.CONFIG_GetMinCenterFreq()
@@ -84,16 +95,12 @@ class TekRSASigan(SignalAnalyzerInterface):
                 logger.exception("API Wrapper not loaded - disabling signal analyzer.")
                 self._is_available = False
                 raise import_error
-            try:
-                logger.debug("Initializing ")
-                self.rsa = rsa_api.RSA()
-                # Connect to device using API wrapper
-                self.rsa.DEVICE_SearchAndConnect()
-            except Exception as e:
-                self._is_available = False
-                self._model = "NONE: Failed to connect to TekRSA"
-                logger.exception("Unable to connect to TEKRSA")
-                raise e
+
+            logger.debug("Initializing ")
+            self.rsa = rsa_api.RSA()
+            # Connect to device using API wrapper
+            self.rsa.DEVICE_SearchAndConnect()
+
         # Finish setup with either real or Mock RSA device
         self._model = self.rsa.DEVICE_GetNomenclature()
         self._firmware_version = self.rsa.DEVICE_GetFWVersion()
