@@ -60,12 +60,13 @@ class TekRSASigan(SignalAnalyzerInterface):
             self._preamp_enable = None
             self._api_version = None
             self._firmware_version = None
+            self.max_iq_bandwidth = None
+            self.min_iq_bandwidth = None
+            self.overload = None
             self.connect()
 
         except BaseException as error:
-            logger.error(
-                f"Unable to initialize sigan: {error}."
-            )
+            logger.error(f"Unable to initialize sigan: {error}.")
             self._is_available = False
             self._model = "NONE: Failed to connect to TekRSA"
 
@@ -88,14 +89,12 @@ class TekRSASigan(SignalAnalyzerInterface):
             self.rsa = MockRSA(randomize_values=random)
         else:
             try:
-                # Load API wrapper
-                logger.debug("Loading RSA API wrapper")
                 import rsa_api
             except ImportError as import_error:
                 logger.exception("API Wrapper not loaded - disabling signal analyzer.")
                 self._is_available = False
+                self._model = "NONE: Failed to connect to TekRSA"
                 raise import_error
-
             logger.debug("Initializing ")
             self.rsa = rsa_api.RSA()
             # Connect to device using API wrapper
