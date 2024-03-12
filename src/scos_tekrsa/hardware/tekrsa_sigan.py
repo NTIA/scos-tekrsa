@@ -299,44 +299,41 @@ class TekRSASigan(SignalAnalyzerInterface):
                 f"acquire_time_domain_samples starting, num_samples = {nsamps}"
             )
 
-            while True:
-                self._capture_time = utils.get_datetime_str_now()
-                data, status = self.rsa.IQSTREAM_Tempfile_NoConfig(durationMsec, True)
-                data = data[nskip : nskip + nsamps_req]  # Remove extra samples, if any
-                data_len = len(data)
+            self._capture_time = utils.get_datetime_str_now()
+            data, status = self.rsa.IQSTREAM_Tempfile_NoConfig(durationMsec, True)
+            data = data[nskip : nskip + nsamps_req]  # Remove extra samples, if any
+            data_len = len(data)
 
-                logger.debug(f"IQ Stream status: {status}")
+            logger.debug(f"IQ Stream status: {status}")
 
-                # Check status string for overload / data loss
-                self.overload = False
-                if "Input overrange" in status:
-                    self.overload = True
-                    logger.debug("IQ stream: ADC overrange event occurred.")
+            # Check status string for overload / data loss
+            self.overload = False
+            if "Input overrange" in status:
+                self.overload = True
+                logger.debug("IQ stream: ADC overrange event occurred.")
 
-                if "data loss" in status or "discontinuity" in status:  # Invalid data
-                    msg = "Data loss occurred during IQ streaming"
-                    logger.debug(msg)
-                    raise RuntimeError(msg)
-                elif (
-                    not data_len == nsamps_req
-                ):  # Invalid data: incorrect number of samples
-                    msg = f"RSA error: requested {nsamps_req + nskip} samples, but got {data_len}."
-                    logger.debug(msg)
-                    raise RuntimeError(msg)
-                else:
-                    logger.debug(
-                        f"IQ stream: successfully acquired {data_len} samples."
-                    )
+            if "data loss" in status or "discontinuity" in status:  # Invalid data
+                msg = "Data loss occurred during IQ streaming"
+                logger.debug(msg)
+                raise RuntimeError(msg)
+            elif (
+                not data_len == nsamps_req
+            ):  # Invalid data: incorrect number of samples
+                msg = f"RSA error: requested {nsamps_req + nskip} samples, but got {data_len}."
+                logger.debug(msg)
+                raise RuntimeError(msg)
+            else:
+                logger.debug(f"IQ stream: successfully acquired {data_len} samples.")
 
-                    measurement_result = {
-                        "data": data,
-                        "overload": self.overload,
-                        "frequency": self.frequency,
-                        "reference_level": self.reference_level,
-                        "sample_rate": self.rsa.IQSTREAM_GetAcqParameters()[1],
-                        "capture_time": self._capture_time,
-                    }
-                    if self._model not in ["RSA306B", "RSA306"]:
-                        measurement_result["attenuation"] = self.attenuation
-                        measurement_result["preamp_enable"] = self.preamp_enable
-                    return measurement_result
+                measurement_result = {
+                    "data": data,
+                    "overload": self.overload,
+                    "frequency": self.frequency,
+                    "reference_level": self.reference_level,
+                    "sample_rate": self.rsa.IQSTREAM_GetAcqParameters()[1],
+                    "capture_time": self._capture_time,
+                }
+                if self._model not in ["RSA306B", "RSA306"]:
+                    measurement_result["attenuation"] = self.attenuation
+                    measurement_result["preamp_enable"] = self.preamp_enable
+                return measurement_result
