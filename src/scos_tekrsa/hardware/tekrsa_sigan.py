@@ -280,7 +280,7 @@ class TekRSASigan(SignalAnalyzerInterface):
         """Acquire specific number of time-domain IQ samples."""
         with sigan_lock:
             for i in range(self.retries):
-                try
+                try:
                     measurement_result = self._try_acquire_time_domain_samples(num_samples, num_samples_skip)
                     return measurement_result
                 except BaseException as error:
