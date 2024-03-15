@@ -29,16 +29,17 @@ else:
     )
     ACTION_DEFINITIONS_DIR = CONFIG_DIR / "actions-500-600"
 logger.debug(f"Action configs directory: {ACTION_DEFINITIONS_DIR}")
-actions["monitor_tekrsa"] = MonitorSignalAnalyzer(parameters={"name": "monitor_tekrsa"})
-logger.debug("Created Monitor SIGAN action")
-# Pass new radio to existing action classes with new SDR specific yaml files
-logger.debug("Initializing yaml actions")
-yaml_actions, _ = init(yaml_dir=ACTION_DEFINITIONS_DIR)
-logger.debug(f"Created {len(yaml_actions)} actions")
-actions.update(yaml_actions)
+
 logger.debug(f"scos-tekrsa: SIGAN_MODULE = {SIGAN_MODULE}")
 logger.debug(f"scos-tekrsa: SIGAN_CLASS = {SIGAN_CLASS}")
 if SIGAN_MODULE == "scos_tekrsa.hardware.tekrsa_sigan" and SIGAN_CLASS == "TekRSASigan":
+    actions["monitor_tekrsa"] = MonitorSignalAnalyzer(parameters={"name": "monitor_tekrsa"})
+    logger.debug("Created Monitor SIGAN action")
+    # SDR specific yaml files
+    logger.debug("Initializing yaml actions")
+    yaml_actions, _ = init(yaml_dir=ACTION_DEFINITIONS_DIR)
+    logger.debug(f"Created {len(yaml_actions)} actions")
+    actions.update(yaml_actions)
     logger.debug("scos-tekrsa: loading test action configs")
     test_actions["test_monitor_tekrsa"] = MonitorSignalAnalyzer(
         parameters={"name": "monitor_tekrsa"}
