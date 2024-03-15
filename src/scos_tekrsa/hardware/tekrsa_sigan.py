@@ -9,6 +9,7 @@ from scos_actions.hardware.sigan_iface import SignalAnalyzerInterface
 
 import scos_tekrsa.hardware.tekrsa_constants as rsa_constants
 from scos_tekrsa import __version__ as SCOS_TEKRSA_VERSION
+from scos_tekrsa import __package__ as SCOS_TEKRSA_NAME
 from scos_tekrsa import settings
 from scos_tekrsa.hardware.mocks.rsa_block import MockRSA
 
@@ -29,6 +30,7 @@ class TekRSASigan(SignalAnalyzerInterface):
             super().__init__(sensor_cal, sigan_cal, switches)
             logger.debug("Initializing Tektronix RSA Signal Analyzer")
             self._plugin_version = SCOS_TEKRSA_VERSION
+            self._plugin_name = SCOS_TEKRSA_NAME
 
             self.rsa = None
             self._is_available = False  # should not be set outside of connect method
@@ -124,6 +126,11 @@ class TekRSASigan(SignalAnalyzerInterface):
     def plugin_version(self) -> str:
         """Returns the current version of scos-tekrsa."""
         return self._plugin_version
+    
+    @property
+    def plugin_name(self) -> str:
+        """Returns the current package name of scos-tekrsa."""
+        return self._plugin_name
 
     @property
     def firmware_version(self) -> str:
@@ -301,7 +308,7 @@ class TekRSASigan(SignalAnalyzerInterface):
                     cal_params = self.sensor_calibration.calibration_parameters
                 else:
                     # Make it work for mock sigan/testing. Just match frequency.
-                    cal_params = [vars(self)["_frequency"]]
+                    cal_params = ["frequency"]
                 try:
                     cal_args = [vars(self)[f"_{p}"] for p in cal_params]
                 except KeyError:
@@ -380,7 +387,6 @@ class TekRSASigan(SignalAnalyzerInterface):
                     # Scale data to RF power and return
                     logger.debug(f"Applying gain of {linear_gain}")
                     data /= linear_gain
-
                     measurement_result = {
                         "data": data,
                         "overload": self.overload,

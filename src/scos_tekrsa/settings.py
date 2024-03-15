@@ -18,3 +18,5 @@ MOCK_SIGAN_RANDOM = env.bool("MOCK_SIGAN_RANDOM", default=False)
 RUNNING_MIGRATIONS = env.bool("RUNNING_MIGRATIONS", default=False)
 if RUNNING_TESTS:
     logging.basicConfig(level=logging.DEBUG)
+SIGAN_MODULE = env.str("SIGAN_MODULE", default="scos_tekrsa.hardware.tekrsa_sigan")
+SIGAN_CLASS = env.str("SIGAN_CLASS", default="TekRSASigan")
