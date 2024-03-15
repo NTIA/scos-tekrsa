@@ -305,11 +305,8 @@ class TekRSASigan(SignalAnalyzerInterface):
             )
 
             self._capture_time = utils.get_datetime_str_now()
-            try:
-                data, status = self.rsa.IQSTREAM_Tempfile_NoConfig(durationMsec, True)
-            except BaseException as error:
-                logger.error(f"Error acquiring IQ: {error}. Retrying..." )
-                data, status = self.rsa.IQSTREAM_Tempfile_NoConfig(durationMsec, True)
+
+            data, status = self.rsa.IQSTREAM_Tempfile_NoConfig(durationMsec, True)
 
             data = data[nskip : nskip + nsamps_req]  # Remove extra samples, if any
             data_len = len(data)
