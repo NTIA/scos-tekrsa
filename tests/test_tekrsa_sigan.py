@@ -17,7 +17,7 @@ from scos_tekrsa.hardware.tekrsa_sigan import TekRSASigan
 
 
 class TestTekRSA:
-    # Ensure we write the test cal file and use mocks
+    # Ensure we use mock TekRSA
     setup_complete = False
 
     @pytest.fixture(autouse=True)
