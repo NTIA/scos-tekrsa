@@ -12,13 +12,12 @@ from scos_tekrsa.hardware.mocks.rsa_block import (
     MAX_IQ_BW,
     MIN_CENTER_FREQ,
     MIN_IQ_BW,
-    TIMES_TO_FAIL,
 )
 from scos_tekrsa.hardware.tekrsa_sigan import TekRSASigan
 
 
 class TestTekRSA:
-    # Ensure we write the test cal file and use mocks
+    # Ensure we use mock TekRSA
     setup_complete = False
 
     @pytest.fixture(autouse=True)
@@ -156,34 +155,11 @@ class TestTekRSA:
         assert self.rx.preamp_enable is None
         setattr(self.rx, "model", old_dev_name)
 
-    def test_acquire_samples_retry(self):
-        # Not enough retries = acquisition should fail
-        # The mocked IQ capture function will fail the first
-        # TIMES_TO_FAIL times it is called consecutively.
-
-        # With retries=0, IQ capture should fail TIMES_TO_FAIL times
-        for i in range(TIMES_TO_FAIL):
-            with pytest.raises(RuntimeError):
-                _ = self.rx.acquire_time_domain_samples(
-                    100, retries=0, cal_adjust=False
-                )
-
-        # With retries>TIMES_TO_FAIL, IQ capture should succeed
-        # In this case, IQ capture fails TIMES_TO_FAIL times within
-        # acquire_time_domain_samples, which handles the retry logic until
-        # the IQ acquisition succeeds.
-        self.rx.rsa.set_times_to_fail(TIMES_TO_FAIL)  # Reset times_failed
-        _ = self.rx.acquire_time_domain_samples(
-            100, retries=TIMES_TO_FAIL + 1, cal_adjust=False
-        )
-
     def test_acquire_samples(self):
         setattr(self.rx, "iq_bandwidth", max(self.CORRECT_ALLOWED_BW))
 
         # Test non-data measurement result components
-        r = self.rx.acquire_time_domain_samples(
-            int(self.rx.iq_bandwidth * 0.001), cal_adjust=False
-        )
+        r = self.rx.acquire_time_domain_samples(int(self.rx.iq_bandwidth * 0.001))
         assert r["frequency"] == self.rx.frequency
         assert r["overload"] == False
         assert r["reference_level"] == self.rx.reference_level
@@ -195,9 +171,7 @@ class TestTekRSA:
         # Attenuation/preamp keys should not exist for RSA30X
         old_dev_name = self.rx.model
         setattr(self.rx, "model", "RSA306B")
-        r = self.rx.acquire_time_domain_samples(
-            int(self.rx.iq_bandwidth * 0.001), cal_adjust=False
-        )
+        r = self.rx.acquire_time_domain_samples(int(self.rx.iq_bandwidth * 0.001))
         with pytest.raises(KeyError):
             _ = r["attenuation"]
         with pytest.raises(KeyError):
@@ -207,25 +181,19 @@ class TestTekRSA:
         # Acquire n_samps resulting in integer number of milliseconds
         for duration_ms in [1, 2, 3, 7, 10]:
             n_samps = int(self.rx.iq_bandwidth * duration_ms * 0.001)
-            result = self.rx.acquire_time_domain_samples(n_samps, cal_adjust=False)
+            result = self.rx.acquire_time_domain_samples(n_samps)
             assert len(result["data"]) == n_samps
 
         # Acquire n_samps resulting in non-integer milliseconds
         for duration_ms in [1.1, 2.02, 3.3, 7.007, 10.05]:
             n_samps = int(self.rx.iq_bandwidth * duration_ms * 0.001)
-            result = self.rx.acquire_time_domain_samples(n_samps, cal_adjust=False)
+            result = self.rx.acquire_time_domain_samples(n_samps)
             assert len(result["data"]) == n_samps
-
-        # Calibration data is not loaded, cal_adjust should fail
-        with pytest.raises(Exception):
-            _ = self.rx.acquire_time_domain_samples(100)
 
         # Non-integer n_samps should fail
         with pytest.raises(ValueError):
-            _ = self.rx.acquire_time_domain_samples(1.01, cal_adjust=False)
+            _ = self.rx.acquire_time_domain_samples(1.01)
 
         # Test with skipping samples
-        r = self.rx.acquire_time_domain_samples(
-            int(self.rx.iq_bandwidth * 0.001), 100, cal_adjust=False
-        )
+        r = self.rx.acquire_time_domain_samples(int(self.rx.iq_bandwidth * 0.001), 100)
         assert len(r["data"]) == int(self.rx.iq_bandwidth * 0.001)
