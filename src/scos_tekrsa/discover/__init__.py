@@ -33,7 +33,9 @@ logger.debug(f"Action configs directory: {ACTION_DEFINITIONS_DIR}")
 logger.debug(f"scos-tekrsa: SIGAN_MODULE = {SIGAN_MODULE}")
 logger.debug(f"scos-tekrsa: SIGAN_CLASS = {SIGAN_CLASS}")
 if SIGAN_MODULE == "scos_tekrsa.hardware.tekrsa_sigan" and SIGAN_CLASS == "TekRSASigan":
-    actions["monitor_tekrsa"] = MonitorSignalAnalyzer(parameters={"name": "monitor_tekrsa"})
+    actions["monitor_tekrsa"] = MonitorSignalAnalyzer(
+        parameters={"name": "monitor_tekrsa"}
+    )
     logger.debug("Created Monitor SIGAN action")
     # SDR specific yaml files
     logger.debug("Initializing yaml actions")

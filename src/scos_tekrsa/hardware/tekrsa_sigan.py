@@ -7,8 +7,8 @@ from scos_actions import utils
 from scos_actions.hardware.sigan_iface import SignalAnalyzerInterface
 
 import scos_tekrsa.hardware.tekrsa_constants as rsa_constants
-from scos_tekrsa import __version__ as SCOS_TEKRSA_VERSION
 from scos_tekrsa import __package__ as SCOS_TEKRSA_NAME
+from scos_tekrsa import __version__ as SCOS_TEKRSA_VERSION
 from scos_tekrsa import settings
 from scos_tekrsa.hardware.mocks.rsa_block import MockRSA
 
@@ -121,7 +121,7 @@ class TekRSASigan(SignalAnalyzerInterface):
     def plugin_version(self) -> str:
         """Returns the current version of scos-tekrsa."""
         return self._plugin_version
-    
+
     @property
     def plugin_name(self) -> str:
         """Returns the current package name of scos-tekrsa."""
