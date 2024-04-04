@@ -6,11 +6,6 @@ from scos_tekrsa.hardware.tekrsa_constants import IQSTREAM_BW_SR_MAP
 
 rng = np.random.default_rng()
 
-# For testing IQ capture retry on failure, this parameter controls the
-# number of times that the mocked IQSTREAM_Tempfile_NoConfig() will fail
-# when run consecutively, before working.
-TIMES_TO_FAIL = 3
-
 # Mock Signal Analyzer Constants
 DEVICE_NOMENCLATURE = "MOCK RSA507A"
 MIN_CENTER_FREQ = 9e3
@@ -30,8 +25,6 @@ PREAMP_ENABLE = True
 class MockRSA:
     def __init__(self, randomize_values=False):
         # Simulate returning less than requested num samples
-        self.times_to_fail = TIMES_TO_FAIL
-        self.times_failed = 0
         self.randomize_values = randomize_values
 
         # Initialize parameters
@@ -107,10 +100,7 @@ class MockRSA:
         # Get n_samp from dur_msec
         n_samp = int((dur_msec / 1000) * self.IQSTREAM_GetAcqParameters()[1])
 
-        if self.times_failed < self.times_to_fail:
-            self.times_failed += 1
-            iq = np.ones(0, dtype=np.complex64)
-        elif self.randomize_values:
+        if self.randomize_values:
             i = rng.normal(0.5, 0.5, n_samp)
             q = rng.normal(0.5, 0.5, n_samp)
             rand_iq = np.empty(n_samp, dtype=np.complex64)
@@ -126,10 +116,6 @@ class MockRSA:
 
     def IQSTREAM_Acquire(self, dur_msec, return_status):
         return self.IQSTREAM_Tempfile_NoConfig(dur_msec, return_status)
-
-    def set_times_to_fail(self, n):
-        self.times_to_fail = n
-        self.times_failed = 0
 
     def DEVICE_GetFWVersion(self):
         return "mock_rsa"

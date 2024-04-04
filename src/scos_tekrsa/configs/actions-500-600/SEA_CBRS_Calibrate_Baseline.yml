@@ -1,5 +1,6 @@
 y_factor_cal:
   name: SEA_CBRS_Calibrate_Baseline
+  reference_point: "noise source output"
   # Preselector configuration
   cal_source_idx: 0
   temp_sensor_idx: 2
