@@ -306,7 +306,7 @@ class TekRSASigan(SignalAnalyzerInterface):
 
             self._capture_time = utils.get_datetime_str_now()
 
-            data, status = self.rsa.IQSTREAM_Acquire(durationMsec, True)
+            data, status = self.rsa.IQSTREAM_Tempfile_NoConfig(durationMsec, True)
 
             data = data[nskip : nskip + nsamps_req]  # Remove extra samples, if any
             data_len = len(data)
