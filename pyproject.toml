@@ -41,7 +41,7 @@ classifiers = [
 dependencies = [
     "environs>=9.5.0",
     "tekrsa-api-wrap>=1.3.2",
-    "scos_actions @ git+https://github.com/NTIA/scos-actions@multiprocessing_3.8",
+    "scos_actions @ git+https://github.com/NTIA/scos-actions@threading",
 ]
 
 [project.optional-dependencies]
