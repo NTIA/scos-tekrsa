@@ -334,13 +334,13 @@ class TekRSASigan(SignalAnalyzerInterface):
 
                 measurement_result = {
                     "data": data,
-                    "overload": self.overload,
-                    "frequency": self.frequency,
-                    "reference_level": self.reference_level,
-                    "sample_rate": self.rsa.IQSTREAM_GetAcqParameters()[1],
+                    "overload": False, #self.overload,
+                    "frequency": 3550, #self.frequency,
+                    "reference_level": -25.0, #self.reference_level,
+                    "sample_rate": 1.4e6, #self.rsa.IQSTREAM_GetAcqParameters()[1],
                     "capture_time": self._capture_time,
                 }
                 if self._model not in ["RSA306B", "RSA306"]:
-                    measurement_result["attenuation"] = self.attenuation
-                    measurement_result["preamp_enable"] = self.preamp_enable
+                    measurement_result["attenuation"] = False, #self.attenuation
+                    measurement_result["preamp_enable"] = True,# self.preamp_enable
                 return measurement_result
