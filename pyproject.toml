@@ -41,7 +41,7 @@ classifiers = [
 dependencies = [
     "environs>=9.5.0",
     "tekrsa-api-wrap>=1.3.3",
-    "scos_actions @ git+https://github.com/NTIA/scos-actions@10.0.2",
+    "scos_actions @ git+https://github.com/NTIA/scos-actions@cal_NAN_prevention",
 ]
 
 [project.optional-dependencies]
