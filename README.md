@@ -107,7 +107,8 @@ file:
 (such as `scos_usrp`), then add the `scos_tekrsa` dependency:
 
     ```text
-    scos_tekrsa @ git+https://github.com/NTIA/scos-tekrsa@3.0.1
+    # Be sure to provide the correct tag for the desired version
+    scos_tekrsa @ git+https://github.com/NTIA/scos-tekrsa@8.0.0
     ```
 
 1. Compile requirements by running:
@@ -195,7 +196,9 @@ Registry, run:
 ```bash
 docker build -f docker/Dockerfile -t tekrsa_usb .
 docker tag tekrsa_usb ghcr.io/ntia/scos-tekrsa/tekrsa_usb:X.X.X
+docker tag tekrsa_usb ghcr.io/ntia/scos-tekrsa/tekrsa_usb:latest
 docker push ghcr.io/ntia/scos-tekrsa/tekrsa_usb:X.X.X
+docker push ghcr.io/ntia/scos-tekrsa/tekrsa_usb:latest
 ```
 
 ### Running Tests
