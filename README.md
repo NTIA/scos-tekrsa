@@ -57,7 +57,7 @@ Tektronix RSA devices, along with supporting test code
 
 ## Running in SCOS Sensor
 
-Requires `git`, `python>=3.8`, `pip>=18.1`, and `pip-tools>=6.6.2`
+Requires `git`, `python>=3.9`, `pip>=18.1`, and `pip-tools>=6.6.2`
 
 Below are the steps to run SCOS Sensor with the SCOS Tektronix RSA plugin:
 
@@ -149,7 +149,7 @@ from Tektronix. Place the three files `libRSA_API.so`, `libcyusb_shared.so`, and
 
 Set up a development environment using a tool like
 [Conda](https://docs.conda.io/en/latest/)
-or [venv](https://docs.python.org/3/library/venv.html#module-venv), with `python>=3.8`.
+or [venv](https://docs.python.org/3/library/venv.html#module-venv), with `python>=3.9`.
 Then, from the cloned directory, install the development dependencies by running:
 
 ```bash

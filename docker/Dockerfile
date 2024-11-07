@@ -7,5 +7,5 @@ RUN echo "SUBSYSTEM==\"usb\", ATTR{idVendor}==\"0699\", MODE=\"0666\", GROUP=\"p
 RUN chmod a+r /etc/udev/rules.d/Tektronix.rules
 
 # Locale fixes
-ENV LC_ALL C.UTF-8
-ENV LANG C.UTF-8
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
