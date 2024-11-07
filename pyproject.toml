@@ -48,14 +48,14 @@ dependencies = [
 
 [project.optional-dependencies]
 tests = [
-    "pytest>=7.3.1,<8.0",
-    "pytest-cov>=4.0.0,<5.0",
+    "pytest>=7.3.1,<9.0",
+    "pytest-cov>=5.0.0,<6.0",  # pytest-cov >= 6.0 drops python 3.8 support
     "tox>=4.5.1,<5.0",  # Should keep in sync with tox.ini minimum_version
 ]
 
 dev = [
     "hatchling>=1.14.2,<2.0",
-    "pre-commit>=3.3.1,<4.0",
+    "pre-commit>=3.3.1,<5.0",
     "scos-tekrsa[tests]",
 ]
 
