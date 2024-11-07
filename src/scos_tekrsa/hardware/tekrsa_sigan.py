@@ -1,6 +1,6 @@
 import logging
 import threading
-from typing import Dict, Optional
+from typing import Optional
 
 from its_preselector.web_relay import WebRelay
 from scos_actions import utils
@@ -20,7 +20,7 @@ sigan_lock = threading.Lock()
 class TekRSASigan(SignalAnalyzerInterface):
     def __init__(
         self,
-        switches: Optional[Dict[str, WebRelay]] = None,
+        switches: Optional[dict[str, WebRelay]] = None,
     ):
 
         try:
