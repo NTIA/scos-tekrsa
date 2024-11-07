@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 # Create Tektronix.rules as described in RSA API installation notes
 RUN mkdir -p /etc/udev/rules.d/

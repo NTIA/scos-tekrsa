@@ -217,7 +217,8 @@ TEKTRONIX and TEK are registered trademarks of Tektronix, Inc.
 
 ## Contact
 
-For technical questions about `scos_tekrsa`, contact Anthony Romaniello, <aromaniello@ntia.gov>
+For technical questions about `scos_tekrsa`, contact the
+[ITS Spectrum Monitoring Team](mailto:spectrummonitoring@ntia.gov).
 
 ## Disclaimer
 
