@@ -57,7 +57,7 @@ Tektronix RSA devices, along with supporting test code
 
 ## Running in SCOS Sensor
 
-Requires `git`, `python>=3.8`, `pip>=18.1`, and `pip-tools>=6.6.2`
+Requires `git`, `python>=3.9`, `pip>=18.1`, and `pip-tools>=6.6.2`
 
 Below are the steps to run SCOS Sensor with the SCOS Tektronix RSA plugin:
 
@@ -107,7 +107,8 @@ file:
 (such as `scos_usrp`), then add the `scos_tekrsa` dependency:
 
     ```text
-    scos_tekrsa @ git+https://github.com/NTIA/scos-tekrsa@3.0.1
+    # Be sure to provide the correct tag for the desired version
+    scos_tekrsa @ git+https://github.com/NTIA/scos-tekrsa@8.0.0
     ```
 
 1. Compile requirements by running:
@@ -149,7 +150,7 @@ from Tektronix. Place the three files `libRSA_API.so`, `libcyusb_shared.so`, and
 
 Set up a development environment using a tool like
 [Conda](https://docs.conda.io/en/latest/)
-or [venv](https://docs.python.org/3/library/venv.html#module-venv), with `python>=3.8`.
+or [venv](https://docs.python.org/3/library/venv.html#module-venv), with `python>=3.9`.
 Then, from the cloned directory, install the development dependencies by running:
 
 ```bash
@@ -195,7 +196,9 @@ Registry, run:
 ```bash
 docker build -f docker/Dockerfile -t tekrsa_usb .
 docker tag tekrsa_usb ghcr.io/ntia/scos-tekrsa/tekrsa_usb:X.X.X
+docker tag tekrsa_usb ghcr.io/ntia/scos-tekrsa/tekrsa_usb:latest
 docker push ghcr.io/ntia/scos-tekrsa/tekrsa_usb:X.X.X
+docker push ghcr.io/ntia/scos-tekrsa/tekrsa_usb:latest
 ```
 
 ### Running Tests
